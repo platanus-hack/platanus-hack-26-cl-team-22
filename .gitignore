@@ -38,6 +38,9 @@ data/raw/*
 data/raw/licitaciones/*
 !data/raw/licitaciones/*.zip
 
+# Agent skill registry (generated)
+.atl/
+
 # Trabajo local del flujo de diseño
 .impeccable/*.log
 .impeccable/decision-payload.json

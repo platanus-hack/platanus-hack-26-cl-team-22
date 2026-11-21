@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import logoRoot from '../assets/logo-root.png'
 import { GRADOS, LARGO_CASO, PERFILES, prioridadesDe, type Perfil, type PerfilId } from '../lib/onboarding'
 import type { VariableCorta } from '../lib/variables'
 
@@ -12,6 +13,8 @@ export interface Busqueda {
 interface Props {
   variables: VariableCorta[]
   onListo: (b: Busqueda) => void
+  /** Where "Atrás" on the first step goes: the landing, when the simulator was opened from it. */
+  inicio: string | null
 }
 
 const SALIDA_MS = 520
@@ -21,7 +24,7 @@ const orden = (i: number) => ({ '--i': i }) as CSSProperties
  * Entrada en tres pantallas, una decisión por pantalla: quién busca, qué pesa más y, si quiere, su caso.
  * Elegir una tarjeta avanza sola; «Solo quiero explorar» entra directo al mapa.
  */
-export function Onboarding({ variables, onListo }: Props) {
+export function Onboarding({ variables, onListo, inicio }: Props) {
   const [paso, setPaso] = useState(0)
   const [atras, setAtras] = useState(false)
   const [perfil, setPerfil] = useState<Perfil | null>(null)
@@ -60,7 +63,9 @@ export function Onboarding({ variables, onListo }: Props) {
     <div className={`onb${saliendo ? ' onb-saliendo' : ''}`} role="dialog" aria-modal="true" aria-label="Antes de empezar">
       <div className="onb-marco">
         <header className="onb-cabeza">
-          <p className="onb-marca">root</p>
+          <p className="onb-marca">
+            <img src={logoRoot} alt="root" />
+          </p>
           <ol className="onb-pasos" aria-label={`Paso ${paso + 1} de 3`}>
             {[0, 1, 2].map((i) => (
               <li key={i} className={i === paso ? 'onb-paso-actual' : i < paso ? 'onb-paso-hecho' : undefined} />
@@ -84,6 +89,13 @@ export function Onboarding({ variables, onListo }: Props) {
                   </button>
                 ))}
               </div>
+              {inicio && (
+                <div className="onb-pie" style={orden(PERFILES.length + 1)}>
+                  <a className="onb-volver" href={inicio}>
+                    Atrás
+                  </a>
+                </div>
+              )}
             </>
           )}
 

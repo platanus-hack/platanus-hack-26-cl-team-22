@@ -1,4 +1,5 @@
 import type { SimulatorApi } from "./simulator/engine";
+import { createRoots } from "./roots";
 
 // Landing colors (keep in sync with --bg / --dot in styles.css).
 const BG = "#092122";
@@ -13,6 +14,8 @@ type Elements = {
   spacer: HTMLElement;
   layer: HTMLElement;
   box: HTMLElement;
+  /** Full-screen canvas behind the logo where the roots grow. */
+  roots: HTMLCanvasElement;
   sim: { api: SimulatorApi; root: HTMLElement } | null;
 };
 
@@ -55,11 +58,12 @@ const GLOBE_FADE_MS = 600; // keep in sync with .sim #map transition in simulato
  * simulator's world view. Reaching the end commits: the scroll spacer and the
  * logo go away and the simulator takes the page. reopen() undoes the commit.
  */
-export function startIntro({ spacer, layer, box, sim }: Elements): IntroHandle {
+export function startIntro({ spacer, layer, box, roots: rootsCanvas, sim }: Elements): IntroHandle {
   const html = document.documentElement;
   const svg = box.querySelector("svg")!;
   const dot = box.querySelector<SVGCircleElement>(".logo-dot")!;
-  const pageColor = getComputedStyle(html).getPropertyValue("--page").trim() || "#EEF1ED";
+  const pageColor = getComputedStyle(html).getPropertyValue("--page").trim() || "#E8EFEE";
+  const roots = createRoots(rootsCanvas, { root: DOT, crumbs: [DOT, "#8a5a33", "#3d2614"] });
   let raf = 0;
   let autoRaf = 0;
   // Read from the page, not assumed: if this controller is re-created after the
@@ -109,6 +113,10 @@ export function startIntro({ spacer, layer, box, sim }: Elements): IntroHandle {
     const mix = smooth(0.1, 0.9, a);
     document.body.style.background = mixHex(BG, pageColor, mix);
 
+    // Roots spread from the period's edge to the whole screen while the zoom
+    // goes in, then fade before the simulator's UI takes over.
+    roots.draw({ x, y, r: D.r * s, grow: ease(smooth(0.02, 0.6, p)), alpha: 1 - smooth(0.6, 0.85, p) });
+
     if (sim) {
       revealGlobe(sim.root);
       sim.root.style.setProperty("--ui", String(b));
@@ -138,10 +146,11 @@ export function startIntro({ spacer, layer, box, sim }: Elements): IntroHandle {
     sim!.root.classList.remove("is-intro");
     sim!.root.style.removeProperty("--ui");
     sim!.api.setIntro(null);
+    roots.clear();
     setHomeDisabled(false);
     scrollTo(0, 0);
-    // The intro text stays on screen until the visitor decides to go in (src/simulador.ts).
-    document.dispatchEvent(new Event("intro-fin"));
+    // Entering the real simulator is only through the "Entrar al simulador" button
+    // (src/simulador.ts); the "intro-fin" scroll-to-enter gesture is not armed.
   }
 
   async function reopen() {
