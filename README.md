@@ -14,6 +14,8 @@ team-22
 - Valeria Riera ([@ingvaleriariera](https://github.com/ingvaleriariera))
 - Massiel Paola Perozo Ballestero ([@massiperozo](https://github.com/massiperozo))
 
+Team docs: [`docs/team-setup.md`](docs/team-setup.md) · [`docs/work-plan.md`](docs/work-plan.md) · [`docs/sim-spec.md`](docs/sim-spec.md)
+
 Before Submitting:
 
 - ✅ Fill in the project metadata (name, oneliner, description and deploy URL) in platanus-hack-project.jsonc
