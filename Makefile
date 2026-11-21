@@ -1,6 +1,6 @@
 PY := .venv/bin/python
 
-.PHONY: setup test lint experiments simulate clean
+.PHONY: setup test lint experiments simulate web web-build clean
 
 setup:            ## create .venv and install dev dependencies
 	python3 -m venv .venv
@@ -19,8 +19,15 @@ experiments:      ## replicas for the reference model -> results/*.csv
 simulate:         ## calibrate air and households -> promises -> viz/datos/simulacion.json
 	$(PY) -m experiments.calibrar_aire
 	$(PY) -m experiments.calibrar_hogares
+	$(PY) -m experiments.calibrar_seguridad
 	$(PY) -m experiments.promesas
 	$(PY) -m experiments.simular
+
+web:              ## run the landing page dev server (http://localhost:5173)
+	cd web && npm install && npm run dev
+
+web-build:        ## build the landing page into web/dist
+	cd web && npm ci && npm run build
 
 clean:
 	rm -rf .pytest_cache .ruff_cache results/*.csv

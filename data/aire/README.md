@@ -16,6 +16,7 @@ Descarga realizada el 2026-11-21.
 - `pm25_diario.csv`: fecha, estacion_id, estacion, pm25 (µg/m³), estado (`validado` | `preliminar` | `no_validado`). Por día se usa validado si existe; si no, preliminar; si no, no validado.
 - `estaciones.csv`: estación, comuna, lat/lon, primera/última fecha con dato y % de días con dato en 2017-2024.
 - `pm25_mensual.csv`, `pm25_anual.csv`: media por estación y período, con `dias_validos`. La media queda vacía si hay menos de 75% de días. El anual incluye media de invierno (mayo-agosto, 123 días, mismo umbral).
+- `viento_rosa_2023.csv`: rosa de vientos de 2023 por estación: estacion_id, sector_centro_grados (centro del sector de 15°, dirección desde donde sopla el viento), frecuencia (fracción de horas, suma 1 por estación), fecha_descarga. Fuente: SINCA, macro `./RM/<código>/Met/WDIR//horario_010.ic` (10 m), 1-ene a 31-dic-2023. Se descarga con `python -m datos.aire.fetch_viento` (descargado el 2026-11-21). Hay rosa para 8 estaciones (D12, D13, D14, D15, D17, D18, D27, D28); D11, D16, D29, D30, D31 y D35 no tienen datos de viento en 2023.
 - Crudos tal cual los sirve SINCA: `data/raw/sinca/<codigo>_<estacion>.csv` y `data/raw/sinca/pages/` (HTML de listado y fichas).
 
 ## Cómo reejecutar

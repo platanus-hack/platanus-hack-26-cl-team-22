@@ -43,8 +43,8 @@ Valores según [`simulation-taxonomy.md`](./simulation-taxonomy.md).
   agentes con reglas. Una población sintética de agentes agregaría parámetros que dos censos no
   alcanzan a identificar.
 - El azar está en **si cada medida se ejecuta**. Por eso hacen falta réplicas: con el plan
-  cumplido al 100 % la banda colapsa a un solo valor (19,1 µg/m³ en 2036), y con el historial
-  real se abre (20,5 a 22,7 µg/m³).
+  cumplido al 100 % la banda colapsa a un solo valor (18,8 µg/m³ en 2036), y con el historial
+  real se abre (20,2 a 22,4 µg/m³).
 
 ## Entidades y variables de estado
 
@@ -95,6 +95,7 @@ Implementación en `core/ciclo.py`.
 | Aporte de cada política | µg/m³ | Mediana de la diferencia pareada con y sin la política (misma semilla) |
 | Probabilidad de cumplir la norma en 2036 | — | Fracción de réplicas |
 | Crecimiento de población por comuna | % desde 2024 | Determinista (flujos esperados) |
+| Delitos de mayor connotación social por comuna y año | casos por 100.000 habitantes | Por réplica; se publica p10, p50 y p90 |
 
 Todas se escriben en `viz/datos/simulacion.json` (contrato en [`plan-comunas.md`](./plan-comunas.md)).
 
@@ -108,8 +109,13 @@ alternativas simples. Se publica también donde el modelo pierde.
 | Aire | Cambio medio 2017 → 2023 (9 estaciones) | −3,0 µg/m³ | Observado: −3,2 | `python -m experiments.calibrar_aire` |
 | Aire | Error por estación del cambio 2017 → 2023 | 0,90 | Sin cambio: 3,32 · Mismo cambio en todas: 0,91 | igual |
 | Aire | Niveles 2024 (10 estaciones), RMSE | 4,29 | **Persistencia de 2023: 1,91** · Media de las otras: 2,87 | igual |
+| Aire v1 | Niveles 2024 anclados al residuo 2023 de cada estación | 1,91 | Persistencia: 1,91 · v0: 2,57 | `python -m experiments.aire_v1_pruebas` |
+| Aire v1 | Error dejando una estación fuera: estacional / viento / residuos interpolados | 2,10 / 2,05 / 2,04 | v0: 2,05 (ninguno mejora) | igual |
 | Hogares | Migración neta por comuna 2019→2024, RMSE (ajuste con 2012→2017) | **4.335** | Nadie se muda: 7.716 · Repetir 2012→2017: 5.054 | `python -m experiments.calibrar_hogares` |
 | Hogares | Correlación fuera de muestra | **0,83** | Repetir 2012→2017: 0,76 | igual |
+| Seguridad | Tasa DMCS 2024 a 2 años, comunas completas fuera del ajuste | **10,8 %** | Persistencia: 12,4 % · Tendencia: 13,1 % · Media prepandemia: 20,0 % | `python -m experiments.calibrar_seguridad` |
+| Seguridad | Tasa DMCS 2024 a 1 año | 8,5 % | **Persistencia: 7,4 %** | igual |
+| Seguridad | Valores reales dentro de la banda del 80 % (1 y 2 años) | 70 % y 66 % | Ideal: 80 % (bandas algo estrechas) | igual |
 
 - **Caso teórico:** el kernel de simulación se valida contra la cola M/M/1 y la ley de Little
   (`tests/test_mm1.py`, `tests/test_kernel.py`).
@@ -117,9 +123,12 @@ alternativas simples. Se publica también donde el modelo pierde.
   los sorteos de las demás (`tests/test_credibilidad.py`, `tests/test_ciclo.py`).
 - **Casos extremos con test:** una medida con θ = 0 nunca se ejecuta y con θ = 1 siempre; la
   población total se conserva al mudarse (`tests/test_hogares.py`). Una medida en una comuna
-  mejora el aire de las otras (`tests/test_ciclo.py`). En total hay 112 pruebas (`make test`).
-- **Pendiente:** cobertura de las bandas (que cerca del 80 % de los valores reales caiga en la
-  banda p10–p90) y calibración de la credibilidad con años que el ajuste no vio. Esta última
+  mejora el aire de las otras (`tests/test_ciclo.py`). Una comuna con estación parte de su nivel
+  medido (`tests/test_simular.py`). Una política de seguridad con credibilidad 0 no tiene efecto y
+  el efecto sobre vecinas tiene signo abierto (`tests/test_seguridad.py`). En total hay 132
+  pruebas (`make test`).
+- **Pendiente:** cobertura de las bandas del aire (en seguridad ya se mide: 70 % y 66 % frente al
+  80 % ideal) y calibración de la credibilidad con años que el ajuste no vio. Esta última
   depende de conseguir el detalle anual de la SMA.
 
 ## Experimentos
@@ -139,20 +148,23 @@ alternativas simples. Se publica también donde el modelo pierde.
 ## Resultados que sorprendieron al equipo
 
 1. **El plan escrito y el historial real dan regiones distintas.** Cumplido al 100 %, el plan
-   deja la región en 19,1 µg/m³ en 2036, bajo la norma. Con el cumplimiento observado queda en
-   21,7 µg/m³ (banda de 20,5 a 22,7): el incumplimiento como cifra.
+   deja la región en 18,8 µg/m³ en 2036, bajo la norma. Con el cumplimiento observado queda en
+   21,4 µg/m³ (banda de 20,2 a 22,4): el incumplimiento como cifra.
 2. **La migración puede borrar la mejora del plan.** Si la leña sigue a la gente, la ciudad se
    muda hacia la Zona B (+18 % de población en 2036). Con el plan vigente la región queda en
-   23,2 µg/m³, prácticamente el nivel de hoy (23,4).
+   22,9 µg/m³, prácticamente el nivel de hoy (23,1).
 3. **Importa más quién ejecuta que cuántas promesas hay.** Hay dos maneras de repartir las 18
    promesas de la Zona B:
 
    | Ejecución | Banda | Probabilidad de cumplir la norma |
    |---|---|---|
-   | Un solo ejecutor | 2,96 µg/m³ | 0,41 |
-   | 18 municipios | 1,32 µg/m³ | 0,29 |
+   | Un solo ejecutor | 2,96 µg/m³ | 0,51 |
+   | 18 municipios | 1,32 µg/m³ | 0,54 |
 
-   Una planilla da 20,57 µg/m³ para todos los casos (`docs/promesas.md`).
+   Lo robusto es la banda. La probabilidad de cumplir la norma depende de qué lado del umbral
+   quede la mediana y su orden se invierte con cambios chicos de nivel (`docs/promesas.md`).
+
+   Una planilla da 20,24 µg/m³ para todos los casos (`docs/promesas.md`).
 4. **La prohibición en la Zona B vale más cuanta más gente se muda allí.** Su efecto mediano es
    de −3,9 µg/m³ con la leña siguiendo a la gente, frente a −3,2 con la leña fija. Es una
    interacción entre dos mecanismos, no una suma.
@@ -161,8 +173,10 @@ alternativas simples. Se publica también donde el modelo pierde.
 
 - **Aire v0 está mal identificado.** `L` quedó en el borde de la grilla (40 km) y `b` casi en 0,
   así que la cuenca se comporta como una sola caja. El modelo acierta cuánto mejora la región,
-  pero **no qué comunas ganan más**. En niveles de 2024 pierde contra la persistencia.
-- Medias anuales, sin viento, relieve ni estacionalidad.
+  pero **no qué comunas ganan más**. En niveles de 2024 pierde contra la persistencia. v1 ancla
+  las 10 comunas con estación a su medición (empata con la persistencia); estacionalidad, viento
+  e interpolación de residuos se probaron y ninguno mejora (`docs/modelo-aire.md`).
+- Medias anuales y sin relieve. Viento (rosas SINCA 2023) y estacionalidad se probaron sin mejora.
 - El aire no cambia a dónde se muda la gente. Con dos censos, ese término no se distingue del
   ingreso ni del precio de la vivienda.
 - Las mudanzas son un sistema cerrado: no hay migración externa ni crecimiento natural.
@@ -170,7 +184,9 @@ alternativas simples. Se publica también donde el modelo pierde.
   habitual (`data/censo/README.md`).
 - El 55 % de las medidas del PPDA no tiene evidencia pública. Se publican dos lecturas: «sin
   evidencia = no cumplida» y «sin evidencia = se excluye».
-- La seguridad quedó fuera del modelo. Hay delitos CEAD en `data/seguridad/`.
+- Seguridad: inercia por comuna con datos CEAD; las políticas son ilustrativas (no hay planes
+  comunales clasificados), con cobertura del 25 % y efecto sobre vecinas con signo abierto
+  (`docs/modelo-seguridad.md`). Sus efectos no se pueden validar localmente.
 
 ## Stack y estructura del repo
 
