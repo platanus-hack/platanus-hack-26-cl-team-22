@@ -45,9 +45,15 @@ parten de su medición). Norma anual: 20 µg/m³.
 
    Lo robusto es la banda. La probabilidad de cumplir la norma depende de qué lado del umbral
    quede la mediana y su orden se invierte con cambios chicos de nivel (`docs/promesas.md`).
+4. **Las políticas de seguridad casi no mueven la tasa comunal.** Con efectos citados de
+   metaanálisis (cámaras y alumbrado reducen delitos contra la propiedad, no violentos),
+   cobertura del 25 % y credibilidad municipal baja, las cámaras bajan los delitos de mayor
+   connotación social entre 0,6 % y 1,0 % en las comunas intervenidas: muy dentro de la
+   variación de un año a otro.
 
 Detalle y supuestos: [`docs/modelo-aire.md`](docs/modelo-aire.md),
-[`docs/modelo-hogares.md`](docs/modelo-hogares.md), [`docs/promesas.md`](docs/promesas.md).
+[`docs/modelo-hogares.md`](docs/modelo-hogares.md), [`docs/modelo-seguridad.md`](docs/modelo-seguridad.md),
+[`docs/promesas.md`](docs/promesas.md).
 
 ## Validación
 
@@ -60,6 +66,8 @@ simples. También publicamos dónde pierde.
 | Aire: niveles 2024, RMSE | 4,29 | Persistencia de 2023: **1,91** (gana la alternativa) |
 | Aire v1: niveles 2024 anclados al nivel medido de cada estación | 1,91 | Persistencia: 1,91 (empate) |
 | Hogares: migración neta 2019→2024, RMSE | **4.335** | Repetir 2012→2017: 5.054 · Nadie se muda: 7.716 |
+| Seguridad: tasa DMCS 2024 a 2 años, error relativo (comunas fuera del ajuste) | **10,8 %** | Persistencia: 12,4 % · Tendencia: 13,1 % |
+| Seguridad: tasa DMCS 2024 a 1 año | 8,5 % | Persistencia: **7,4 %** (gana la alternativa) |
 
 El modelo de aire acierta cuánto mejora la región, pero todavía **no qué comunas ganan más**.
 Donde hay estación (10 comunas), el nivel parte de lo medido y el modelo calcula el cambio.
