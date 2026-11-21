@@ -109,6 +109,46 @@
    }
   }
  },
+ "llegadas_externas": {
+  "reparto_2019_2024": {
+   "llegan_extranjero": {
+    "total_rm_observado": 338266,
+    "rmse_proporciones_2012_2017": 4965.2,
+    "corr_proporciones_2012_2017": 0.932,
+    "rmse_permisos_2016_2020": 6543.8,
+    "corr_permisos_2016_2020": 0.759,
+    "rmse_permisos_2014_2018": 5494.4,
+    "corr_permisos_2014_2018": 0.824,
+    "rmse_poblacion_2017": 8302.2,
+    "corr_poblacion_2017": 0.494
+   },
+   "llegan_otras_regiones": {
+    "total_rm_observado": 179275,
+    "rmse_proporciones_2012_2017": 944.4,
+    "corr_proporciones_2012_2017": 0.98,
+    "rmse_permisos_2016_2020": 3174.1,
+    "corr_permisos_2016_2020": 0.785,
+    "rmse_permisos_2014_2018": 3548.8,
+    "corr_permisos_2014_2018": 0.718,
+    "rmse_poblacion_2017": 3534.4,
+    "corr_poblacion_2017": 0.659
+   }
+  },
+  "poblacion_2017_2024": {
+   "abierto_tasas_2012_2017": {
+    "rmse_personas": 18471.9,
+    "total_rm_predicho": 7838500
+   },
+   "abierto_llegadas_por_permisos": {
+    "rmse_personas": 24814.4,
+    "total_rm_predicho": 7901926
+   },
+   "sin_cambio": {
+    "rmse_personas": 15046.3,
+    "total_rm_predicho": 7028421
+   }
+  }
+ },
  "supuestos": [
   "Solo cambian los destinos; la tasa de salida es la de 2012-2017 en todos.",
   "Permisos en ventanas de 5 años, normalizados por las viviendas del censo 2017.",

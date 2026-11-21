@@ -14,6 +14,14 @@ Destination models:
 - `radiacion`: parameter-free radiation model (Simini et al. 2012, doi:10.1038/nature10856)
   with census 2017 population.
 
+Second test, allocation of arrivals from outside the RM (abroad and other regions):
+- `reparto_2019_2024`: given the observed 2019-2024 RM totals, how well does each set of weights
+  split them among comunas? Weights: 2012-2017 shares, permits 2016-2020 (lag 3, chosen above),
+  permits known in 2019 (2014-2018), 2017 population. Isolates the split from the total.
+- `poblacion_2017_2024`: the open model of experiments/validar_poblacion.py with the same RM
+  arrival totals, split by permits 2012-2016 (known at the 2017 start) instead of fixed
+  2012-2017 comuna rates.
+
 Usage:  python -m experiments.validar_vivienda   -> results/vivienda_validacion.json
 """
 
@@ -102,6 +110,62 @@ def radiacion(poblacion, dist) -> np.ndarray:
     return s / s.sum(axis=1, keepdims=True)
 
 
+def repartir(total: float, pesos: np.ndarray) -> np.ndarray:
+    """Split `total` proportionally to non-negative `pesos` (all zero -> nothing)."""
+    pesos = np.asarray(pesos, dtype=float)
+    if np.any(pesos < 0):
+        raise ValueError("weights must not be negative")
+    suma = pesos.sum()
+    return total * pesos / suma if suma > 0 else np.zeros_like(pesos)
+
+
+def _externos(codes: tuple[str, ...], periodo: str, col: str) -> np.ndarray:
+    with (ROOT / "data" / "censo" / "flujos_externos.csv").open(encoding="utf-8") as fh:
+        filas = {r["codigo"]: r for r in csv.DictReader(fh) if r["periodo"] == periodo}
+    return np.array([float(filas[c][col]) for c in codes])
+
+
+def prueba_reparto(codes, permisos, pob17, viv17) -> dict:
+    """Split the observed 2019-2024 arrivals with different weights; RMSE per comuna."""
+    from experiments.validar_poblacion import ANIOS, TasasAbiertas, proyectar, tasas_2012_2017
+
+    pesos = {
+        "proporciones_2012_2017": None,
+        "permisos_2016_2020": ventana(permisos, 2019, 3),
+        "permisos_2014_2018": ventana(permisos, 2019, 5),
+        "poblacion_2017": pob17,
+    }
+    reparto = {}
+    for col in ("llegan_extranjero", "llegan_otras_regiones"):
+        obs = _externos(codes, "2019-2024", col)
+        base = _externos(codes, "2012-2017", col)
+        reparto[col] = {"total_rm_observado": round(float(obs.sum()))}
+        for nombre, w in pesos.items():
+            pred = repartir(obs.sum(), base if w is None else w)
+            reparto[col][f"rmse_{nombre}"] = round(float(np.sqrt(np.mean((pred - obs) ** 2))), 1)
+            reparto[col][f"corr_{nombre}"] = round(float(np.corrcoef(pred, obs)[0, 1]), 3)
+
+    pob24, _ = load_population_dwellings(codes, 2024)
+    modelo = MigrationModel.from_census(load_moves(codes, "2012-2017"), years=YEARS)
+    tasas = tasas_2012_2017(codes, pob17)
+    w17 = sum(permisos[a] for a in range(2012, 2017))
+    con_permisos = TasasAbiertas(
+        natalidad=tasas.natalidad, mortalidad=tasas.mortalidad,
+        llegan_regiones=repartir(float(tasas.llegan_regiones @ pob17), w17) / pob17,
+        llegan_extranjero=repartir(float(tasas.llegan_extranjero @ pob17), w17) / pob17,
+        salen_regiones=tasas.salen_regiones)
+    poblacion = {}
+    for nombre, t in (("abierto_tasas_2012_2017", tasas), ("abierto_llegadas_por_permisos",
+                                                          con_permisos)):
+        pred = proyectar(modelo, pob17, t, ANIOS)[-1]
+        poblacion[nombre] = {"rmse_personas": round(float(np.sqrt(np.mean((pred - pob24) ** 2))),
+                                                    1),
+                             "total_rm_predicho": round(float(pred.sum()))}
+    poblacion["sin_cambio"] = {"rmse_personas": round(float(np.sqrt(np.mean(
+        (pob17 - pob24) ** 2))), 1), "total_rm_predicho": round(float(pob17.sum()))}
+    return {"reparto_2019_2024": reparto, "poblacion_2017_2024": poblacion}
+
+
 def _leer_permisos(codes: tuple[str, ...]) -> dict[int, np.ndarray]:
     por_anio: dict[int, dict[str, float]] = {}
     with (ROOT / "data" / "vivienda" / "permisos_vivienda.csv").open(encoding="utf-8") as fh:
@@ -187,6 +251,7 @@ def main() -> None:
                                         (round(x, 4) for x in grav[:2]))),
         "loglik_ajuste_por_lag": {str(k): round(v["loglik"], 1) for k, v in por_lag.items()},
         "resultados": resultados,
+        "llegadas_externas": prueba_reparto(codes, permisos, pob17, viv17),
         "supuestos": [
             "Solo cambian los destinos; la tasa de salida es la de 2012-2017 en todos.",
             "Permisos en ventanas de 5 años, normalizados por las viviendas del censo 2017.",
@@ -198,6 +263,7 @@ def main() -> None:
     SALIDA.write_text(json.dumps(salida, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print("gravedad:", salida["parametros_gravedad"], "| loglik por lag:",
           salida["loglik_ajuste_por_lag"])
+    print(json.dumps(salida["llegadas_externas"], ensure_ascii=False, indent=1))
     for etiqueta, r in resultados.items():
         print(f"\n== {etiqueta} (lag {r['lag_anios']}; ajuste {r['ventana_ajuste']}, prueba "
               f"{r['ventana_prueba']}) {r['parametros_gravedad_permisos']}")

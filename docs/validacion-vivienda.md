@@ -72,13 +72,43 @@ vivienda nueva atrae mudanzas.
 
 - **No cambiar los destinos del modelo de hogares con los permisos.** El modelo actual es el
   mejor en RMSE.
-- **Usar la vivienda nueva como capacidad del sistema abierto**, donde compiten por ella las
-  mudanzas internas y las llegadas externas (`docs/validacion-poblacion.md`). Es la siguiente
-  prueba: repartir las llegadas desde el extranjero según la vivienda nueva y ver si mejora la
-  población por comuna.
+- **Tampoco repartir las llegadas externas con los permisos**: la segunda prueba (abajo) también
+  pierde contra la geografía observada.
 - **Los permisos ya sirven como dato de oferta.** Los de 2015–2020 tienen correlación 0,925 con
   el aumento de viviendas entre censos (`data/vivienda/README.md`). Para escenarios de
   densificación son un insumo con fuente oficial.
+
+## Segunda prueba: repartir las llegadas externas según la vivienda nueva
+
+Como la vivienda nueva central la ocupó gente que llegó de afuera, se probó otra cosa: usar los
+permisos para repartir entre comunas las llegadas desde el extranjero y desde otras regiones.
+
+**Reparto puro.** Se toma como dado el total observado de 2019–2024 en la RM y se mide qué
+pesos lo reparten mejor entre comunas:
+
+| Pesos para repartir | Extranjero: RMSE / correlación | Otras regiones: RMSE / correlación |
+|---|---|---|
+| **Proporciones 2012–2017** | **4.965 / 0,93** | **944 / 0,98** |
+| Permisos 2014–2018 (conocidos en 2019) | 5.494 / 0,82 | 3.549 / 0,72 |
+| Permisos 2016–2020 | 6.544 / 0,76 | 3.174 / 0,79 |
+| Población 2017 | 8.302 / 0,49 | 3.534 / 0,66 |
+
+**Efecto completo.** Población 2017→2024 con el modelo abierto (`docs/validacion-poblacion.md`).
+Los totales de llegadas son los mismos; cambia el reparto, que ahora sigue los permisos de
+2012–2016, conocidos al inicio:
+
+| Modelo | RMSE por comuna | Total RM |
+|---|---|---|
+| Sin cambio | 15.046 | 7.028.421 |
+| Abierto, llegadas con las tasas de 2012–2017 | 18.472 | 7.838.500 |
+| Abierto, llegadas repartidas por permisos | 24.814 | 7.901.926 |
+
+**Conclusión: quienes llegan de afuera van a donde llegaron otros antes.** La geografía observada
+de las llegadas en 2012–2017 predice la de 2019–2024 con correlación 0,93 (extranjero) y 0,98
+(otras regiones). Los permisos se correlacionan con las llegadas, pero no agregan capacidad de
+predicción por encima de esa geografía. Eso es compatible con un efecto de redes: la gente se
+instala donde ya hay gente que conoce. Los permisos quedan como insumo para escenarios de
+densificación, no como mejora del modelo.
 
 ## Límites
 

@@ -7,6 +7,7 @@ from experiments.validar_vivienda import (
     ajustar_destinos,
     pivote_por_permisos,
     radiacion,
+    repartir,
     shares_destinos,
 )
 
@@ -70,3 +71,21 @@ def test_radiation_prefers_the_nearer_of_two_equal_destinations():
 def test_radiation_rejects_mismatched_shapes():
     with pytest.raises(ValueError, match="shape"):
         radiacion(np.ones(3), np.ones((2, 2)))
+
+
+# --- allocating external arrivals by new housing ---------------------------------------
+
+
+
+
+def test_allocation_splits_the_total_proportionally_to_the_weights():
+    np.testing.assert_allclose(repartir(100.0, np.array([1.0, 3.0])), [25.0, 75.0])
+
+
+def test_allocation_with_all_zero_weights_splits_nothing():
+    np.testing.assert_allclose(repartir(100.0, np.zeros(3)), np.zeros(3))
+
+
+def test_allocation_rejects_negative_weights():
+    with pytest.raises(ValueError, match="negative"):
+        repartir(10.0, np.array([1.0, -1.0]))
