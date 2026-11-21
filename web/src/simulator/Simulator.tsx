@@ -87,7 +87,7 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
             </button>
           </div>
 
-          <p className="hint">Arrastra para girar el mundo. Pellizca para acercarte hasta ver las calles.</p>
+          <p className="hint">Arrastra para girar el mundo. Presiona el botón para entrar al simulador.</p>
 
           <div className="zoom" aria-label="Zoom">
             <button id="zin" aria-label="Acercar">+</button>
