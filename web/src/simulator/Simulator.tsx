@@ -47,25 +47,20 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
       e.stopPropagation();
       if (!leaving()) document.getElementById("cta")?.click();
     };
-    const pointers = new Set<number>();
     const onWheel = (e: WheelEvent) => {
       if (active() && (e.deltaY < 0 || leaving())) block(e);
     };
+    // A pinch is a second finger: the browser marks it non-primary, so no pointer count is kept
+    // (a count could go stale if a finger lifts outside the globe and turn a drag into a "pinch").
     const onPointerDown = (e: PointerEvent) => {
-      pointers.add(e.pointerId);
-      if (active() && (pointers.size >= 2 || leaving())) block(e); // second finger: a pinch
+      if (active() && ((e.pointerType === "touch" && !e.isPrimary) || leaving())) block(e);
     };
-    const onPointerUp = (e: PointerEvent) => pointers.delete(e.pointerId);
     // Capture phase on the ancestor, so it runs before the engine's own listeners on the canvas.
     root.addEventListener("wheel", onWheel, { capture: true, passive: false });
     root.addEventListener("pointerdown", onPointerDown, { capture: true });
-    root.addEventListener("pointerup", onPointerUp, { capture: true });
-    root.addEventListener("pointercancel", onPointerUp, { capture: true });
     return () => {
       root.removeEventListener("wheel", onWheel, { capture: true });
       root.removeEventListener("pointerdown", onPointerDown, { capture: true });
-      root.removeEventListener("pointerup", onPointerUp, { capture: true });
-      root.removeEventListener("pointercancel", onPointerUp, { capture: true });
     };
   }, []);
 
