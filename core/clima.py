@@ -105,7 +105,7 @@ def simulate_climate(scenario: str, *, seed: int, replicas: int, years: Sequence
             risks[risk][ind] = {
                 "unidad": unit,
                 "por_comuna": {
-                    c: {k: np.round(q[j, ci], 2).tolist() for j, k in enumerate(("p10", "p50", "p90"))}
+                    c: {k: np.round(q[j, ci], 1).tolist() for j, k in enumerate(("p10", "p50", "p90"))}
                     for ci, c in enumerate(s.communes)
                 },
             }
@@ -113,6 +113,6 @@ def simulate_climate(scenario: str, *, seed: int, replicas: int, years: Sequence
         "escenario": scenario,
         "anios": list(years),
         "corridas_disponibles": [f"{g}/{c}" for g, c in available],
-        "corridas": [f"{g}/{c}" for g, c in drawn],
+        "corridas": [available.index(r) for r in drawn],  # run drawn by each replica
         "riesgos": risks,
     }

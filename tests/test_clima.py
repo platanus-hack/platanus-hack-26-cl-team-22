@@ -62,7 +62,7 @@ def real():
 
 def test_real_data_every_drawn_run_carries_all_indicators(real):
     assert len(real["corridas"]) == 60
-    assert set(real["corridas"]) <= set(real["corridas_disponibles"])
+    assert all(0 <= i < len(real["corridas_disponibles"]) for i in real["corridas"])
     assert len(real["corridas_disponibles"]) >= 15
 
 

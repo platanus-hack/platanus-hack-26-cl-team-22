@@ -73,3 +73,14 @@ def test_security_policies_publish_credibility_per_target_commune():
         for c in per.values():
             assert c["procedencia"] in ("tasa_base", "supuesto")
             assert 0 <= c["p10"] <= c["media"] <= c["p90"] <= 1
+
+
+def test_climate_block_has_both_scenarios_one_run_per_replica_and_years_to_2060():
+    from experiments.simular import REPLICAS, YEARS, climate_risk
+
+    block = climate_risk()
+    assert set(block["por_escenario"]) == {"ssp245", "ssp585"}
+    for scenario in block["por_escenario"].values():
+        assert scenario["anios"] == list(range(YEARS[0], 2061))
+        assert len(scenario["corridas"]) == REPLICAS
+        assert all(0 <= i < len(scenario["corridas_disponibles"]) for i in scenario["corridas"])
