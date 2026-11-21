@@ -57,6 +57,25 @@ posición y no el valor porque las unidades son distintas y hay comunas muy alej
 Es un índice relativo a la región: no dice si el valor es bueno en términos absolutos; para el aire, eso lo dice
 la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición sea buena.
 
+### Entrada guiada
+
+Al abrir, tres pantallas cortas sobre el mapa (`src/components/Onboarding.tsx`): qué busca la persona
+(vivienda, empresa o solo explorar), cuánto pesa cada variable (cinco grados, de «Nada» a «Clave») y, opcional,
+su caso en una frase. Al terminar se abre la hoja Riesgo con ese orden, la comuna de menor riesgo elegida y una
+explicación en una frase. «Solo quiero explorar» entra directo. Con `?directo` en la dirección no aparece.
+
+La explicación la arma la propia interfaz con los números del índice (`src/lib/onboarding.ts`). Si al construir
+se define `VITE_GUIA_URL` con la dirección de un intermediario propio y la persona escribió su caso, se le pide
+a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.ts`):
+
+- Pedido: `POST` con JSON `{ perfil, contexto, prioridades, anio, top, falta }`; `top` trae las tres comunas de
+  menor riesgo con sus valores. Respuesta: JSON `{ "texto": "..." }`.
+- La clave del modelo vive en el intermediario, nunca en esta página. El intermediario debe permitir el origen
+  de la página (CORS) y limitar el uso.
+- El modelo solo redacta: el orden de las comunas lo calcula siempre el índice. Si el intermediario no está,
+  tarda más de 12 s o responde otra cosa, queda la explicación propia.
+- Lo que escribe la persona sale de la página solo en ese pedido; sin `VITE_GUIA_URL` no sale nunca.
+
 ### Cómo correrla
 
 ```bash
