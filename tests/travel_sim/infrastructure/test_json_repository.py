@@ -21,6 +21,15 @@ from travel_sim.infrastructure.json_repository import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SANTIAGO_SEED_PATH = REPO_ROOT / "data" / "cities" / "santiago.json"
+# Seed options without a verified source; every other seed option carries a source and a date.
+UNVERIFIED_SEED_IDS = {
+    "scl-conn-wom-chip-fisico",
+    "scl-conn-entel-chip-fisico",
+    "scl-transfer-uber-private",
+    "scl-transit-uber-daily",
+    "scl-daytrip-bus-valpo",
+    "scl-transit-metro-contactless",
+}
 
 
 def _build_valid_payload() -> dict[str, object]:
@@ -80,7 +89,7 @@ def test_loading_santiago_seed() -> None:
     assert city.default_usd_exchange_rate == Decimal(950)
 
     options = repo.list_options("scl")
-    assert len(options) == 13
+    assert len(options) == 16
 
     # Check category distribution
     connectivity = repo.list_options_by_city_and_category("scl", ServiceCategory.CONNECTIVITY)
@@ -88,9 +97,9 @@ def test_loading_santiago_seed() -> None:
     transit = repo.list_options_by_city_and_category("scl", ServiceCategory.URBAN_TRANSIT)
     day_trips = repo.list_options_by_city_and_category("scl", ServiceCategory.DAY_TRIP)
 
-    assert len(connectivity) == 4
+    assert len(connectivity) == 5
     assert len(transfers) == 3
-    assert len(transit) == 2
+    assert len(transit) == 3
     assert len(day_trips) == 2
 
     # Verify key attributes from seeding strategy
@@ -193,15 +202,10 @@ def test_unverified_options_flagged_in_seed() -> None:
     repo = JsonOptionRepository(SANTIAGO_SEED_PATH)
 
     options = repo.list_options("scl")
-    assert len(options) == 13
+    assert len(options) == 16
 
     # Only options with a real source are verified; everything else must stay flagged unverified.
-    verified_ids = {
-        "scl-conn-wom-plan-zero-esim",
-        "scl-transfer-centropuerto-bus",
-        "scl-dining-menu-del-dia",
-        "scl-dining-menu-ejecutivo",
-    }
+    verified_ids = {opt.id for opt in options} - UNVERIFIED_SEED_IDS
     for opt in options:
         if opt.id in verified_ids:
             assert repo.is_verified(opt.id) is True
@@ -212,8 +216,8 @@ def test_unverified_options_flagged_in_seed() -> None:
             assert opt.last_verified_at is None
 
     unverified_options = repo.list_unverified_options("scl")
-    assert len(unverified_options) == 9
-    assert {opt.id for opt in unverified_options} == {opt.id for opt in options} - verified_ids
+    assert len(unverified_options) == len(UNVERIFIED_SEED_IDS) == 6
+    assert {opt.id for opt in unverified_options} == UNVERIFIED_SEED_IDS
 
 
 def test_verified_option_returns_freshness_status() -> None:
@@ -293,7 +297,7 @@ def test_adding_second_city_file_without_changing_code(tmp_path: Path) -> None:
     assert "bue" in city_ids
 
     scl_opts = repo.list_options("scl")
-    assert len(scl_opts) == 13
+    assert len(scl_opts) == 16
     assert all(o.city_id == "scl" for o in scl_opts)
 
     bue_opts = repo.list_options("bue")

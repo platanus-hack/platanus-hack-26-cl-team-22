@@ -37,11 +37,13 @@ from travel_sim.infrastructure.json_repository import JsonOptionRepository
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SANTIAGO_SEED_PATH = REPO_ROOT / "data" / "cities" / "santiago.json"
 # Seed options that carry a real source and verification date.
-SOURCED_SEED_IDS = {
-    "scl-conn-wom-plan-zero-esim",
-    "scl-transfer-centropuerto-bus",
-    "scl-dining-menu-del-dia",
-    "scl-dining-menu-ejecutivo",
+UNVERIFIED_SEED_IDS = {
+    "scl-conn-wom-chip-fisico",
+    "scl-conn-entel-chip-fisico",
+    "scl-transfer-uber-private",
+    "scl-transit-uber-daily",
+    "scl-daytrip-bus-valpo",
+    "scl-transit-metro-contactless",
 }
 
 
@@ -519,23 +521,27 @@ def test_end_to_end_santiago_seed_with_unverified_flag_propagated() -> None:
     assert result.unverified is True
     assert result.city_unverified is True
     assert result.has_unverified_options is True
-    assert len(result.unverified_options) == 9
-    assert len(result.unverified_option_ids) == 9
+    assert len(result.unverified_options) == len(UNVERIFIED_SEED_IDS)
+    assert len(result.unverified_option_ids) == len(UNVERIFIED_SEED_IDS)
 
     for scenario_type in ScenarioType:
         scenario = result.scenarios[scenario_type]
         assert scenario.unverified is True
         assert scenario.has_unverified_options is True
-        assert len(scenario.choices) == 5
+        assert len(scenario.choices) == 6
         for choice in scenario.choices:
-            sourced = choice.option.id in SOURCED_SEED_IDS
+            sourced = choice.option.id not in UNVERIFIED_SEED_IDS
             assert choice.unverified is (not sourced)
             assert choice.is_verified is sourced
             assert choice.option.sim_type != SimType.PHYSICAL_SIM
 
-    # Physical SIMs in Santiago seed (WOM chip fisico & Entel chip fisico) are rejected
+    # Every physical-SIM connectivity option in the Santiago seed is rejected for an eSIM-only device
     rejected_ids = {r.option.id for r in result.rejected_options}
-    assert rejected_ids == {"scl-conn-wom-chip-fisico", "scl-conn-entel-chip-fisico"}
+    assert rejected_ids == {
+        "scl-conn-wom-chip-fisico",
+        "scl-conn-entel-chip-fisico",
+        "scl-conn-entel-chip-1gb-7d",
+    }
 
     # Verify ordering of friction and savings on the Santiago seed
     assert (

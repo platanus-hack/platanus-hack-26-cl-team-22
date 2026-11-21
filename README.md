@@ -36,4 +36,4 @@ docs/travel-simulator/      context, data model, engine spec, seeding, roadmap
 
 ## Status and caveats
 
-The Santiago seed is a draft: 2 of 11 options have a source and a verification date (Centropuerto airport bus fare, WOM prepaid plan); the rest are flagged unverified (`last_verified_at: null`). Verifying them against real sources and building a graphical UI are the next steps.
+The Santiago seed is a draft: 10 of 16 options have a source and a verification date (mostly third-party guides and comparators, to be cross-checked against official sources); the other 6 are flagged unverified (`last_verified_at: null`). Percentage-based costs such as exchange-house spreads are not modeled. A local web UI and a hardened server exist; deploying them and running the AI audit against real assistants are the next steps.

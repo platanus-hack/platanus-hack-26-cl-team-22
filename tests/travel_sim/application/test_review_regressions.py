@@ -163,6 +163,7 @@ def test_assistant_answering_only_nulls_never_beats_the_local_optimum() -> None:
                     "URBAN_TRANSIT": None,
                     "DAY_TRIP": None,
                     "DINING": None,
+                    "CURRENCY_EXCHANGE": None,
                 }
             )
 
