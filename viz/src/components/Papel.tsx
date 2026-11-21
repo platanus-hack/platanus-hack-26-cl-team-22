@@ -20,7 +20,14 @@ export function Rodela({ nivel, borde, children, etiqueta }: { nivel: number | n
 }
 
 /** Muestra plana de papel para leyendas. */
-export function Muestra({ clase, forma = 'cuadro' }: { clase: string; forma?: 'cuadro' | 'feston' | 'pila' | 'disco' }) {
+export function Muestra({ clase, forma = 'cuadro' }: { clase: string; forma?: 'cuadro' | 'feston' | 'trama' | 'pila' | 'disco' }) {
+  if (forma === 'trama')
+    return (
+      <svg className="muestra" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="21" height="21" className={clase} />
+        <path d="M2 12 L12 2 M2 22 L22 2 M12 22 L22 12" className="muestra-trama" />
+      </svg>
+    )
   if (forma === 'feston')
     return (
       <svg className="muestra" viewBox="0 0 24 24" aria-hidden="true">

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Anios, ControlesMapa, Leyenda } from './components/Marco'
-import { MapaPapel, type Cinta, type Encuadre } from './components/MapaPapel'
+import { Mapa } from './components/Mapa'
+import type { Cinta, Encuadre } from './components/MapaPapel'
 import { PERSONALIZADO, VistaComuna, VistaCuenca, VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
 import type { AportePolitica } from './lib/capas'
 import { punto, serie, variablesConDato, type Punto } from './lib/data'
@@ -499,7 +500,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   return (
     <div className={`escena${reducido ? ' quieto' : ''}`}>
       <main className="zona-mapa">
-        <MapaPapel
+        <Mapa
           features={features}
           modo={modoMapa}
           cortes={cortes}
@@ -540,7 +541,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
               Demostración automática
             </p>
           )}
-        </MapaPapel>
+        </Mapa>
       </main>
 
       <section className="columna" aria-label="Lectura de la simulación">

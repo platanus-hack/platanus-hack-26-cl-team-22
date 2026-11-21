@@ -11,10 +11,29 @@ Decidir el stack en el kickoff (ver `.claude/skills/sim-scoping`, Paso 4).
 
 ## Interfaz (Frente 8): root, «Capas de papel»
 
-Página estática de una sola pantalla: Vite + React + TypeScript (strict). El mapa es un SVG propio
-(proyección equirrectangular corregida por el coseno de la latitud), sin teselas, sin librería de mapas y
-sin red. Solo lee archivos propios (`datos/*.json`, `geo/comunas_rm.geojson`); no hay backend, ni
-analítica, ni peticiones externas. La tipografía (Bricolage Grotesque) viene empaquetada con `@fontsource`.
+Página estática de una sola pantalla: Vite + React + TypeScript (strict). Los datos son archivos propios
+(`datos/*.json`, `geo/comunas_rm.geojson`); no hay backend ni analítica. La tipografía (Bricolage Grotesque)
+viene empaquetada con `@fontsource`.
+
+### El mapa: relieve en 3D con dos respaldos
+
+El mapa es la cuenca en relieve (MapLibre GL JS 6.19.0, código abierto): la cordillera, las calles y las comunas
+pintadas encima con el color de su nivel. `src/components/Mapa.tsx` elige solo cuál usar, en este orden:
+
+| Mapa | De dónde sale | Cuándo se usa |
+|---|---|---|
+| Relieve en línea | Calles de OpenFreeMap y relieve de Mapterhorn (gratis, sin clave) | Siempre que haya internet |
+| Relieve local | Paquete predescargado en `viz/public/mapas/` (`npm run mapas`, unos 67 MB, fuera de git) | Si el estilo en línea no responde en 4 s |
+| Plano («Capas de papel») | SVG propio, sin teselas ni red (`MapaPapel.tsx`) | Si no hay red ni paquete, o si WebGL falla |
+
+- **Antes de presentar:** correr `npm run mapas` una vez con internet. Se puede repetir; salta lo ya bajado.
+- **Forzar un respaldo:** abrir con `?mapa=local` o `?mapa=plano`, o apretar `L` en plena presentación
+  (en línea → local → plano).
+- El paquete local cubre la Región Metropolitana hasta el zoom 12 (sin edificios en 3D, que solo vienen en línea).
+- Las únicas peticiones externas son las teselas del mapa en línea; no se envía ningún dato de la pantalla.
+- En el relieve, la banda p10–p90 que alcanza otro nivel se marca con una trama; el festón y las hojas de política
+  de la comuna elegida solo existen en el mapa plano. Las comunas del relieve se eligen con clic (el recorrido con
+  `Tab` es del mapa plano).
 
 Cada política es una hoja de papel frío pegada bajo las comunas donde aporta: asoma por el canto de abajo a la
 derecha, más ancha cuanto más aporta, y varias se apilan en orden. Apagar una política la desliza fuera de la pila
@@ -28,6 +47,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm run typecheck  # tsc --noEmit
 npm test           # Vitest: lógica pura (escenarios, niveles, proyección, festones, capas, leña, teclas, validador…)
+npm run mapas      # baja el paquete de mapas para presentar sin internet (viz/public/mapas)
 npm run build      # genera viz/dist, estática, con rutas relativas
 npm run preview    # sirve viz/dist
 ```
@@ -45,6 +65,7 @@ Pensada para escritorio 16:9 y 16:10 (1920×1080, 1440×900, 1280×720), sin des
 | `D` | En El plan, alterna el mapa entre valor y diferencia frente al escenario de referencia |
 | `M` | Alterna Gran Santiago y toda la región |
 | `0` | Reencuadra |
+| `L` | Cambia de mapa: relieve en línea, relieve local, plano |
 | `Esc` | Pausa |
 | `Tab` + `Enter` | Recorre las comunas del mapa y elige una |
 

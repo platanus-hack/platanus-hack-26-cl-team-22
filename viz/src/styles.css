@@ -1145,3 +1145,32 @@ body:has(.estado) {
 .cuenca-grafico {
   margin-top: calc(var(--u) * 1);
 }
+
+/* ---------- Mapa en relieve (MapLibre) ---------- */
+.mapa .mapa-gl,
+.mapa .mapa-gl.maplibregl-map {
+  position: absolute;
+  inset: 0;
+}
+.mapa-espera {
+  background: var(--papel-2);
+}
+.mapa-relieve .solo-plano,
+.mapa:not(.mapa-relieve) .solo-relieve {
+  display: none;
+}
+.muestra .muestra-trama {
+  fill: none;
+  stroke: var(--hoja);
+  stroke-width: 2.5;
+}
+.mapa-relieve .controles-mapa,
+.mapa-relieve .leyenda,
+.mapa-relieve .etiqueta-demo,
+.mapa-relieve .tag-mapa {
+  z-index: 3;
+}
+.mapa-relieve .maplibregl-ctrl-attrib {
+  font-family: var(--f);
+  font-size: 10px;
+}

@@ -3,10 +3,11 @@ import type { AportePolitica } from '../lib/capas'
 import { apilarLabios, apilarNivel, PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
 import type { Diferencia } from '../lib/diferencia'
+import { claseFondo as claseDeFondo, type ModoMapa } from '../lib/fondo'
 import { escalarAnillo, rutaFestoneada } from '../lib/feston'
 import type { GeoFeature } from '../lib/geo'
 import { radioDisco, type Lena } from '../lib/lena'
-import { papelNivel, pasoDiferencia } from '../lib/niveles'
+import { papelNivel } from '../lib/niveles'
 import {
   ajustarCaja,
   areaAnillo,
@@ -28,7 +29,7 @@ import {
 import type { Mejor } from '../lib/types'
 import { esGranSantiago, limitesDe } from '../lib/vista'
 
-export type ModoMapa = 'valor' | 'diferencia' | 'lena'
+export type { ModoMapa }
 export type Encuadre = 'gran-santiago' | 'region'
 
 export interface Cinta {
@@ -36,7 +37,7 @@ export interface Cinta {
   fraccion: number
 }
 
-interface Props {
+export interface PropsMapa {
   features: GeoFeature[]
   modo: ModoMapa
   cortes: readonly number[]
@@ -73,7 +74,7 @@ const MARGEN = 0.045
 const DURACION_ENCUADRE = 750
 const facil = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t))
 
-export function MapaPapel(p: Props) {
+export function MapaPapel(p: PropsMapa) {
   const caja = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [tam, setTam] = useState({ w: 0, h: 0 })
@@ -233,21 +234,7 @@ export function MapaPapel(p: Props) {
     return Math.round(Math.min(1, Math.max(0, (tam.w - sx) / tam.w)) * 260)
   }
 
-  const claseFondo = (x: Prep): string => {
-    if (p.modo === 'lena') {
-      const z = p.lena?.comunas.find((c) => c.codigo === x.f.properties.codigo)?.zona
-      return z === 'A' ? 'zona-a' : z === 'B' ? 'zona-b' : 'sin-dato'
-    }
-    if (!x.sim) return 'sin-dato'
-    if (p.modo === 'diferencia') {
-      const d = p.difs?.get(x.sim)
-      if (!d) return 'sin-dato'
-      const s = pasoDiferencia(d.delta, p.difMax, p.mejor)
-      return s === 0 ? 'dif-0' : s < 0 ? `mejora-${-s}` : `empeora-${s}`
-    }
-    const n = apilarNivel(p.puntos.get(x.sim), p.cortes).nivel
-    return n === null ? 'sin-dato' : `nivel-${papelNivel(n, p.cortes)}`
-  }
+  const claseFondo = (x: Prep): string => claseDeFondo(p, x.f.properties.codigo, x.sim)
 
   const tMaxLena = useMemo(() => Math.max(0, ...(p.lena?.comunas.map((c) => c.toneladas ?? 0) ?? [0])), [p.lena])
   const radioLena = (cajaRegion.x1 - cajaRegion.x0) * 0.038
@@ -260,8 +247,6 @@ export function MapaPapel(p: Props) {
     for (const l of p.aportes.values()) for (const a of l) m = Math.max(m, Math.abs(a.delta))
     return m
   }, [p.aportes])
-  // Bajo este radio en pantalla la comuna no lleva cantos: serían motas, no hojas.
-  const RADIO_MIN_PX = 11
 
   // Geometría que no depende del encuadre: se calcula una vez por dato, no en cada cuadro de animación.
   const recortes = useMemo(() => {
@@ -319,7 +304,9 @@ export function MapaPapel(p: Props) {
                 const x = prep[i]!
                 const interactiva = p.modo === 'lena' || !!x.sim
                 const ap = p.modo !== 'lena' && x.sim ? p.aportes.get(x.sim) : undefined
-                const labios = ap && x.radio * k >= RADIO_MIN_PX ? apilarLabios(ap, p.activas, deltaMax, labioMin, labioMax) : []
+                // Solo la comuna elegida muestra su pila de hojas: así es la única que sobresale del mapa.
+                const elegida = !!x.sim && x.sim === p.seleccionada
+                const labios = ap && elegida ? apilarLabios(ap, p.activas, deltaMax, labioMin * 1.7, labioMax * 1.7) : []
                 const salida = labioMax * 5
                 return (
                   <g key={i}>

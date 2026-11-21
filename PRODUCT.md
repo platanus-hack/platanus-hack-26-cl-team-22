@@ -34,7 +34,7 @@ No se afirma que «nadie hace esto»: existe UrbanSim para la ubicación de hoga
 ## Operating Context
 
 - El modelo corre en Python antes de la demo y escribe `simulacion.json`. La interfaz es una página estática que solo lee ese archivo; no hay servidor ni simulación en el navegador.
-- La demo debe funcionar sin red: sin teselas de mapa, sin fuentes ni scripts de CDN.
+- La demo debe funcionar sin red: sin fuentes ni scripts de CDN. El mapa en relieve usa teselas en línea, con un paquete predescargado (`npm run mapas`) y el mapa plano como respaldos automáticos (ver `viz/README.md`).
 - Escenarios precalculados: el base y uno por cada política apagada. Una combinación no calculada se dice con palabras.
 - Guion de la demo (docs/contexto-proyecto.md §12): problema, mapa con control de tiempo, interruptor de una medida, hallazgo, prueba de validación, perfil de hogar.
 

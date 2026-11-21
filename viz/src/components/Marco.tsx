@@ -95,12 +95,15 @@ export function Leyenda(p: LeyendaProps) {
         <li>
           <Muestra clase="sin-dato" /> Sin dato
         </li>
-        <li>
+        <li className="solo-plano">
           <Muestra clase="nivel-2" forma="feston" /> Festón: la banda p10–p90 alcanza otro nivel
         </li>
+        <li className="solo-relieve">
+          <Muestra clase="nivel-3" forma="trama" /> Trama: la banda p10–p90 alcanza otro nivel
+        </li>
         {p.hayPiezas && (
-          <li>
-            <Muestra clase="pol-0" forma="pila" /> Canto frío: plan pegado bajo la comuna, más ancho cuanto más aporta
+          <li className="solo-plano">
+            <Muestra clase="pol-0" forma="pila" /> Canto frío en la comuna elegida: cada plan pegado, más ancho cuanto más aporta
           </li>
         )}
       </ul>

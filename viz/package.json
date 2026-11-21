@@ -8,10 +8,12 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "mapas": "node scripts/descargar-mapas.mjs"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "5.3.0",
+    "maplibre-gl": "6.19.0",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
