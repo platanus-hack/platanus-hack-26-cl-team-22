@@ -63,7 +63,8 @@ Siguiente paso: completar `docs/sim-spec.md` con `sim-scoping` y repartir roles 
 <!-- Agregar aquí, una sección por idea. -->
 
 ### Simulador realista de viajes: costos vs. fricción (idea lateral, Santiago piloto)
-- **Estado:** idea lateral; guardada como referencia, sin puntuar ni decidir.
+- **Estado:** idea lateral; guardada como referencia, sin puntuar ni decidir. Documentos en [`travel-simulator/`](./travel-simulator/context.md): contexto y fuentes, modelo de datos, motor, seeding y roadmap (borradores).
+- **Ángulo añadido:** auditar qué recomiendan distintos asistentes de IA para el mismo viaje y compararlo contra el óptimo del motor determinista. Restricción clave: tipo de SIM (físico o eSIM) frente al dispositivo del viajero, como filtro duro.
 - **Pregunta "¿qué pasaría si…?":** ¿cuánto ahorra y cuánta fricción asume un viajero según las opciones que elige (eSIM global vs. chip local, transfer vs. bus, tarjeta vs. casa de cambio)?
 - **Problema:** los planificadores recomiendan por afiliados y usan promedios desactualizados. Ejemplo: 1 GB a ~US$4 con eSIM global frente a ~100 GB por ~US$10 con un chip prepago local (WOM).
 - **Quién la usaría y qué decisión cambia:** viajeros que planifican un viaje; decide qué contratar en conectividad, transporte, escapadas, comida y pagos.
