@@ -1,0 +1,78 @@
+{
+  "command": "python -m experiments.calibrar_aire",
+  "model": "v0 isotropic exponential kernel (core/aire.py)",
+  "parameters": {
+    "scale_km": 40.0,
+    "background_ugm3": 0.42210139980151373,
+    "k_ugm3_per_t": 0.007874978777034863,
+    "coefficients_by_source": {
+      "heating": 0.007874978777034863,
+      "transport": 0.007874978777034863,
+      "industry": 0.007874978777034863,
+      "other": 0.0
+    },
+    "fit_year": 2023
+  },
+  "fit": {
+    "stations": 10,
+    "r2": 0.5462264650877177,
+    "loo_rmse_by_scale_km": {
+      "3.0": 3.0696433919809074,
+      "5.0": 2.7753167248803847,
+      "8.0": 2.527068658581096,
+      "12.0": 2.4199561991583107,
+      "18.0": 2.3506208313570887,
+      "25.0": 2.2893388491907296,
+      "40.0": 2.048128424383732
+    },
+    "loo_rmse_model": 2.048128424383732,
+    "loo_rmse_mean_of_other_stations": 2.833130493828643,
+    "scale_at_grid_edge": true
+  },
+  "test_2024_levels": {
+    "stations": 10,
+    "rmse_model": 4.2857874563112395,
+    "rmse_mean_of_other_stations": 2.8684596029623903,
+    "rmse_persistence_2023": 1.9104659117607934,
+    "stations_with_persistence": 10
+  },
+  "test_change_2017_2023": {
+    "stations": 9,
+    "observed_mean": -3.192222222222222,
+    "predicted_mean": -3.0040006205449554,
+    "rmse_model": 0.8988052922327852,
+    "rmse_no_change": 3.319144802840368,
+    "rmse_same_change_everywhere": 0.9090871829328805,
+    "pattern_correlation": 0.2564799107408297
+  },
+  "assumptions": [
+    "Transport emissions exist only for 2023; 2017 and 2024 reuse the 2023 values.",
+    "A commune absent from the RETC table for a source is counted as 0 t/year.",
+    "Stations are receptors at their own coordinates; emissions sit at commune centroids.",
+    "Annual means only; no seasonal background, wind or relief (v0).",
+    "Source 'other' (wildfires, agricultural burning) has coefficient 0: it is episodic.",
+    "RETC industry coverage changes between years (110 t in 2017, 616 t in 2024)."
+  ],
+  "missing_emissions": {
+    "2017": {
+      "transport": 52,
+      "industry": 1,
+      "other": 19
+    },
+    "2023": {
+      "heating": 3,
+      "transport": 7
+    },
+    "2024": {
+      "heating": 3,
+      "transport": 52,
+      "industry": 1
+    }
+  },
+  "data": [
+    "data/comunas_rm.csv",
+    "data/emisiones/pm25_por_comuna_fuente.csv",
+    "data/aire/estaciones.csv",
+    "data/aire/pm25_anual.csv"
+  ]
+}

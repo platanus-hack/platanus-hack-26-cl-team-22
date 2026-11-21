@@ -39,13 +39,41 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `escenarios` | Id, nombre y lista de políticas activas |
 | `trayectorias` | Por escenario, comuna y variable: tres listas (p10, p50, p90), una posición por año |
 | `aportes` | Por escenario, comuna y variable: cuánto mueve cada política el valor final |
-| `flujos` | Por escenario: hogares que se mudan entre dos comunas en un año |
+| `flujos` | Por escenario: personas que se mudan entre dos comunas en un año (`anio`, `origen`, `destino`, `personas`; las 15 mayores por año) |
+| `impacto` | Por escenario: personas que viven en comunas sobre la norma anual de PM2,5 (p10, p50, p90 por año) |
+| `validacion` | Error del modelo contra datos reales y contra alternativas simples |
+| `migracion_neta` | Por comuna: personas que llegan menos las que salen, una posición por año |
+| `promesas` | Comparación aparte (no es un interruptor): muchas promesas con poca ejecución contra pocas con mucha ejecución. Por paquete: valor de planilla, bandas, probabilidad de cumplir la norma por año. Ver `docs/promesas.md` |
 
 Reglas del contrato:
 
 - Solo se agregan claves; no se renombran ni se quitan sin avisar a quien hace la interfaz.
-- Faltan dos claves que se sumarán cuando existan: `validacion` (error del modelo contra
-  datos reales) y la variable `seguridad`.
+- Falta la variable `seguridad`, que se sumará cuando exista.
+
+### Archivo real (v1, 21 nov: aire + hogares)
+
+`viz/datos/simulacion.json`, generado con `make simulate` (calibración de aire y de hogares, promesas y simulación, en ese
+orden; determinista: la
+misma corrida da el mismo archivo). Diferencias con el ejemplo que la interfaz debe saber:
+
+- **La variable es `pm25_anual`, no `pm25_invierno`.** El modelo v0 es anual. La interfaz
+  debe leer los ids desde `variables`, no fijarlos en el código.
+- Los códigos de comuna son los oficiales de cinco dígitos (`"13101"` es Santiago).
+- Claves nuevas: `comunas[].zona_ppda` (A o B), `politicas[].tipo` (vigente o propuesta),
+  `politicas[].procedencia`, `cita` y `efecto`, y `escenarios[].lectura`.
+- **Segunda variable: `crecimiento_poblacion`** (% desde 2024, mayor es mejor). Sale del
+  mecanismo de hogares y no tiene banda (p10 = p50 = p90). `tipos_hogar` ahora pesa
+  `pm25_anual` y `crecimiento_poblacion`; el perfil «prioriza seguridad» se reemplazó por
+  «prefiere comunas que crecen» hasta que exista `seguridad`.
+- **Los interruptores** son los escenarios con `lectura: "conservadora"` y
+  `hogares: "fija"`. Los escenarios `base-lectura-optimista` y `base-plan-escrito` cambian la
+  lectura de la credibilidad; los `…-lena-sigue-a-la-gente` usan `hogares: "proporcional"`
+  (la leña sigue a quienes se mudan, cota superior). Ninguno de ellos es un interruptor.
+- **Apagar una política vigente** significa que no avanza más desde 2023, no que la leña
+  vuelva (`meta.significado_sin`).
+- **`flujos` cuenta personas, no hogares** (el censo cuenta personas): el campo se llama
+  `personas`, no `hogares` como en el ejemplo. Son iguales en todos los escenarios, porque ni
+  las políticas ni el aire cambian a dónde se muda la gente.
 - Los códigos de comuna del ejemplo son nombres en minúsculas. El archivo real usará el
   código oficial de comuna; la interfaz no debe depender del formato del código.
 
@@ -57,11 +85,11 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 | Frente | Qué construye | Entrega | Depende de | Estado | Quién |
 |---|---|---|---|---|---|
 | 1. Datos de aire | Mediciones de PM2,5 por estación, 2017 a 2024 | `data/aire/*.csv` | Nada | Hecho |  |
-| 2. Emisiones y comunas | Emisiones por comuna y fuente; tabla de las 52 comunas | `data/emisiones/`, `data/comunas_rm.csv` | Nada | En curso |  |
+| 2. Emisiones y comunas | Emisiones por comuna y fuente; tabla de las 52 comunas | `data/emisiones/`, `data/comunas_rm.csv` | Nada | Hecho |  |
 | 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Hecho | Massiel |
-| 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Libre |  |
-| 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario inicial en curso |  |
-| 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Por empezar | Jesús |
+| 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Delitos CEAD hechos; falta ENUSC |  |
+| 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario hecho (`docs/politicas-aire.md`); cumplimiento por capítulo hecho; falta catálogo de intervenciones |  |
+| 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Aire v0 y hogares hechos, escriben `simulacion.json`; falta v1 de aire | Jesús |
 | 7. Validación y experimentos | Ajuste y prueba separados, comparación con alternativas simples, réplicas | `results/`, y escribe `simulacion.json` real | 6 | Por empezar |  |
 | 8. Interfaz | Mapa de la región, control de tiempo, interruptores de políticas, ficha de comuna | `viz/` | Solo el contrato | Puede empezar hoy | Gabriel |
 | 9. Spec, README y pitch | `sim-spec.md` completo, guion de demo, textos de entrega | `docs/`, `README.md` | Avanza con todos | Por empezar |  |
@@ -106,6 +134,74 @@ que construirlas desde los microdatos.
 
 Trabaja en la rama `feat/viz-interfaz` con el ejemplo de `viz/ejemplo/simulacion.json`.
 
+
+## Resultado de la prueba de la brecha (21 nov)
+
+Se corrió `python -m experiments.prueba_brecha` con emisiones 2023 del RETC y las medias
+anuales de 10 estaciones. Es un modelo de tamizaje, no el modelo final.
+
+| Escenario | Cambio medio (µg/m³) | Brecha entre comunas | Orden conservado (Spearman) |
+|---|---|---|---|
+| Leña -50 % en toda la región | -5,7 | 18,1 → 14,4 | 0,97 |
+| Transporte -20 % en toda la región | -1,8 | 18,1 → 16,2 | 0,99 |
+| Todas las fuentes -20 % | -4,3 | 18,1 → 14,5 | 1,00 |
+| Cierra la industria de Renca | -0,2 | 18,1 → 17,9 | 1,00 |
+| Proyecto nuevo de 108 t/año en Tiltil | +0,2 | 18,1 → 18,3 | 1,00 |
+| Sin leña en las 5 comunas que más emiten | -4,4 | 18,1 → 15,8 | 0,98 |
+
+Qué significa:
+
+- **El orden entre comunas casi no cambia.** El titular de la demo no puede ser "el ranking
+  se reordena". Pasa a ser la trayectoria de cada comuna y de qué depende.
+- **Los proyectos locales pesan muy poco** (±0,2 µg/m³). Un proyecto del SEIA como shock de
+  la demo no se va a notar.
+- **La leña es la palanca**: es el 60 % de las emisiones reguladas (leña, transporte,
+  industria).
+
+Cuánto confiar: poco. El ajuste explica el 55 % de la diferencia entre estaciones, eligió
+la escala máxima permitida (40 km, toda la cuenca como una sola caja) y las emisiones no
+calzan con lo medido: la leña se quema en la periferia (Paine, Lampa, Buin) y el aire peor
+está en El Bosque, Cerro Navia y Pudahuel. **Un acople solo por distancia no alcanza como
+modelo de aire**; faltan relieve y viento.
+
+### Hallazgo para la demo: la leña y la Zona B
+
+El plan de descontaminación prohíbe la leña en la Zona A (34 comunas urbanas, art. 74). En
+la Zona B (18 comunas periféricas, 15 % de la población) solo restringe los calefactores
+nuevos (art. 75). Según el RETC 2023, el **77 % de las emisiones de leña está en la Zona B**
+(2.487 de 3.218 t).
+
+Pregunta candidata para la demo: **¿qué pasa si la prohibición se extiende a la Zona B?**
+Es una decisión real que no se puede ensayar, y muestra interacción: comunas urbanas
+mejoran por una medida que se ejecuta en otras. La magnitud no se puede afirmar con el
+modelo de tamizaje. Detalle de zonas y artículos en `docs/politicas-aire.md`.
+
+### Credibilidad: hay datos por capítulo del plan
+
+El informe de avance de la SMA 2024 agrega por categoría; el detalle por medida está en un
+anexo Excel que no se pudo obtener. La revisión encargada por la SEREMI RM (ECOS-Chile,
+2023) resume 157 medidas (24 % conformes, 21 % parciales, 55 % sin evidencia pública), pero
+el documento publicado solo nombra seis por código. Lo que sí trae, con página y cita, es el
+cumplimiento por capítulo, que calza con las fuentes del modelo:
+
+| Fuente | Medidas evaluadas | Conformes | Parciales | Sin evidencia |
+|---|---|---|---|---|
+| Transporte (fuentes móviles) | 31 | 7 | 19 | 5 |
+| Industria (fuentes estacionarias) | 58 | 10 | 5 | 43 |
+| Leña | 23 | 4 | 7 | 12 |
+| Episodios críticos | 33 | 12 | 5 | 16 |
+
+Tabla completa en `data/politicas/cumplimiento_ppda_capitulos.csv`. Alcanza para una
+credibilidad por tipo de fuente con datos reales; no para una credibilidad medida por
+medida. "Sin evidencia" significa que no hubo evidencia pública para comprobarla, no
+incumplimiento demostrado.
+
+### Seguridad: datos disponibles
+
+`data/seguridad/delitos_comuna_anio.csv`: casos policiales y tasa por 100.000 habitantes del
+CEAD, 52 comunas, 17 categorías, 2017 a 2024. `dmcs_total` es una suma propia de 11
+categorías publicadas, porque el portal no entrega esa fila; la composición está en
+`data/seguridad/README.md`. No incluye victimización (ENUSC).
 
 ## Orden y cortes
 

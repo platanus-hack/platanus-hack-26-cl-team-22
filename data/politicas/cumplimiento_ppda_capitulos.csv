@@ -1,0 +1,11 @@
+﻿capitulo,tema,fuente_objetivo,medidas_unicas_declaradas,medidas_evaluadas,conformes,parciales,no_conformes,tasa_conforme,tasa_conforme_o_parcial,pagina_pdf,cita
+III,Fuentes móviles,transporte,18,31,7,19,5,0.226,0.839,68-70,7 medidas Conformes (23% del total de medidas) ... 19 medidas estuvieron Parcialmente Conforme (61% del total) ... 5 medidas del tipo No Conformes (16% del total de medidas)
+IV,Combustibles,otra,11,12,0,0,12,0.000,0.000,72-74,la totalidad de las medidas se encuentran No Conformes
+V,Control de emisiones de COV asociado a la cadena de distribución de combustibles,otra,5,5,0,1,4,0.000,0.200,77-78,1 medida (20%) se encuentra Parcialmente Conforme ... 4 de las medidas (80%) se encuentran No conformes
+VI,Fuentes estacionarias,industria,,58,10,5,43,0.172,0.259,82-108,un 17% de medidas Conformes (10 medidas) y un 9% como Parcialmente Conforme (5 medidas) ... un 74% No Conformes (43 medidas)
+VII,"Control de emisiones por uso de leña, pellet y derivados de la madera",lena,,23,4,7,12,0.174,0.478,85-87,4 de estas medidas se encontraron conformes ... parcialmente conforme (30% del total) ... 12 de estas se encontraron como No conforme (52%)
+VIII,"Control de emisiones de quemas agrícolas, forestales y de residuos",quemas,4,4,1,1,2,0.250,0.500,89-90,solamente la medida bajo la autoría de la SEREMI de Agricultura se encontró conforme ... la medida de carabineros que se encontró parcialmente conforme ... 2 medidas No conformes
+IX,Control del levantamiento de polvo y generación de áreas verdes,otra,5,5,2,3,0,0.400,1.000,92-94,un 60% de estas (3) se encuentran Parcialmente conformes ... un 40% de las medidas se encontraron conformes
+X,Medidas de incentivo al cambio modal,transporte,4,5,3,0,2,0.600,0.600,95-97,el 60% de las medidas (3) se encontraron conformes ... solo el 40% (2) se encontraron como no conformes
+XI,Educación ambiental y gestión ambiental local,otra,9,10,3,7,0,0.300,1.000,99-100,el 30% de las medidas se encontraron conformes ... el 70% de las medidas (7) se encuentra parcialmente conforme
+XII,Plan operacional para la gestión de episodios críticos,episodios,,33,12,5,16,0.364,0.515,103-104,un 36% de las medidas (12) se encontraron conformes ... un 15% de las medidas (5) se encontraron como Parcialmente conformes ... Respecto a las medidas No conformes un 48% de las medidas ... (16) se encuentran bajo esta tipología
