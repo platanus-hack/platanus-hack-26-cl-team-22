@@ -15,14 +15,22 @@ Output: results/aire_calibracion.json (parameters read by the simulation, metric
 """
 from __future__ import annotations
 
+import csv
 import json
+import unicodedata
 
 import numpy as np
 from scipy.optimize import nnls
 
 from core.aire import distance_matrix_km, exponential_transfer
 from core.estado import SOURCES
-from experiments.datos_aire import ROOT, load_communes, load_emissions, load_stations
+from experiments.datos_aire import (
+    F_ESTACIONES,
+    ROOT,
+    load_communes,
+    load_emissions,
+    load_stations,
+)
 
 FIT_YEAR = 2023
 SCALES_KM = (3.0, 5.0, 8.0, 12.0, 18.0, 25.0, 40.0)
@@ -88,6 +96,30 @@ def main() -> None:
     pred_fit = background + k * signal(st, scale, FIT_YEAR)
     r2 = 1 - np.sum((st.pm25 - pred_fit) ** 2) / np.sum((st.pm25 - st.pm25.mean()) ** 2)
 
+    # Anchoring: each station's residual, assigned to the commune it sits in. The simulation
+    # adds it to that commune's level (measured level + modelled change).
+    def plain(name: str) -> str:
+        text = unicodedata.normalize("NFKD", name)
+        return "".join(ch for ch in text if not unicodedata.combining(ch)).lower().strip()
+
+    with F_ESTACIONES.open(encoding="utf-8-sig", newline="") as fh:
+        station_commune = {r["estacion_id"]: r["comuna"] for r in csv.DictReader(fh)}
+    code_of = {plain(name): code for name, code in zip(communes.names, communes.codes,
+                                                       strict=True)}
+    # The residual is taken against the model at the commune centroid, which is where the
+    # simulation evaluates the commune, so an anchored commune starts exactly at its measurement.
+    centroid_model = background + k * (
+        exponential_transfer(distance_matrix_km(communes.lat, communes.lon), scale)
+        @ total[FIT_YEAR])
+    anchoring: dict[str, dict] = {}
+    for sid, observed in zip(st.ids, st.pm25, strict=True):
+        code = code_of[plain(station_commune[sid])]
+        if code in anchoring:
+            raise SystemExit(f"Two stations in commune {code}: decide how to anchor it")
+        modelled = centroid_model[communes.codes.index(code)]
+        anchoring[code] = {"estacion_id": sid, "medido_ugm3": round(float(observed), 3),
+                           "residuo_ugm3": round(float(observed - modelled), 3)}
+
     def predict(stations, year):
         return background + k * signal(stations, scale, year)
 
@@ -141,6 +173,13 @@ def main() -> None:
         },
         "test_2024_levels": test_2024,
         "test_change_2017_2023": change,
+        "anchoring": {
+            "year": FIT_YEAR,
+            "note": ("Residual (observed at the station - modelled at the commune centroid), "
+                     "so an anchored commune starts at its measured level; communes without a "
+                     "station get 0."),
+            "communes": anchoring,
+        },
         "assumptions": ASSUMPTIONS,
         "missing_emissions": {
             str(y): {s: len(c) for s, c in m.items() if c} for y, m in missing.items()

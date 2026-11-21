@@ -45,6 +45,62 @@
     "rmse_same_change_everywhere": 0.9090871829328805,
     "pattern_correlation": 0.2564799107408297
   },
+  "anchoring": {
+    "year": 2023,
+    "note": "Residual (observed at the station - modelled at the commune centroid), so an anchored commune starts at its measured level; communes without a station get 0.",
+    "communes": {
+      "13110": {
+        "estacion_id": "D12",
+        "medido_ugm3": 24.46,
+        "residuo_ugm3": 0.791
+      },
+      "13114": {
+        "estacion_id": "D13",
+        "medido_ugm3": 19.13,
+        "residuo_ugm3": -4.213
+      },
+      "13101": {
+        "estacion_id": "D14",
+        "medido_ugm3": 22.94,
+        "residuo_ugm3": -2.342
+      },
+      "13124": {
+        "estacion_id": "D15",
+        "medido_ugm3": 25.11,
+        "residuo_ugm3": 0.222
+      },
+      "13105": {
+        "estacion_id": "D17",
+        "medido_ugm3": 28.13,
+        "residuo_ugm3": 2.958
+      },
+      "13103": {
+        "estacion_id": "D18",
+        "medido_ugm3": 26.47,
+        "residuo_ugm3": 1.949
+      },
+      "13201": {
+        "estacion_id": "D27",
+        "medido_ugm3": 21.1,
+        "residuo_ugm3": -2.121
+      },
+      "13601": {
+        "estacion_id": "D28",
+        "medido_ugm3": 21.59,
+        "residuo_ugm3": 0.924
+      },
+      "13125": {
+        "estacion_id": "D30",
+        "medido_ugm3": 22.84,
+        "residuo_ugm3": 0.002
+      },
+      "13102": {
+        "estacion_id": "D35",
+        "medido_ugm3": 25.02,
+        "residuo_ugm3": -0.513
+      }
+    }
+  },
   "assumptions": [
     "Transport emissions exist only for 2023; 2017 and 2024 reuse the 2023 values.",
     "A commune absent from the RETC table for a source is counted as 0 t/year.",

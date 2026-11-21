@@ -35,39 +35,42 @@ Las muchas promesas se corren con dos estructuras de ejecutor: **un solo ejecuto
 
 ## Resultado
 
-PM2,5 en 2036, promedio ponderado por población, 2.000 réplicas. Nivel 2023: 23,4 µg/m³;
-norma anual: 20 µg/m³. La planilla da **20,57** para los tres.
+PM2,5 en 2036, promedio ponderado por población, 2.000 réplicas. Nivel 2023: 23,1 µg/m³ (con
+las comunas con estación ancladas a su medición, ver `docs/modelo-aire.md`); norma anual:
+20 µg/m³. La planilla da **20,24** para los tres.
 
 | Paquete | Mediana | Mejor caso (p10) | Peor caso (p90) | Ancho de banda | Prob. de cumplir la norma |
 |---|---|---|---|---|---|
-| Muchas promesas, un ejecutor | 20,29 | 18,73 | **21,69** | **2,96** | 0,41 |
-| Muchas promesas, 18 municipios | 20,27 | 19,60 | 20,92 | 1,32 | **0,29** |
-| Pocas promesas | 20,21 | **19,86** | 21,27 | 1,41 | 0,42 |
+| Muchas promesas, un ejecutor | 19,96 | **18,41** | **21,37** | **2,96** | 0,51 |
+| Muchas promesas, 18 municipios | 19,95 | 19,27 | 20,59 | 1,32 | 0,54 |
+| Pocas promesas | 19,89 | 19,54 | 20,94 | 1,41 | 0,61 |
 
 Qué significa:
 
-1. **La mediana sí es la de una planilla** (las tres quedan en 20,2–20,3). Lo decimos: el valor
+1. **La mediana sí es la de una planilla** (las tres quedan en 19,9–20,0). Lo decimos: el valor
    central de este modelo sale de una cuenta simple. Lo que no sale de una cuenta es lo de abajo.
 2. **Importa más quién ejecuta que cuántas promesas hay.** Las mismas 18 promesas tienen una
    banda de 2,96 µg/m³ con un solo ejecutor y de 1,32 con 18 municipios: cuando las medidas
-   dependen del mismo ejecutor, fallan juntas y prometer más no reparte el riesgo.
-3. **Menos riesgo no es más probabilidad de cumplir.** Repartir entre municipios da la banda
-   más estrecha y la menor probabilidad de cumplir la norma (0,29 frente a 0,41). La mediana
-   queda justo sobre 20; sin varianza casi ninguna réplica baja de la norma. Es un efecto de
-   umbral que una planilla no puede mostrar.
-4. **La promesa chica tiene techo.** Su mejor caso (19,86) es exactamente lo prometido: nunca
+   dependen del mismo ejecutor, fallan juntas y prometer más no reparte el riesgo. Es el
+   resultado más sólido: se mantiene con `ρθ = 0` (1,83 frente a 1,34) y con la rampa corta.
+3. **La promesa chica tiene techo.** Su mejor caso (19,54) es exactamente lo prometido: nunca
    sorprende para bien. Por eso su media es la peor de las tres aunque su mediana sea la mejor.
+4. **La probabilidad de cumplir la norma es frágil.** Con las medianas justo en el umbral, el
+   ancho de banda decide quién tiene más chance, y el signo de ese efecto cambia según de qué
+   lado del umbral quede la mediana. Antes de anclar los niveles a las estaciones (mediana
+   20,3), repartir entre municipios daba la **menor** probabilidad (0,29 frente a 0,41); ahora
+   (mediana 19,95) da una algo **mayor** (0,54 frente a 0,51). No es un resultado para el pitch.
 
 ## De qué depende
 
 | Variante | Muchas, un ejecutor | Muchas, 18 municipios | Pocas promesas |
 |---|---|---|---|
-| Principal (`ρθ = 0,5`, rampa de 10 años): banda / prob. norma | 2,96 / 0,41 | 1,32 / 0,29 | 1,41 / 0,42 |
-| Credibilidad independiente (`ρθ = 0`) | 1,83 / 0,35 | 1,34 / 0,28 | 1,41 / 0,42 |
-| Rampa de 5 años | 4,13 / 0,89 | 1,87 / 1,00 | 0,00 / 0,98 |
+| Principal (`ρθ = 0,5`, rampa de 10 años): banda / prob. norma | 2,96 / 0,51 | 1,32 / 0,54 | 1,41 / 0,61 |
+| Credibilidad independiente (`ρθ = 0`) | 1,83 / 0,53 | 1,34 / 0,53 | 1,41 / 0,62 |
+| Rampa de 5 años | 4,13 / 0,93 | 1,87 / 1,00 | 0,00 / 0,98 |
 
-- Con `ρθ = 0` la diferencia entre un ejecutor y 18 municipios se achica, pero se mantiene
-  (por la correlación anual `ρ = 0,3`), y el orden de las probabilidades no cambia.
+- Con `ρθ = 0` la diferencia de banda entre un ejecutor y 18 municipios se achica, pero se
+  mantiene (por la correlación anual `ρ = 0,3`).
 - **La rampa cambia qué significa la credibilidad.** Con 10 años para el efecto completo, una
   credibilidad de 0,347 entrega cerca de 35 % de lo prometido, que es lo que mide ECOS-Chile.
   Con 5 años, la misma credibilidad entrega cerca de 76 %, y la comparación deja de ser justa.
@@ -79,8 +82,8 @@ Qué significa:
   efecto de cómo se promete y se ejecuta.
 - Usa el modelo de aire v0: todas las comunas se mueven casi igual, así que el resultado es
   regional. No dice qué comunas ganan más con cada paquete.
-- La credibilidad alta (0,8) es hipotética. La conclusión 2 no depende de ella; las
-  conclusiones 3 y 4 comparan contra ella.
+- La credibilidad alta (0,8) es hipotética. La conclusión 2 no depende de ella; la
+  conclusión 3 compara contra ella.
 - El mecanismo de hogares y la segunda variable (`crecimiento_poblacion`) ya existen en la
   simulación principal (`docs/modelo-hogares.md`); lo que sigue faltando es que el aire
   cambie a dónde se muda la gente.
