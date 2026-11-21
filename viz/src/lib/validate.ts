@@ -3,6 +3,7 @@ import type {
   Aportes,
   Banda,
   BloqueValidacion,
+  PruebaValidacion,
   ComunaFocoTransformacion,
   DireccionCambio,
   Flujo,
@@ -104,15 +105,42 @@ export function leerValidacion(raw: unknown): Validacion | undefined {
   if (!esObj(raw)) return undefined
   const bloques: BloqueValidacion[] = []
   for (const [id, b] of Object.entries(raw)) {
-    if (!esObj(b)) continue
+    if (!esObj(b) || id === 'pruebas') continue
     const valores = Object.entries(b)
       .filter((e): e is [string, number] => esNum(e[1]))
       .map(([clave, valor]) => ({ clave, valor }))
     const texto = (k: string) => (typeof b[k] === 'string' ? (b[k] as string) : undefined)
     if (valores.length > 0) bloques.push({ id, valores, unidad: texto('unidad'), metrica: texto('metrica'), aviso: texto('aviso') })
   }
-  if (bloques.length === 0) return undefined
-  return { fuente: typeof raw.fuente === 'string' ? raw.fuente : undefined, bloques }
+  const pruebas = leerPruebas(raw.pruebas)
+  if (bloques.length === 0 && pruebas.length === 0) return undefined
+  return {
+    fuente: typeof raw.fuente === 'string' ? raw.fuente : undefined,
+    bloques,
+    ...(pruebas.length > 0 ? { pruebas } : {}),
+    ...(esNum(raw.tolerancia) ? { tolerancia: raw.tolerancia } : {}),
+  }
+}
+
+/** Rows of make validate (results/validacion.json `filas`): text fields, the model's error and the two alternatives'. */
+function leerPruebas(raw: unknown): PruebaValidacion[] {
+  if (!Array.isArray(raw)) return []
+  const out: PruebaValidacion[] = []
+  const numONull = (v: unknown) => (esNum(v) ? v : null)
+  for (const f of raw) {
+    if (!esObj(f) || !esNum(f.modelo)) continue
+    if (![f.variable, f.prueba, f.metrica, f.gana].every((x) => typeof x === 'string')) continue
+    out.push({
+      variable: f.variable as string,
+      prueba: f.prueba as string,
+      metrica: f.metrica as string,
+      modelo: f.modelo,
+      sin_cambio: numONull(f.sin_cambio),
+      tendencia: numONull(f.tendencia),
+      gana: f.gana as string,
+    })
+  }
+  return out
 }
 
 const esDireccion = (v: unknown): v is DireccionCambio => v === 'mejora' || v === 'empeora' || v === 'neutro'

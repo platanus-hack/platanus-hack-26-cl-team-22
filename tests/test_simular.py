@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -73,3 +74,11 @@ def test_security_policies_publish_credibility_per_target_commune():
         for c in per.values():
             assert c["procedencia"] in ("tasa_base", "supuesto")
             assert 0 <= c["p10"] <= c["media"] <= c["p90"] <= 1
+
+
+def test_simulation_shows_the_same_validation_as_make_validate():
+    root = Path(__file__).resolve().parents[1]
+    sim = json.loads((root / "viz" / "datos" / "simulacion.json").read_text(encoding="utf-8"))
+    report = json.loads((root / "results" / "validacion.json").read_text(encoding="utf-8"))
+    assert sim["validacion"]["pruebas"] == report["filas"]
+    assert sim["validacion"]["tolerancia"] == report["protocolo_empate"]

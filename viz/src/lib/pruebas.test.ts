@@ -58,3 +58,42 @@ describe('resumirPruebas: population and housing blocks', () => {
     expect(filas[1]!.rival.nombre).toBe('destinos ajustados por permisos')
   })
 })
+
+describe('resumirPruebas: unified validation (make validate)', () => {
+  const fila = (o: Partial<import('./types').PruebaValidacion>) => ({
+    variable: 'Aire',
+    prueba: 'PM2,5 por estación 2022-2024 desde 2019',
+    metrica: 'RMSE µg/m³',
+    modelo: 1.905,
+    sin_cambio: 2.401,
+    tendencia: 4.243,
+    gana: 'modelo',
+    ...o,
+  })
+  const v: Validacion = {
+    bloques: [b('hogares', { rmse_modelo: 4334.8, rmse_repetir_2012_2017: 5054 }), b('vivienda', { rmse_modelo: 4334.8, rmse_pivote_permisos: 5049.5 })],
+    tolerancia: 0.02,
+    pruebas: [
+      fila({}),
+      fila({ variable: 'Población', prueba: 'Población por comuna 2024 desde 2017', metrica: 'RMSE personas', modelo: 16903.6, sin_cambio: 15046.3, tendencia: null, gana: 'sin_cambio' }),
+      fila({ variable: 'Seguridad', prueba: 'Delitos 2024 a 1 año', metrica: 'RMSE log (≈ error relativo)', modelo: 0.1, sin_cambio: 0.099, tendencia: 0.13, gana: 'empate' }),
+    ],
+  }
+
+  it('shows only the unified tests, so no test is counted twice', () => {
+    const filas = resumirPruebas(v)
+    expect(filas.map((f) => f.titulo)).toEqual([
+      'Aire: PM2,5 por estación 2022-2024 desde 2019',
+      'Población: Población por comuna 2024 desde 2017',
+      'Seguridad: Delitos 2024 a 1 año',
+    ])
+  })
+
+  it('takes the winner as computed by make validate and names the best alternative', () => {
+    const [aire, pob, seg] = resumirPruebas(v)
+    expect(aire).toMatchObject({ resultado: 'gana', rival: { nombre: 'sin cambio', valor: 2.401 }, formato: 'aire' })
+    expect(pob).toMatchObject({ resultado: 'pierde', rival: { nombre: 'sin cambio', valor: 15046.3 }, formato: 'personas' })
+    expect(seg).toMatchObject({ resultado: 'empata', formato: 'pct' })
+    expect(contarPruebas(resumirPruebas(v))).toEqual({ gana: 1, empata: 1, pierde: 1 })
+  })
+})

@@ -2,7 +2,7 @@ import { fmt, fmtPct } from '../lib/format'
 import { TECLAS_POLITICA, textoBanda, type ResumenDif } from '../lib/interaccion'
 import type { Lena } from '../lib/lena'
 import { DIF_SIN_CAMBIO } from '../lib/niveles'
-import { contarPruebas, resumirPruebas, type FilaPrueba, type Resultado } from '../lib/pruebas'
+import { TOLERANCIA, contarPruebas, resumirPruebas, type FilaPrueba, type Resultado } from '../lib/pruebas'
 import type { Banda, Comuna, Escenario, Politica, Validacion, Variable } from '../lib/types'
 import { Desplegable } from './Desplegable'
 import { Cifras } from './Papel'
@@ -211,7 +211,7 @@ export function VistaPrueba({ validacion, aviso, unidad }: { validacion: Validac
       <Cifras
         items={[
           { etiqueta: 'Gana', valor: fmt(n.gana, 0), nota: `de ${filas.length} pruebas`, tono: n.gana > 0 ? 'mejora' : undefined },
-          { etiqueta: 'Empata', valor: fmt(n.empata, 0), nota: 'por menos de 5 %' },
+          { etiqueta: 'Empata', valor: fmt(n.empata, 0), nota: `por menos de ${fmt((validacion.tolerancia ?? TOLERANCIA) * 100, 0)} %` },
           { etiqueta: 'Pierde', valor: fmt(n.pierde, 0), nota: 'y se publica igual', tono: n.pierde > 0 ? 'empeora' : undefined },
         ]}
       />
@@ -228,7 +228,10 @@ export function VistaPrueba({ validacion, aviso, unidad }: { validacion: Validac
           </li>
         ))}
       </ul>
-      <p className="nota">Error fuera de muestra: menor es mejor.</p>
+      <p className="nota">
+        Error fuera de muestra: menor es mejor. Cada prueba ajusta el modelo con un período y lo compara con otro que no vio; se calcula una vez con
+        datos del pasado, así que no cambia con la comuna, el escenario ni tus prioridades.
+      </p>
       {aviso && (
         <details className="limites">
           <summary>Qué no sabe el modelo</summary>
