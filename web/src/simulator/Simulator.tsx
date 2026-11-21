@@ -53,7 +53,6 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
             <button className="cta" id="cta" onClick={entrarAlSimulador}>
               Entrar al simulador
             </button>
-            <small>O sigue bajando.</small>
           </div>
 
           <p className="hint">Arrastra para girar el mundo. Pellizca para acercarte hasta ver las calles.</p>

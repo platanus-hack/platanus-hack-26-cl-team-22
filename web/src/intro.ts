@@ -149,8 +149,8 @@ export function startIntro({ spacer, layer, box, roots: rootsCanvas, sim }: Elem
     roots.clear();
     setHomeDisabled(false);
     scrollTo(0, 0);
-    // The intro text stays on screen until the visitor decides to go in (src/simulador.ts).
-    document.dispatchEvent(new Event("intro-fin"));
+    // Entering the real simulator is only through the "Entrar al simulador" button
+    // (src/simulador.ts); the "intro-fin" scroll-to-enter gesture is not armed.
   }
 
   async function reopen() {
