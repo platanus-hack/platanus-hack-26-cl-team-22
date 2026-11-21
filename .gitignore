@@ -13,6 +13,8 @@ dist/
 # Experiment output (regenerate with `make experiments`)
 results/*
 !results/.gitkeep
+# Validation results the simulation reads; regenerate with the command stored inside.
+!results/aire_calibracion.json
 
 # LLM record/replay logs: commit only the ones needed for the demo
 llm-logs/*.jsonl
