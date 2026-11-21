@@ -72,6 +72,36 @@ def test_removing_a_policy_leaves_the_other_policy_unchanged():
     assert np.allclose(both - no_policy, (only_a - no_policy) + (only_b - no_policy))
 
 
+def test_unit_heating_scale_is_identical_to_no_households():
+    ivs = [intervention("ban")]
+    ones = np.ones((N_YEARS, 3))
+    assert np.array_equal(simulate(state(), air(), ivs, np.array([0.5]), n_years=N_YEARS, seed=1,
+                                   replica=0, heating_scale=ones), run(ivs, [0.5]))
+
+
+def test_people_moving_into_one_commune_worsen_the_air_of_the_others():
+    growth = np.ones((N_YEARS, 3))
+    growth[:, 2] = np.linspace(1.0, 1.5, N_YEARS)  # commune c gains residents
+    moved = simulate(state(), air(), [], np.array([]), n_years=N_YEARS, seed=1, replica=0,
+                     heating_scale=growth)
+    still = run([], [])
+    assert np.all(moved[-1] > still[-1])  # communes a and b too
+
+
+def test_a_ban_is_worth_more_where_people_move_in():
+    ban = [intervention("ban", communes=(False, False, True))]
+    growth = np.ones((N_YEARS, 3))
+    growth[:, 2] = 1.5
+
+    def effect(scale):
+        kwargs = {"n_years": N_YEARS, "seed": 1, "replica": 0, "heating_scale": scale}
+        with_ban = simulate(state(), air(), ban, np.array([1.0]), **kwargs)
+        without = simulate(state(), air(), [], np.array([]), **kwargs)
+        return (with_ban - without)[-1]
+
+    assert np.all(effect(growth) < effect(None))  # larger reduction with more residents
+
+
 def test_same_seed_reproduces_and_other_replica_differs():
     ivs = [intervention("ban")]
     assert np.array_equal(run(ivs, [0.5]), run(ivs, [0.5]))
