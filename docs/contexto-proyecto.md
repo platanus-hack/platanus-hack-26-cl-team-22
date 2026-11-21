@@ -43,15 +43,15 @@ Restricciones del equipo: nada de videojuegos, chats, pizarras ni tableros Kanba
 - Sin inmigración como variable de riesgo.
 - Pesos personales sí, pero sin fricción (ver sección 8).
 
-### Abierto (con recomendación)
+### Cerrado el 21 nov (ver `docs/adr/`)
 
-| Decisión | Opciones | Recomendación |
+| Decisión | Qué se decidió | ADR |
 |---|---|---|
-| Shock de la demo | Venezuela → migración / algo fechado y medible (línea de Metro, proyecto aprobado en el SEIA) | Fechado y medible. Venezuela queda como extensión |
-| Hogares | Flujos agregados entre comunas / miles de agentes sintéticos | Flujos agregados, calibrados con los censos |
-| Usuario al centro del pitch | Municipio / comprador de vivienda | Municipio primero; comprador como cara humana |
-| Métrica de impacto | Personas expuestas sobre la norma de MP2,5 / costo en salud / viviendas afectadas | Personas expuestas sobre la norma |
-| Comunas en la demo | — | Todas en el modelo (las interacciones lo necesitan); 5–6 destacadas en la interfaz |
+| Shock de la demo | Leña del plan de descontaminación: apagar la prohibición en la Zona A y extenderla a la Zona B. Un proyecto del SEIA mueve ±0,2 µg/m³ y no se nota. Venezuela queda como extensión | [0001](./adr/0001-shock-de-la-demo.md) |
+| Hogares | Flujos agregados calibrados con los censos (`core/hogares.py`) | [0002](./adr/0002-hogares-como-flujos-agregados.md) |
+| Usuario al centro del pitch | El municipio simula con el interruptor; el ciudadano lee con perfiles en el paso 6; la confianza sale de la credibilidad del interruptor | [0003](./adr/0003-usuario-municipio-y-perfiles.md) |
+| Métrica de impacto | Personas expuestas sobre la norma de PM2,5 | [0004](./adr/0004-metrica-personas-sobre-la-norma.md) |
+| Comunas en la demo | 52 en el motor; 5 destacadas con estación, por regla fija | [0005](./adr/0005-comunas-destacadas.md) |
 
 ## 4. El modelo
 
@@ -179,6 +179,7 @@ Los pesos son la forma de **leer** la simulación; el interruptor de políticas 
 
 ## 14. Documentos del proyecto
 
+- Decisiones cerradas (ADR): [`docs/adr/`](./adr/)
 - Whitepaper v1: https://claude.ai/artifact/4WiDC7yncYA8uzrBeHvGGi
 - Iteración del modelo (respuesta a observaciones): https://claude.ai/artifact/DWRbFzNJdtW4WPv3nUkXhq
 - Impacto: https://claude.ai/artifact/UrUuRcxEJVhgQgkWLJHxjD
