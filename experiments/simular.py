@@ -28,6 +28,7 @@ from core.credibilidad import (
 )
 from core.estado import SOURCES, RegionState
 from core.hogares import MigrationModel
+from core.seguridad import GROUPS, CrimeModel, EffectSize, SecurityIntervention, simulate_security
 from experiments.datos_aire import ROOT, Communes, load_communes, load_emissions
 from experiments.datos_hogares import load_moves, load_population_dwellings
 
@@ -35,6 +36,7 @@ OUTPUT = ROOT / "viz" / "datos" / "simulacion.json"
 CALIBRATION = ROOT / "results" / "aire_calibracion.json"
 PROMISES = ROOT / "results" / "promesas.json"
 HOUSEHOLDS_CALIBRATION = ROOT / "results" / "hogares_calibracion.json"
+SECURITY_CALIBRATION = ROOT / "results" / "seguridad_calibracion.json"
 
 SEED = 22
 REPLICAS = 500
@@ -71,6 +73,15 @@ READINGS = {
 CONCENTRATION = 10.0  # assumption: Beta alpha + beta, sets the width of each measure's band
 DEFAULT_READING = "conservadora"
 
+SEC_VARIABLE = "seguridad"
+# Security (docs/modelo-seguridad.md). Every value below was fixed before looking at outputs.
+SECURITY_COVERAGE = 0.25  # scenario choice: share of a commune's property DMCS treated
+SECURITY_CREDIBILITY = BetaCredibility(0.35 * 4, 0.65 * 4)  # assumption: wide, no history
+SECURITY_YEARS_TO_FULL = 10
+NEIGHBOR_KM = 6.0  # assumption: centroid distance (no commune polygons in the repo)
+SPILLOVER = (-0.1, 0.2)  # assumption: open sign, diffusion more likely (Bowers et al. 2011)
+SECURITY_TARGETS = 5  # illustrative policies act in the 5 communes with the highest DMCS rate
+
 ASSUMPTIONS = [
     ("Communes with a station start from their measured level: the station's 2023 residual is "
      "kept constant (measured level + modelled change); communes without a station use the "
@@ -94,6 +105,9 @@ ASSUMPTIONS = [
      "in 2025-2036."),
     ("Residential heating either stays fixed or follows population (two readings); transport, "
      "industry and other sources do not follow residents."),
+    (f"Security policies cover {SECURITY_COVERAGE:.0%} of a commune's property crime, have "
+     f"municipal credibility with mean 0.35 and a wide band, and reach communes within "
+     f"{NEIGHBOR_KM:.0f} km with a share drawn in [{SPILLOVER[0]}, {SPILLOVER[1]}] (open sign)."),
 ]
 
 
@@ -127,6 +141,36 @@ POLICIES = (
            "nuevos (PPDA art. 75)",
            "Las emisiones de leña de las 18 comunas de la Zona B bajan hasta 0."),
 )
+
+
+@dataclass(frozen=True)
+class SecurityPolicy:
+    id: str
+    name: str
+    effects: dict[str, EffectSize]
+    citation: str
+    effect: str
+
+
+SECURITY_POLICIES = (
+    SecurityPolicy(
+        "ilustrativa-camaras", "Cámaras con monitoreo activo (ilustrativa)",
+        {"property": EffectSize(1.161, 1.023, 1.317, 0.95),
+         "violent": EffectSize(1.050, 0.954, 1.155, 0.95)},
+        "Piza, Welsh, Farrington y Thomas (2019), Criminology & Public Policy 18:135-159, "
+        "tabla 1",
+        f"Cubre el {SECURITY_COVERAGE:.0%} de los delitos contra la propiedad de cada comuna; "
+        "en el área cubierta, OR 1,161 (propiedad) y 1,050 (violentos, no significativo)."),
+    SecurityPolicy(
+        "ilustrativa-iluminacion", "Mejor iluminación de calles (ilustrativa)",
+        {"property": EffectSize(1.14, 1.03, 1.27, 0.90),
+         "violent": EffectSize(0.99, 0.87, 1.13, 0.90)},
+        "Welsh, Farrington y Douglas (2021), informe Brå, tabla 2 y pág. 35; Criminology & "
+        "Public Policy (2022)",
+        f"Cubre el {SECURITY_COVERAGE:.0%} de los delitos contra la propiedad de cada comuna; "
+        "en el área cubierta, RES 1,14 (propiedad) y 0,99 (violentos, no significativo)."),
+)
+
 SOURCE_LABEL = {"heating": "lena", "transport": "transporte", "industry": "industria",
                 "other": "otras"}
 
@@ -146,6 +190,10 @@ def build_scenarios() -> list[dict]:
             scenarios.append({"id": f"con-{p.id}", "nombre": f"Con: {p.name}",
                               "politicas_activas": [*in_force, p.id],
                               "lectura": DEFAULT_READING})
+    for sp in SECURITY_POLICIES:
+        scenarios.append({"id": f"con-{sp.id}", "nombre": f"Con: {sp.name}",
+                          "politicas_activas": [*in_force, sp.id],
+                          "lectura": DEFAULT_READING})
     scenarios.append({"id": "sin-politicas", "nombre": "Ninguna política avanza",
                       "politicas_activas": [], "lectura": DEFAULT_READING})
     scenarios.append({"id": "base-lectura-optimista",
@@ -232,6 +280,7 @@ def main() -> None:
                          "experiments.promesas first (or make simulate)")
     promises = json.loads(PROMISES.read_text(encoding="utf-8"))
     households_fit = json.loads(HOUSEHOLDS_CALIBRATION.read_text(encoding="utf-8"))
+    security_fit = json.loads(SECURITY_CALIBRATION.read_text(encoding="utf-8"))
     n = len(communes.codes)
     heating = state.emissions[:, SOURCES.index("heating")]
     print(f"Leña {BASE_YEAR}: Zona B {heating[in_b].sum():.0f} of {heating.sum():.0f} t")
@@ -263,8 +312,55 @@ def main() -> None:
     by_id = {p.id: p for p in POLICIES}
     cache: dict[tuple[frozenset[str], str, str], np.ndarray] = {}
 
+    # --- Security: crime model and illustrative policies (docs/modelo-seguridad.md) ---
+    sp_params = security_fit["parametros"]
+    log_mean = np.array([[sp_params["media_log_por_comuna"][c][g] for g in GROUPS]
+                         for c in communes.codes])
+    phi = np.array([sp_params["phi"][g] for g in GROUPS])
+    near = distance_matrix_km(communes.lat, communes.lon) < NEIGHBOR_KM
+    np.fill_diagonal(near, False)
+    crime = CrimeModel(communes.codes, log_mean, phi,
+                       np.array([sp_params["sigma"][g] for g in GROUPS]), near)
+    rate_2024 = np.array([[sp_params["tasa_2024_por_comuna"][c][g] for g in GROUPS]
+                          for c in communes.codes])
+    # 2025 is not simulated with noise: the first simulated year (2026) starts from the
+    # expected 2025 level, one AR step from 2024.
+    log_start = log_mean + phi * (np.log(rate_2024) - log_mean)
+    targets = np.argsort(-rate_2024.sum(axis=1))[:SECURITY_TARGETS]
+    target_codes = [communes.codes[i] for i in targets]
+    sec_by_id = {sp.id: sp for sp in SECURITY_POLICIES}
+
+    def security_interventions(policy: SecurityPolicy) -> list[SecurityIntervention]:
+        out = []
+        for i in targets:
+            mask = np.zeros(n, dtype=bool)
+            mask[i] = True
+            code = communes.codes[i]
+            measure = Measure(f"{policy.id}-{code}", f"municipio-{code}", SECURITY_CREDIBILITY,
+                              "supuesto")
+            out.append(SecurityIntervention(measure, mask, SECURITY_COVERAGE, policy.effects,
+                                            SECURITY_YEARS_TO_FULL))
+        return out
+
+    sec_cache: dict[frozenset[str], np.ndarray] = {}
+
+    def run_security(active: list[str]) -> np.ndarray:
+        """(replicas, years, communes) DMCS rate; same keyed streams for every scenario."""
+        key = frozenset(pid for pid in active if pid in sec_by_id)
+        if key not in sec_cache:
+            ivs = [iv for pid in sorted(key) for iv in security_interventions(sec_by_id[pid])]
+            measures = [iv.measure for iv in ivs]
+            out = np.empty((REPLICAS, len(YEARS), n))
+            for r in range(REPLICAS):
+                theta = draw_theta(measures, seed=SEED, replica=r)
+                out[r] = simulate_security(crime, log_start, ivs, theta, n_years=len(YEARS),
+                                           seed=SEED, replica=r, spillover=SPILLOVER).sum(axis=2)
+            sec_cache[key] = out
+        return sec_cache[key]
+
     def run(active: list[str], reading: str, households: str) -> np.ndarray:
         """(replicas, years, communes) PM2.5, same seed and keyed streams for every scenario."""
+        active = [pid for pid in active if pid in by_id]
         key = (frozenset(active), reading, households)
         if key not in cache:
             ivs = [intervention(by_id[pid], reading) for pid in sorted(active)]
@@ -291,21 +387,27 @@ def main() -> None:
     trajectories, contributions, impact = {}, {}, {}
     for sc in scenarios:
         pm = run(sc["politicas_activas"], sc["lectura"], sc["hogares"])
+        sec = run_security(sc["politicas_activas"])
         trajectories[sc["id"]] = {
             code: {VARIABLE: bands(pm[:, :, i]),
                    # deterministic: no band (policies and air do not move people)
-                   POP_VARIABLE: {k: growth_bands[code] for k in ("p10", "p50", "p90")}}
+                   POP_VARIABLE: {k: growth_bands[code] for k in ("p10", "p50", "p90")},
+                   SEC_VARIABLE: bands(sec[:, :, i])}
             for i, code in enumerate(communes.codes)}
         exposed = np.einsum("rtc,tc->rt", pm > PM25_ANNUAL_NORM, population)
         impact[sc["id"]] = {k: [round(v) for v in vals] for k, vals in bands(exposed).items()}
-        contributions[sc["id"]] = {code: {VARIABLE: [], POP_VARIABLE: []}
+        contributions[sc["id"]] = {code: {VARIABLE: [], POP_VARIABLE: [], SEC_VARIABLE: []}
                                    for code in communes.codes}
         for pid in sc["politicas_activas"]:
-            without = run([q for q in sc["politicas_activas"] if q != pid], sc["lectura"],
-                          sc["hogares"])
-            delta = np.median(pm[:, -1, :] - without[:, -1, :], axis=0)
+            rest = [q for q in sc["politicas_activas"] if q != pid]
+            if pid in sec_by_id:
+                variable, now, without = SEC_VARIABLE, sec, run_security(rest)
+            else:
+                variable, now = VARIABLE, pm
+                without = run(rest, sc["lectura"], sc["hogares"])
+            delta = np.median(now[:, -1, :] - without[:, -1, :], axis=0)
             for i, code in enumerate(communes.codes):
-                contributions[sc["id"]][code][VARIABLE].append(
+                contributions[sc["id"]][code][variable].append(
                     {"politica_id": pid, "delta_p50_final": round(float(delta[i]), 3)})
 
     def credibility_summary(policy: Policy) -> dict:
@@ -351,6 +453,10 @@ def main() -> None:
             "lecturas_hogares": HOUSEHOLD_READINGS,
             "poblacion_sin_banda": "crecimiento_poblacion no tiene banda (p10 = p50 = p90): "
                                    "las mudanzas son flujos esperados, no se sortean.",
+            "seguridad": "DMCS por 100.000 habitantes (CEAD), con inercia por comuna. Las "
+                         "políticas de seguridad son ilustrativas (todavía no hay planes "
+                         "comunales clasificados): actúan en las 5 comunas de mayor tasa 2024 y "
+                         "solo reducen delitos contra la propiedad (docs/modelo-seguridad.md).",
             "aviso": "El modelo de aire responde cuánto mejora la región, no qué comunas ganan "
                      "más: su patrón espacial no le gana a «el mismo cambio en todas». Las "
                      "diferencias de nivel entre comunas solo son medidas donde hay estación.",
@@ -365,24 +471,29 @@ def main() -> None:
             {"id": VARIABLE, "nombre": "PM2,5 media anual", "unidad": "µg/m³", "mejor": "menor"},
             {"id": POP_VARIABLE, "nombre": f"Crecimiento de la población desde {POP_START_YEAR}",
              "unidad": "%", "mejor": "mayor"},
+            {"id": SEC_VARIABLE, "nombre": "Delitos de mayor connotación social (DMCS)",
+             "unidad": "casos por 100.000 habitantes", "mejor": "menor"},
         ],
         "comunas": [
             {"codigo": code, "nombre": name, "lat": float(lat), "lon": float(lon),
              "zona_ppda": "B" if b else "A", f"poblacion_{POP_START_YEAR}": int(p0),
              "nivel_base": "medido" if med else "modelado",
-             "base": {VARIABLE: round(float(c), 3), POP_VARIABLE: 0.0}}
-            for code, name, lat, lon, b, c, p0, med in zip(
+             "base": {VARIABLE: round(float(c), 3), POP_VARIABLE: 0.0,
+                      SEC_VARIABLE: round(float(r24), 1)}}
+            for code, name, lat, lon, b, c, p0, med, r24 in zip(
                 communes.codes, communes.names, communes.lat, communes.lon, in_b, state.pm25,
-                pop_start, setup.measured, strict=True)
+                pop_start, setup.measured, rate_2024.sum(axis=1), strict=True)
         ],
         "comunas_destacadas": featured_communes(setup),
         "tipos_hogar": [
             {"id": "sensible-aire", "nombre": "Sensible a la contaminación",
-             "pesos": {VARIABLE: 0.8, POP_VARIABLE: 0.2}},
+             "pesos": {VARIABLE: 0.6, SEC_VARIABLE: 0.2, POP_VARIABLE: 0.2}},
+            {"id": "prioriza-seguridad", "nombre": "Prioriza seguridad",
+             "pesos": {VARIABLE: 0.2, SEC_VARIABLE: 0.6, POP_VARIABLE: 0.2}},
             {"id": "busca-crecimiento", "nombre": "Prefiere comunas que crecen",
-             "pesos": {VARIABLE: 0.2, POP_VARIABLE: 0.8}},
+             "pesos": {VARIABLE: 0.2, SEC_VARIABLE: 0.2, POP_VARIABLE: 0.6}},
             {"id": "equilibrado", "nombre": "Equilibrado",
-             "pesos": {VARIABLE: 0.5, POP_VARIABLE: 0.5}},
+             "pesos": {VARIABLE: 0.34, SEC_VARIABLE: 0.33, POP_VARIABLE: 0.33}},
         ],
         "politicas": [
             {"id": p.id, "nombre": p.name, "nivel": "regional",
@@ -391,8 +502,16 @@ def main() -> None:
              "comunas": "todas" if p.zone == "todas" else
              [c for c, m in zip(communes.codes, masks[p.zone], strict=True) if m],
              "credibilidad": {k: round(v, 3) for k, v in credibility_summary(p).items()},
-             "procedencia": "tasa_base", "cita": p.citation, "efecto": p.effect}
+             "procedencia": "tasa_base", "cita": p.citation, "efecto": p.effect,
+             "variable": VARIABLE}
             for p in POLICIES
+        ] + [
+            {"id": sp.id, "nombre": sp.name, "nivel": "comunal", "tipo": "ilustrativa",
+             "fuente": "seguridad", "comunas": target_codes,
+             "credibilidad": {k: round(v, 3) for k, v in SECURITY_CREDIBILITY.summary().items()},
+             "procedencia": "supuesto", "cita": sp.citation, "efecto": sp.effect,
+             "variable": SEC_VARIABLE}
+            for sp in SECURITY_POLICIES
         ],
         "escenarios": scenarios,
         "trayectorias": trajectories,
@@ -419,6 +538,14 @@ def main() -> None:
                 "rmse_media_otras_estaciones": round(test24["rmse_mean_of_other_stations"], 2),
             },
             "ajuste_2023": {"estaciones": fit["stations"], "r2": round(fit["r2"], 2)},
+            "seguridad": {
+                "fuente": "results/seguridad_calibracion.json",
+                "comando": security_fit["comando"],
+                "metrica": security_fit["prueba_2024"]["metrica"],
+                **{k: v for k, v in security_fit["prueba_2024"].items() if k != "metrica"},
+                "aviso": "Los efectos de las intervenciones no se validan localmente: no hay "
+                         "datos de cámaras ni de iluminación por comuna.",
+            },
             "hogares": {
                 "fuente": "results/hogares_calibracion.json",
                 "comando": households_fit["comando"],
@@ -449,6 +576,13 @@ def main() -> None:
         p10, p50, p90 = np.quantile(final, [0.1, 0.5, 0.9])
         print(f"{sc['id']:<48} {p10:6.2f} {p50:6.2f} {p90:6.2f} | "
               f"{impact[sc['id']]['p50'][-1]:>9,}")
+    print(f"\nDMCS 2036 en las {SECURITY_TARGETS} comunas intervenidas "
+          f"({', '.join(communes.names[i] for i in targets)}), media de p10/p50/p90:")
+    for sc in scenarios:
+        final = run_security(sc["politicas_activas"])[:, -1, targets].mean(axis=1)
+        p10, p50, p90 = np.quantile(final, [0.1, 0.5, 0.9])
+        print(f"{sc['id']:<48} {p10:7.0f} {p50:7.0f} {p90:7.0f}")
+    print(f"DMCS 2024 en esas comunas: {rate_2024[targets].sum(axis=1).mean():.0f}")
     print(f"Base {BASE_YEAR}: {state.pm25 @ (pop_start / pop_start.sum()):.2f} µg/m³ | "
           f"{OUTPUT.relative_to(ROOT)}")
 

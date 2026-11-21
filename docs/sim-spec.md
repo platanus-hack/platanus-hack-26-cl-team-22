@@ -95,6 +95,7 @@ Implementación en `core/ciclo.py`.
 | Aporte de cada política | µg/m³ | Mediana de la diferencia pareada con y sin la política (misma semilla) |
 | Probabilidad de cumplir la norma en 2036 | — | Fracción de réplicas |
 | Crecimiento de población por comuna | % desde 2024 | Determinista (flujos esperados) |
+| Delitos de mayor connotación social por comuna y año | casos por 100.000 habitantes | Por réplica; se publica p10, p50 y p90 |
 
 Todas se escriben en `viz/datos/simulacion.json` (contrato en [`plan-comunas.md`](./plan-comunas.md)).
 
@@ -112,6 +113,9 @@ alternativas simples. Se publica también donde el modelo pierde.
 | Aire v1 | Error dejando una estación fuera: estacional / viento / residuos interpolados | 2,10 / 2,05 / 2,04 | v0: 2,05 (ninguno mejora) | igual |
 | Hogares | Migración neta por comuna 2019→2024, RMSE (ajuste con 2012→2017) | **4.335** | Nadie se muda: 7.716 · Repetir 2012→2017: 5.054 | `python -m experiments.calibrar_hogares` |
 | Hogares | Correlación fuera de muestra | **0,83** | Repetir 2012→2017: 0,76 | igual |
+| Seguridad | Tasa DMCS 2024 a 2 años, comunas completas fuera del ajuste | **10,8 %** | Persistencia: 12,4 % · Tendencia: 13,1 % · Media prepandemia: 20,0 % | `python -m experiments.calibrar_seguridad` |
+| Seguridad | Tasa DMCS 2024 a 1 año | 8,5 % | **Persistencia: 7,4 %** | igual |
+| Seguridad | Valores reales dentro de la banda del 80 % (1 y 2 años) | 70 % y 66 % | Ideal: 80 % (bandas algo estrechas) | igual |
 
 - **Caso teórico:** el kernel de simulación se valida contra la cola M/M/1 y la ley de Little
   (`tests/test_mm1.py`, `tests/test_kernel.py`).
@@ -120,9 +124,11 @@ alternativas simples. Se publica también donde el modelo pierde.
 - **Casos extremos con test:** una medida con θ = 0 nunca se ejecuta y con θ = 1 siempre; la
   población total se conserva al mudarse (`tests/test_hogares.py`). Una medida en una comuna
   mejora el aire de las otras (`tests/test_ciclo.py`). Una comuna con estación parte de su nivel
-  medido (`tests/test_simular.py`). En total hay 118 pruebas (`make test`).
-- **Pendiente:** cobertura de las bandas (que cerca del 80 % de los valores reales caiga en la
-  banda p10–p90) y calibración de la credibilidad con años que el ajuste no vio. Esta última
+  medido (`tests/test_simular.py`). Una política de seguridad con credibilidad 0 no tiene efecto y
+  el efecto sobre vecinas tiene signo abierto (`tests/test_seguridad.py`). En total hay 132
+  pruebas (`make test`).
+- **Pendiente:** cobertura de las bandas del aire (en seguridad ya se mide: 70 % y 66 % frente al
+  80 % ideal) y calibración de la credibilidad con años que el ajuste no vio. Esta última
   depende de conseguir el detalle anual de la SMA.
 
 ## Experimentos
@@ -178,7 +184,9 @@ alternativas simples. Se publica también donde el modelo pierde.
   habitual (`data/censo/README.md`).
 - El 55 % de las medidas del PPDA no tiene evidencia pública. Se publican dos lecturas: «sin
   evidencia = no cumplida» y «sin evidencia = se excluye».
-- La seguridad quedó fuera del modelo. Hay delitos CEAD en `data/seguridad/`.
+- Seguridad: inercia por comuna con datos CEAD; las políticas son ilustrativas (no hay planes
+  comunales clasificados), con cobertura del 25 % y efecto sobre vecinas con signo abierto
+  (`docs/modelo-seguridad.md`). Sus efectos no se pueden validar localmente.
 
 ## Stack y estructura del repo
 
