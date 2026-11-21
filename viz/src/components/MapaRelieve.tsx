@@ -1,5 +1,10 @@
-import { Map as MapaGL, type GeoJSONSource, type MapLayerMouseEvent, type StyleSpecification } from 'maplibre-gl'
+import { Map as MapaGL, setWorkerUrl, type GeoJSONSource, type MapLayerMouseEvent, type StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+// MapLibre 6 ships its worker as a separate file and finds it with new URL(variable, import.meta.url),
+// which Vite cannot see, so the file is missing in dev and in the build ("Worker failed to load") and
+// the relief map never loads. Let Vite bundle the worker and tell MapLibre where it is.
+import urlWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
+setWorkerUrl(urlWorker)
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apilarNivel } from '../lib/capas'
 import { claseFondo, variableDeClase } from '../lib/fondo'
