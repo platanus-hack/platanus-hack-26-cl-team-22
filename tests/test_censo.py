@@ -12,6 +12,7 @@ from datos.censo.censo import (
     externos_2024,
     matriz_2024,
     pares_2017,
+    stock_extranjero_2017,
     sumar_proyeccion,
 )
 
@@ -308,3 +309,30 @@ def test_published_projection_covers_every_rm_comuna_2017_to_2035():
     # INE estimaciones y proyecciones base 2017, RM totals (they correct census omission,
     # so 2017 is above the census count of 7.028.421).
     assert rm == {"2017": 7_508_690, "2024": 8_420_729}
+
+
+# --- foreign-born stock (network rule of the moves simulation) -------------------------
+
+def _p17n(*filas):
+    return pd.DataFrame(filas, columns=["COMUNA", "P10", "P10COMUNA", "P12", "P12A_LLEGADA"])
+
+
+def test_foreign_stock_counts_people_born_abroad_by_usual_residence():
+    out = stock_extranjero_2017(_p17n(
+        (13101, 1, 98, 3, 2010),      # born in Perú, arrived 2010, lives in 13101
+        (13101, 3, 13110, 8, 2015),   # counted in 13101, lives in 13110, arrived 2015
+        (13101, 1, 98, 1, 9998),      # born in this comuna: not foreign
+        (13101, 1, 98, 5, 9999),      # born abroad, arrival year missing
+        (5101, 1, 98, 3, 2000),       # outside the RM
+    ))
+    assert out == {13101: (2, 1), 13110: (1, 0)}
+
+
+def test_dwelling_occupancy_2024_adds_up_to_the_ine_totals():
+    filas = _leer("viviendas_ocupacion_2024.csv")
+    assert len(filas) == 52
+    tot = {k: sum(int(f[k]) for f in filas) for k in
+           ("viviendas", "particulares_ocupadas", "particulares_desocupadas", "colectivas")}
+    # INE V1 (Censo 2024), RM: 2.764.749 = 2.619.563 ocupadas + 143.824 desocupadas + 1.362.
+    assert tot == {"viviendas": 2_764_749, "particulares_ocupadas": 2_619_563,
+                   "particulares_desocupadas": 143_824, "colectivas": 1_362}

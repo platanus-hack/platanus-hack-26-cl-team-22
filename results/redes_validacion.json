@@ -1,0 +1,36 @@
+{
+ "comando": "python -m experiments.validar_redes",
+ "regla": "peso_j = (stock_extranjero_j + 1)^phi",
+ "phi": 1.0863,
+ "ajuste": {
+  "datos": "stock que llegó antes de 2012 -> llegadas 2012-2017",
+  "redes_phi_ajustado": {
+   "rmse_personas": 4085.9,
+   "correlacion": 0.943
+  }
+ },
+ "prueba_2019_2024": {
+  "datos": "stock 2017 -> llegadas 2019-2024",
+  "total_rm_observado": 338266,
+  "redes_phi_ajustado": {
+   "rmse_personas": 5475.9,
+   "correlacion": 0.923
+  },
+  "redes_phi_1": {
+   "rmse_personas": 4297.6,
+   "correlacion": 0.928
+  },
+  "geografia_2012_2017": {
+   "rmse_personas": 4965.2,
+   "correlacion": 0.932
+  },
+  "poblacion_2017": {
+   "rmse_personas": 8302.2,
+   "correlacion": 0.494
+  }
+ },
+ "supuestos": [
+  "El stock antes de 2012 se mide en la comuna de residencia de 2017 (aproximación).",
+  "Solo se reparte el total observado: la prueba mide a dónde llegan, no cuántos."
+ ]
+}

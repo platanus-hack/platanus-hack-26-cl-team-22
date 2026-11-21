@@ -3,6 +3,7 @@ import "@fontsource-variable/bricolage-grotesque/opsz.css";
 import "@fontsource-variable/instrument-sans";
 import "./simulator.css";
 import type { SimulatorApi } from "./engine";
+import { entrarAlSimulador, URL_SIMULADOR } from "../simulador";
 
 type Props = {
   /** Se llama una vez, cuando el motor (d3 + datos, carga diferida) está listo. */
@@ -47,8 +48,11 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
           <div className="intro">
             <h1>Mira hacia dónde va una comuna antes de comprar</h1>
             <p>Proyectamos el aire y la seguridad de cada comuna a 5, 10 y 30 años, según los planes públicos que la afectan y la probabilidad real de que se cumplan.</p>
-            <button className="cta" id="cta">Acercar a Santiago</button>
-            <small>Arrastra para girar el mundo. Usa la rueda o pellizca para acercarte hasta ver las calles.</small>
+            {/* El motor escucha este mismo botón y vuela a la región; al llegar se abre el simulador real. */}
+            <button className="cta" id="cta" onClick={entrarAlSimulador}>
+              Entrar al simulador
+            </button>
+            <small>O sigue bajando.</small>
           </div>
 
           <div className="zoom" aria-label="Zoom">
@@ -105,6 +109,10 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
             <button className="link" id="openSrc">Ver las fuentes internacionales del modelo</button>
 
             <p className="note">Cifras de ejemplo para mostrar la interfaz: no sirven para decidir una compra. El modelo real se alimenta de SINCA, CEAD, ENUSC, Censo, PPDA y SEIA.</p>
+
+            <a className="abrir" href={URL_SIMULADOR}>
+              Abrir el simulador con datos reales
+            </a>
           </div>
 
           <div className="view" id="viewSources" hidden>

@@ -18,7 +18,7 @@ def _norm(texto) -> str:
     return " ".join(plano.lower().split())
 
 
-def _clave(nombre) -> str:
+def clave_nombre(nombre) -> str:
     """Name key that ignores accents, case, spaces and apostrophes ('Til Til' = 'Tiltil')."""
     return "".join(ch for ch in _norm(nombre) if ch.isalnum())
 
@@ -68,13 +68,13 @@ def leer_anuario(filas: list[tuple], codigos: dict[str, int]) -> dict[int, tuple
                  if f and _norm(f[0]).endswith("metropolitana")), None)
     if i_rm is None:
         raise ValueError("RM block not found in sheet 122-04")
-    por_clave = {_clave(n): c for n, c in codigos.items()}
+    por_clave = {clave_nombre(n): c for n, c in codigos.items()}
     leidos: dict[int, tuple[int, int]] = {}
     for fila in filas[i_rm + 1:]:
         nombre = str(fila[0] or "").strip()
         if nombre and nombre.upper() == nombre and any(ch.isalpha() for ch in nombre):
             break  # next region (regions are written in capitals)
-        codigo = por_clave.get(_clave(nombre))
+        codigo = por_clave.get(clave_nombre(nombre))
         if codigo is not None:
             leidos[codigo] = (_valor(fila, c_nac), _valor(fila, c_def))
 

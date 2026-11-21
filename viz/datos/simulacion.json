@@ -88031,7 +88031,32 @@
    "rmse_nadie_se_muda": 7716.2,
    "rmse_repetir_2012_2017": 5054.0,
    "correlacion_modelo": 0.829,
+   "unidad": "personas",
    "aviso": "2019-2024 incluye el estallido y la pandemia."
+  },
+  "poblacion": {
+   "fuente": "results/poblacion_validacion.json",
+   "comando": "python -m experiments.validar_poblacion",
+   "metrica": "Población por comuna en 2024, proyectada desde el censo 2017 con tasas de 2012-2017",
+   "unidad": "personas",
+   "rmse_modelo": 18471.9,
+   "rmse_sin_cambio": 15046.3,
+   "rmse_cerrado": 16903.6,
+   "rmse_proyeccion_ine": 18391.1,
+   "total_rm_modelo": 7838500,
+   "total_rm_real": 7400741,
+   "aviso": "Nadie le gana a «sin cambio» en 7 años, tampoco el INE: los nacimientos cayeron 31 % y las salidas a otras regiones subieron."
+  },
+  "vivienda": {
+   "fuente": "results/vivienda_validacion.json",
+   "comando": "python -m experiments.validar_vivienda",
+   "metrica": "Migración neta por comuna 2019-2024 según a dónde van quienes se mudan",
+   "unidad": "personas",
+   "rmse_modelo": 4334.8,
+   "rmse_pivote_permisos": 5049.5,
+   "rmse_gravedad_permisos": 9572.2,
+   "rmse_radiacion": 14900.1,
+   "aviso": "La vivienda nueva central la ocuparon llegadas desde el extranjero: los permisos no mejoran los destinos de las mudanzas internas."
   }
  },
  "promesas": {

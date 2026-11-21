@@ -4,6 +4,7 @@ import { fmtPct } from '../lib/format'
 import type { Comuna, Politica } from '../lib/types'
 
 const NIVELES: Record<string, string> = { regional: 'Regional', comunal: 'Comunal', proyecto: 'Proyecto' }
+const TIPOS = ['vigente', 'propuesta', 'ilustrativa']
 
 export function alcance(p: Politica, comunas: Comuna[]): string {
   if (p.comunas === 'todas') return 'todas las comunas'
@@ -21,58 +22,48 @@ interface Props {
   onAlternar: () => void
 }
 
+const pct = (x: number) => `${Math.min(1, Math.max(0, x)) * 100}%`
+
 /**
- * Una política como tira de papel frío. La franja inferior muestra cuánto de la tira está pegado
- * (credibilidad media), con muescas de tijera en p10 y p90. Despegada, la tira se levanta y muestra su revés blanco.
+ * Una política como fila con interruptor: casilla del color de la política, nombre y alcance en tinta,
+ * y a la derecha la probabilidad de que se cumpla con su rango p10–p90 en una regla corta.
  */
 export function TiraPolitica({ politica: p, indice, tecla, pegada, comunas, onAlternar }: Props) {
   const c = p.credibilidad
-  const papel = indice % PAPELES_POLITICA
-  const giro = ((indice * 37) % 5) - 2
   const nivel = NIVELES[p.nivel] ?? (typeof p.nivel === 'string' ? p.nivel : '')
-  const propuesta = p.tipo === 'propuesta'
-  const estilo = {
-    '--giro': `${giro * 0.45}deg`,
-    '--c': `var(--pol-${papel})`,
-    '--c-txt': `var(--pol-txt-${papel})`,
-    '--media': `${Math.min(1, Math.max(0, c.media)) * 100}%`,
-    '--p10': `${Math.min(1, Math.max(0, c.p10)) * 100}%`,
-    '--p90': `${Math.min(1, Math.max(0, c.p90)) * 100}%`,
-  } as CSSProperties
-  const probabilidad = `Se cumple con probabilidad ${fmtPct(c.media)} (${fmtPct(c.p10)}–${fmtPct(c.p90)})`
-  const cara = (
-    <>
-      <span className="tira-cab">
-        {tecla && <kbd className="tira-tecla">{tecla.toUpperCase()}</kbd>}
-        <span className="tira-nombre">{p.nombre}</span>
-      </span>
-      <span className="tira-cred">
-        {[nivel, alcance(p, comunas), propuesta ? 'propuesta' : p.tipo === 'vigente' ? 'vigente' : ''].filter(Boolean).join(' · ')}. {probabilidad}
-        {!pegada && <b> · {propuesta ? 'no está en el plan: pégala para probarla' : 'despegada: ya no avanza'}</b>}
-      </span>
-    </>
-  )
+  const tipo = p.tipo && TIPOS.includes(p.tipo) ? p.tipo : ''
+  // el tipo ya va en la línea de abajo: no se repite entre paréntesis en el nombre
+  const nombre = p.nombre.replace(/\s*\((propuesta|ilustrativa)\)\s*$/i, '')
+  const estilo = { '--c': `var(--pol-${indice % PAPELES_POLITICA})` } as CSSProperties
   return (
     <button
       type="button"
-      className={`tira ${pegada ? 'pegada' : 'despegada'}`}
+      className={`plan-item${pegada ? '' : ' plan-item-apagada'}`}
       style={estilo}
       aria-pressed={pegada}
-      onClick={onAlternar}
+      aria-label={`${nombre}. Se cumple con probabilidad ${fmtPct(c.media)}, entre ${fmtPct(c.p10)} y ${fmtPct(c.p90)}`}
       aria-keyshortcuts={tecla?.toUpperCase()}
+      onClick={onAlternar}
     >
-      {/* La parte pegada (credibilidad media) es el papel macizo; el resto está levantado y se ve más pálido */}
-      <span className="tira-fondo" aria-hidden="true">
-        <span className="tira-maciza" />
-        <span className="tira-pliegue" />
-        <span className="tira-marca" style={{ left: 'var(--p10)' }} />
-        <span className="tira-marca" style={{ left: 'var(--p90)' }} />
+      <span className="plan-caja" aria-hidden="true">
+        {pegada && (
+          <svg viewBox="0 0 16 16">
+            <path d="M3 8.5 L6.6 12 L13 4.5" />
+          </svg>
+        )}
       </span>
-      <span className="tira-cara">{cara}</span>
-      {/* Mismo texto en el color claro, recortado a la parte maciza: el contraste se mantiene en las dos partes */}
-      <span className="tira-cara tira-cara-clara" aria-hidden="true">
-        {cara}
+      <span className="plan-txt">
+        <b>{nombre}</b>
+        <small>{[nivel, alcance(p, comunas), tipo, pegada ? '' : 'apagada'].filter(Boolean).join(' · ')}</small>
       </span>
+      <span className="plan-cred" aria-hidden="true">
+        <b>{fmtPct(c.media)}</b>
+        <span className="plan-rango">
+          <i style={{ left: pct(c.p10), width: `calc(${pct(c.p90)} - ${pct(c.p10)})` }} />
+          <u style={{ left: pct(c.media) }} />
+        </span>
+      </span>
+      {tecla && <kbd className="plan-tecla">{tecla.toUpperCase()}</kbd>}
     </button>
   )
 }
