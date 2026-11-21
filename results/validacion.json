@@ -1,0 +1,375 @@
+{
+  "comando": "make validate",
+  "protocolo_empate": 0.02,
+  "filas": [
+    {
+      "variable": "Aire",
+      "prueba": "PM2,5 por estación 2022-2024 desde 2019 (ajuste 2017-2019)",
+      "metrica": "RMSE µg/m³",
+      "modelo": 1.905,
+      "sin_cambio": 2.401,
+      "tendencia": 4.243,
+      "cobertura_80": 0.741,
+      "n": "27 pares, 9 estaciones",
+      "gana": "modelo",
+      "fuente": "python -m experiments.validar",
+      "notas": "Banda del motor sola: 22%. El mismo cambio en todas las estaciones: 1.94."
+    },
+    {
+      "variable": "Hogares",
+      "prueba": "Migración neta por comuna 2019-2024 (ajuste 2012-2017)",
+      "metrica": "RMSE personas",
+      "modelo": 4334.8,
+      "sin_cambio": 7716.2,
+      "tendencia": 5054.0,
+      "cobertura_80": null,
+      "n": "52 comunas",
+      "gana": "modelo",
+      "fuente": "python -m experiments.calibrar_hogares",
+      "notas": "Modelo determinista: sin banda."
+    },
+    {
+      "variable": "Población",
+      "prueba": "Población por comuna 2024 desde 2017 (tasas 2012-2017)",
+      "metrica": "RMSE personas",
+      "modelo": 16903.6,
+      "sin_cambio": 15046.3,
+      "tendencia": null,
+      "cobertura_80": null,
+      "n": "52 comunas",
+      "gana": "sin_cambio",
+      "fuente": "python -m experiments.validar_poblacion",
+      "notas": "Proyección oficial del INE: 18,391 (no es una tendencia de los años de ajuste). Sistema cerrado: no suma nacimientos ni llegadas."
+    },
+    {
+      "variable": "Seguridad",
+      "prueba": "Tasa de delitos 2024 a 1 año (comunas fuera del ajuste)",
+      "metrica": "RMSE log (≈ error relativo)",
+      "modelo": 0.085,
+      "sin_cambio": 0.0739,
+      "tendencia": 0.1305,
+      "cobertura_80": 0.702,
+      "n": "52 comunas",
+      "gana": "sin_cambio",
+      "fuente": "python -m experiments.calibrar_seguridad",
+      "notas": "A un año, la tasa cambia poco y repetirla es difícil de batir."
+    },
+    {
+      "variable": "Seguridad",
+      "prueba": "Tasa de delitos 2024 a 2 años (comunas fuera del ajuste)",
+      "metrica": "RMSE log (≈ error relativo)",
+      "modelo": 0.1078,
+      "sin_cambio": 0.124,
+      "tendencia": null,
+      "cobertura_80": 0.663,
+      "n": "52 comunas",
+      "gana": "modelo",
+      "fuente": "python -m experiments.calibrar_seguridad",
+      "notas": "Sin tendencia comparable: la de 2022-2023 usa un año que el modelo no ve."
+    }
+  ],
+  "aire": {
+    "pregunta": "¿El motor (plan de descontaminación + credibilidad) predice el PM2,5 por estación mejor que la persistencia y la tendencia?",
+    "protocolo": {
+      "ajuste": [
+        2017,
+        2018,
+        2019
+      ],
+      "origen": 2019,
+      "prueba": [
+        2022,
+        2023,
+        2024
+      ],
+      "no_puntuados": [
+        2020,
+        2021
+      ],
+      "lectura_credibilidad": "conservadora",
+      "replicas": 500,
+      "semilla": 22,
+      "kernel": {
+        "anio": 2017,
+        "estaciones": 10,
+        "escala_km": 40.0,
+        "fondo_ugm3": 0.0,
+        "k_ugm3_por_t": 0.008095771256171554,
+        "escala_en_el_borde": true
+      }
+    },
+    "estaciones": [
+      "D12",
+      "D13",
+      "D14",
+      "D15",
+      "D17",
+      "D18",
+      "D27",
+      "D28",
+      "D30"
+    ],
+    "n_pares": 27,
+    "modelo": {
+      "rmse_ugm3": 1.905,
+      "sesgo_ugm3": 1.106,
+      "cobertura_80": 0.222,
+      "cobertura_80_con_residuo": 0.741,
+      "ancho_banda_ugm3": 1.165,
+      "ancho_banda_con_residuo_ugm3": 4.143
+    },
+    "sin_cambio": {
+      "rmse_ugm3": 2.401,
+      "sesgo_ugm3": 1.688
+    },
+    "tendencia": {
+      "rmse_ugm3": 4.243,
+      "sesgo_ugm3": -2.115
+    },
+    "lecturas": {
+      "sin-ejecucion": {
+        "rmse_ugm3": 2.401,
+        "sesgo_ugm3": 1.688
+      },
+      "plan-escrito": {
+        "rmse_ugm3": 1.384,
+        "sesgo_ugm3": -0.077
+      },
+      "kernel-2023": {
+        "rmse_ugm3": 1.918,
+        "sesgo_ugm3": 1.122
+      },
+      "mismo-cambio-en-todas": {
+        "rmse_ugm3": 1.935,
+        "sesgo_ugm3": 1.106
+      }
+    },
+    "residuo_ajuste_sd_ugm3": 1.565,
+    "pares": [
+      {
+        "estacion": "D12",
+        "anio": 2022,
+        "observado": 25.68,
+        "modelo": 24.73,
+        "sin_cambio": 25.18,
+        "tendencia": 22.54
+      },
+      {
+        "estacion": "D12",
+        "anio": 2023,
+        "observado": 24.46,
+        "modelo": 24.71,
+        "sin_cambio": 25.18,
+        "tendencia": 21.79
+      },
+      {
+        "estacion": "D12",
+        "anio": 2024,
+        "observado": 21.82,
+        "modelo": 24.31,
+        "sin_cambio": 25.18,
+        "tendencia": 21.04
+      },
+      {
+        "estacion": "D13",
+        "anio": 2022,
+        "observado": 18.64,
+        "modelo": 19.63,
+        "sin_cambio": 20.1,
+        "tendencia": 17.93
+      },
+      {
+        "estacion": "D13",
+        "anio": 2023,
+        "observado": 19.13,
+        "modelo": 19.62,
+        "sin_cambio": 20.1,
+        "tendencia": 17.15
+      },
+      {
+        "estacion": "D13",
+        "anio": 2024,
+        "observado": 17.51,
+        "modelo": 19.2,
+        "sin_cambio": 20.1,
+        "tendencia": 16.36
+      },
+      {
+        "estacion": "D14",
+        "anio": 2022,
+        "observado": 23.65,
+        "modelo": 24.96,
+        "sin_cambio": 25.46,
+        "tendencia": 23.18
+      },
+      {
+        "estacion": "D14",
+        "anio": 2023,
+        "observado": 22.94,
+        "modelo": 24.94,
+        "sin_cambio": 25.46,
+        "tendencia": 22.41
+      },
+      {
+        "estacion": "D14",
+        "anio": 2024,
+        "observado": 20.22,
+        "modelo": 24.51,
+        "sin_cambio": 25.46,
+        "tendencia": 21.65
+      },
+      {
+        "estacion": "D15",
+        "anio": 2022,
+        "observado": 25.08,
+        "modelo": 26.73,
+        "sin_cambio": 27.21,
+        "tendencia": 25.11
+      },
+      {
+        "estacion": "D15",
+        "anio": 2023,
+        "observado": 25.11,
+        "modelo": 26.71,
+        "sin_cambio": 27.21,
+        "tendencia": 24.49
+      },
+      {
+        "estacion": "D15",
+        "anio": 2024,
+        "observado": 23.58,
+        "modelo": 26.28,
+        "sin_cambio": 27.21,
+        "tendencia": 23.87
+      },
+      {
+        "estacion": "D17",
+        "anio": 2022,
+        "observado": 28.61,
+        "modelo": 27.89,
+        "sin_cambio": 28.36,
+        "tendencia": 21.8
+      },
+      {
+        "estacion": "D17",
+        "anio": 2023,
+        "observado": 28.13,
+        "modelo": 27.87,
+        "sin_cambio": 28.36,
+        "tendencia": 19.59
+      },
+      {
+        "estacion": "D17",
+        "anio": 2024,
+        "observado": 26.2,
+        "modelo": 27.45,
+        "sin_cambio": 28.36,
+        "tendencia": 17.39
+      },
+      {
+        "estacion": "D18",
+        "anio": 2022,
+        "observado": 28.36,
+        "modelo": 29.72,
+        "sin_cambio": 30.2,
+        "tendencia": 31.54
+      },
+      {
+        "estacion": "D18",
+        "anio": 2023,
+        "observado": 26.47,
+        "modelo": 29.7,
+        "sin_cambio": 30.2,
+        "tendencia": 31.81
+      },
+      {
+        "estacion": "D18",
+        "anio": 2024,
+        "observado": 24.85,
+        "modelo": 29.28,
+        "sin_cambio": 30.2,
+        "tendencia": 32.08
+      },
+      {
+        "estacion": "D27",
+        "anio": 2022,
+        "observado": 21.67,
+        "modelo": 20.97,
+        "sin_cambio": 21.39,
+        "tendencia": 17.73
+      },
+      {
+        "estacion": "D27",
+        "anio": 2023,
+        "observado": 21.1,
+        "modelo": 20.96,
+        "sin_cambio": 21.39,
+        "tendencia": 16.62
+      },
+      {
+        "estacion": "D27",
+        "anio": 2024,
+        "observado": 19.67,
+        "modelo": 20.59,
+        "sin_cambio": 21.39,
+        "tendencia": 15.51
+      },
+      {
+        "estacion": "D28",
+        "anio": 2022,
+        "observado": 23.72,
+        "modelo": 21.74,
+        "sin_cambio": 22.02,
+        "tendencia": 19.04
+      },
+      {
+        "estacion": "D28",
+        "anio": 2023,
+        "observado": 21.59,
+        "modelo": 21.73,
+        "sin_cambio": 22.02,
+        "tendencia": 18.28
+      },
+      {
+        "estacion": "D28",
+        "anio": 2024,
+        "observado": 19.75,
+        "modelo": 21.49,
+        "sin_cambio": 22.02,
+        "tendencia": 17.52
+      },
+      {
+        "estacion": "D30",
+        "anio": 2022,
+        "observado": 24.78,
+        "modelo": 23.65,
+        "sin_cambio": 24.07,
+        "tendencia": 19.15
+      },
+      {
+        "estacion": "D30",
+        "anio": 2023,
+        "observado": 22.84,
+        "modelo": 23.63,
+        "sin_cambio": 24.07,
+        "tendencia": 17.62
+      },
+      {
+        "estacion": "D30",
+        "anio": 2024,
+        "observado": 20.83,
+        "modelo": 23.26,
+        "sin_cambio": 24.07,
+        "tendencia": 16.09
+      }
+    ],
+    "avisos": [
+      "La credibilidad viene de la revisión de cumplimiento de 2023, dentro del período de prueba; ver las lecturas sin-ejecucion y plan-escrito.",
+      "Acertar la baja no prueba que la causa sea el plan: el motor no tiene renovación del parque vehicular ni clima, que también bajan el PM2,5.",
+      "La tendencia usa tres puntos (2017-2019): es frágil.",
+      "Transporte 2017 usa el inventario 2023 (el RETC no lo trae antes); ninguna medida vigente lo toca, así que no mueve el cambio simulado.",
+      "9 estaciones: no alcanza para afirmar significancia estadística.",
+      "La escala del kernel quedó en el borde de la grilla (toda la cuenca como una caja): el acople entre comunas es casi uniforme."
+    ]
+  }
+}

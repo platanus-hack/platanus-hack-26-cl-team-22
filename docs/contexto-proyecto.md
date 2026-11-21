@@ -142,7 +142,8 @@ Los pesos son la forma de **leer** la simulación; el interruptor de políticas 
 
 - Un documento del modelo: cada mecanismo, sus ecuaciones y el origen de cada parámetro.
 - El catálogo de intervenciones con la cita de cada rango.
-- Resultados de validación guardados, con el comando que los reproduce.
+- Resultados de validación guardados, con el comando que los reproduce: `make validate` →
+  [`docs/validacion.md`](./validacion.md) y `results/validacion.json`.
 - Semillas fijas, separadas por fuente de azar.
 - Pruebas automáticas del núcleo, por ejemplo: la población total se conserva al mudarse; una política con credibilidad 0 no tiene efecto.
 - Origen y fecha de descarga de cada fuente de datos.
