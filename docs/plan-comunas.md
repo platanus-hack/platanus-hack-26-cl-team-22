@@ -77,7 +77,7 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 |---|---|---|---|---|---|
 | 1. Datos de aire | Mediciones de PM2,5 por estación, 2017 a 2024 | `data/aire/*.csv` | Nada | Hecho |  |
 | 2. Emisiones y comunas | Emisiones por comuna y fuente; tabla de las 52 comunas | `data/emisiones/`, `data/comunas_rm.csv` | Nada | Hecho |  |
-| 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Por empezar | Massiel |
+| 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Hecho | Massiel |
 | 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Libre |  |
 | 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario hecho (`docs/politicas-aire.md`); falta catálogo y credibilidad |  |
 | 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Aire v0 hecho y escribe `simulacion.json`; falta v1 de aire y hogares | Jesús |
