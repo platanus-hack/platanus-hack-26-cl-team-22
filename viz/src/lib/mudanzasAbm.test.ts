@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { MULTIPLICADORES_BASE, leerDemografia, proyectarDemografia } from './demografia'
-import { simular, simularReplicas, type OpcionesAbm, type ParametrosAbm, type ResultadoAbm } from './mudanzasAbm'
+import { bandaOcupacion, frecuenciaSaturacion, simular, simularReplicas, type OpcionesAbm, type ParametrosAbm, type ResultadoAbm } from './mudanzasAbm'
 
 const ruta = fileURLToPath(new URL('../../public/datos/demografia.json', import.meta.url))
 const datos = leerDemografia(JSON.parse(readFileSync(ruta, 'utf-8')))
@@ -214,5 +214,33 @@ describe('simular: performance', () => {
     const t0 = performance.now()
     simular(datos, { ...base, semilla: 2 })
     expect(performance.now() - t0).toBeLessThan(1000)
+  })
+})
+
+describe('summaries of several runs', () => {
+  const params: ParametrosAbm = { ...datos, capacidad_inicial: datos.poblacion_inicial.map((p) => p * 1.01) }
+  const corridas = [1, 2, 3, 4, 5].map((s) => simular(params, { ...base, semilla: s }))
+
+  it('gives the occupancy band per comuna in percent, ordered p10 ≤ p50 ≤ p90', () => {
+    const banda = bandaOcupacion(corridas, 3)
+    expect(banda).toHaveLength(n)
+    for (const b of banda) {
+      expect(b).not.toBeNull()
+      expect(b!.p10).toBeLessThanOrEqual(b!.p50)
+      expect(b!.p50).toBeLessThanOrEqual(b!.p90)
+    }
+    const r = corridas[0]!
+    expect(bandaOcupacion([r], 3)[0]!.p50).toBeCloseTo(r.ocupacion[3]![0]! * 100, 9)
+  })
+
+  it('has no occupancy band without a capacity limit', () => {
+    expect(bandaOcupacion([simular(datos, base)], 1).every((b) => b === null)).toBe(true)
+  })
+
+  it('counts in how many runs each comuna saturated up to a year, most frequent first', () => {
+    const f = frecuenciaSaturacion(corridas, datos.anios.length - 1)
+    expect(f.length).toBeGreaterThan(0)
+    for (let k = 1; k < f.length; k++) expect(f[k - 1]!.corridas).toBeGreaterThanOrEqual(f[k]!.corridas)
+    expect(f.every((x) => x.corridas >= 1 && x.corridas <= corridas.length)).toBe(true)
   })
 })

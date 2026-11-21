@@ -1,134 +1,200 @@
-import { useMemo, useState } from 'react'
-import {
-  COMPONENTES,
-  MULTIPLICADORES_BASE,
-  cambiosPorComuna,
-  mayoresFlujos,
-  proyectarDemografia,
-  type Componente,
-  type Demografia,
-  type Multiplicadores,
-} from '../lib/demografia'
+import { frecuenciaSaturacion, type Evento, type OpcionesAbm, type ParametrosAbm } from '../lib/mudanzasAbm'
 import { fmt, fmtSigned } from '../lib/format'
+import { REPLICAS_ABM, type SimulacionAbm } from '../lib/useSimulacionAbm'
 import { GraficoBanda } from './GraficoBanda'
 
 /**
- * Prototype of view 6, "Las mudanzas": the open household model runs live while the sliders move.
- * Every slider scales a measured rate (1 = what the census and vital statistics measured).
+ * View 5, "Las mudanzas": the agent-based moves simulation (docs/modelo-mudanzas-abm.md).
+ * The map paints housing occupancy per comuna; this sheet sets the rules and events and reads
+ * what emerges over the runs: the region's band, which comunas saturate and the spilled demand.
  */
 
-const ETIQUETA: Record<Componente, string> = {
-  natalidad: 'Nacimientos',
-  mortalidad: 'Defunciones',
-  llegan_regiones: 'Llegadas desde otras regiones',
-  llegan_extranjero: 'Llegadas desde el extranjero',
-  salen_regiones: 'Salidas a otras regiones',
+const DESDE = 2026
+
+interface DefEvento {
+  id: string
+  texto: string
+  detalle: string
+  crear: (seleccionada: number, nComunas: number) => Evento[]
+  necesitaComuna?: boolean
 }
 
-const total = (fila: number[]) => fila.reduce((s, v) => s + v, 0)
-const CERO: Multiplicadores = { natalidad: 0, mortalidad: 0, llegan_regiones: 0, llegan_extranjero: 0, salen_regiones: 0 }
+const EVENTOS: DefEvento[] = [
+  {
+    id: 'ola',
+    texto: 'Ola migratoria',
+    detalle: 'Llegadas desde el extranjero ×3 entre 2026 y 2028',
+    crear: () => [{ tipo: 'ola_migratoria', desde: DESDE, anios: 3, m: 3 }],
+  },
+  {
+    id: 'congelar',
+    texto: 'Congelar permisos',
+    detalle: 'Ninguna vivienda nueva desde 2026',
+    crear: (_, n) => Array.from({ length: n }, (_, i) => ({ tipo: 'densificar' as const, comuna: i, desde: DESDE, m: 0 })),
+  },
+  {
+    id: 'densificar',
+    texto: 'Densificar la comuna elegida',
+    detalle: 'Permisos ×3 desde 2026 en la comuna marcada en el mapa',
+    crear: (s) => (s >= 0 ? [{ tipo: 'densificar', comuna: s, desde: DESDE, m: 3 }] : []),
+    necesitaComuna: true,
+  },
+  {
+    id: 'crisis',
+    texto: 'Crisis',
+    detalle: 'Mudanzas y llegadas ×2 en 2027',
+    crear: () => [{ tipo: 'crisis', desde: 2027, anios: 1, m: 2 }],
+  },
+]
 
-export function VistaMudanzas({ datos, anio }: { datos: Demografia; anio: number }) {
-  const [mult, setMult] = useState<Multiplicadores>(MULTIPLICADORES_BASE)
-  const proy = useMemo(() => proyectarDemografia(datos, mult), [datos, mult])
-  const cerrado = useMemo(() => proyectarDemografia(datos, CERO), [datos])
-  const t = Math.max(0, Math.min(datos.anios.length - 1, datos.anios.indexOf(anio)))
-  const codigos = datos.comunas.map((c) => c.codigo)
-  const nombre = (codigo: string) => datos.comunas.find((c) => c.codigo === codigo)?.nombre ?? codigo
-  const totales = proy.poblacion.map(total)
-  const totalesCerrado = cerrado.poblacion.map(total)
-  const millones = totales.map((v) => v / 1e6)
-  const millonesCerrado = totalesCerrado.map((v) => v / 1e6)
-  const cambios = cambiosPorComuna(datos.comunas, proy.poblacion, t)
-  const flujos = t > 0 ? mayoresFlujos(proy.flujos[t - 1]!, codigos, 5) : []
-  const anual = (c: Componente) => mult[c] * datos.tasas[c].reduce((s, r, i) => s + r * datos.poblacion_inicial[i]!, 0)
+/** Options of the simulation plus which events the sheet has switched on. */
+export type OpcionesMudanzas = OpcionesAbm & { activos?: string[] }
+
+interface Props {
+  datos: ParametrosAbm
+  resultado: SimulacionAbm | null
+  calculando: boolean
+  opciones: OpcionesMudanzas
+  onOpciones: (o: OpcionesMudanzas) => void
+  anio: number
+  /** index of the comuna chosen on the map, or −1 */
+  seleccionada: number
+}
+
+export function VistaMudanzas({ datos, resultado, calculando, opciones, onOpciones, anio, seleccionada }: Props) {
+  const activos = new Set(opciones.activos ?? [])
+  const t = Math.max(0, datos.anios.indexOf(anio))
+  const nombre = (i: number) => datos.comunas[i]?.nombre ?? '—'
+
+  const alternar = (ev: DefEvento) => {
+    const sig = new Set(activos)
+    if (sig.has(ev.id)) sig.delete(ev.id)
+    else sig.add(ev.id)
+    const eventos = EVENTOS.filter((e) => sig.has(e.id)).flatMap((e) => e.crear(seleccionada, datos.comunas.length))
+    onOpciones({ ...opciones, eventos, activos: [...sig] })
+  }
+
+  const corridas = resultado?.corridas ?? []
+  const saturadas = frecuenciaSaturacion(corridas, t)
+  const mediana = (xs: number[]) => (xs.length === 0 ? 0 : xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)]!)
+  const tamano = opciones.tamanoGrupo ?? 250
+  const hasta = (xs: number[]) => xs.slice(0, t).reduce((a, b) => a + b, 0)
+  const derrames = mediana(corridas.map((c) => hasta(c.derrames))) * tamano
+  const sinLugar = mediana(corridas.map((c) => hasta(c.noAtendida))) * tamano
+  const total = resultado?.total
+  const millones = (xs: number[]) => xs.map((v) => v / 1e6)
 
   return (
     <div className="v-prueba">
       <p className="v-escenario">
-        Una simulación dentro de la simulación: la población de cada comuna cambia en vivo con las mudanzas entre comunas, los nacimientos, las
-        defunciones y quienes llegan o se van de la región. Cada control escala lo que midieron el censo y las estadísticas vitales.
+        Si la vivienda se llena y cada grupo llega a donde llegaron los suyos, ¿qué comunas se saturan primero y hacia dónde se derrama la gente? El
+        mapa muestra la ocupación de la vivienda de cada comuna. Cada una de las {REPLICAS_ABM} corridas es distinta: lo que se ve es lo que
+        emerge de las reglas, no un número fijo.
       </p>
 
-      <section className="bloque" aria-labelledby="h-controles">
-        <h3 id="h-controles">Controles</h3>
-        {COMPONENTES.map((c) => (
-          <label key={c} className="prueba-frase" style={{ display: 'grid', gridTemplateColumns: '1fr 6rem 9.5rem', gap: '0.5rem', alignItems: 'center', margin: '0.15rem 0' }}>
-            <span>{ETIQUETA[c]}</span>
-            <input
-              type="range"
-              min={0}
-              max={2}
-              step={0.1}
-              value={mult[c]}
-              aria-label={`${ETIQUETA[c]}: ${fmt(mult[c] * 100, 0)} % de lo medido`}
-              onChange={(e) => setMult({ ...mult, [c]: Number(e.target.value) })}
-            />
-            <span style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-              {fmt(anual(c), 0)}/año · {fmt(mult[c] * 100, 0)} %
-            </span>
-          </label>
-        ))}
-        <button type="button" onClick={() => setMult(MULTIPLICADORES_BASE)}>
-          Volver a lo medido
-        </button>
-      </section>
-
-      <section className="bloque" aria-labelledby="h-total">
-        <h3 id="h-total">Región Metropolitana en {datos.anios[t]}</h3>
+      <section className="bloque" aria-labelledby="h-reglas">
+        <h3 id="h-reglas">Quienes llegan del extranjero</h3>
+        <div role="radiogroup" aria-labelledby="h-reglas" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+          {(
+            [
+              ['redes', 'Siguen a su comunidad'],
+              ['fijo', 'Repiten la geografía medida'],
+            ] as const
+          ).map(([modo, texto]) => (
+            <button
+              key={modo}
+              type="button"
+              role="radio"
+              aria-checked={opciones.modoExtranjero === modo}
+              className="lectura"
+              onClick={() => onOpciones({ ...opciones, modoExtranjero: modo })}
+            >
+              {texto}
+            </button>
+          ))}
+        </div>
         <p className="prueba-frase">
-          <b>{fmt(totales[t]!, 0)} personas</b> ({fmtSigned(((totales[t]! - totales[0]!) / totales[0]!) * 100, 1)} % desde {datos.anios[0]}). El
-          modelo cerrado que usa hoy la simulación deja {fmt(totalesCerrado[t]!, 0)}.
+          «Siguen a su comunidad»: cada llegada elige comuna con peso (stock + 1)^{fmt(datos.phi ?? 1, 2)}, así que cada una hace más atractiva su
+          comuna para la siguiente. Ajustado con 2012–2017 y probado con 2019–2024.
         </p>
-        <GraficoBanda
-          anios={datos.anios}
-          serie={{ p10: millones, p50: millones, p90: millones }}
-          comparacion={{ nombre: 'Modelo cerrado', p50: millonesCerrado }}
-          idxAnio={t}
-          unidad="millones de personas"
-          nivelBanda={null}
-        />
-        <p className="prueba-frase">Línea continua: con tus controles. Comparación: modelo cerrado (sin nacimientos ni migración externa).</p>
       </section>
 
-      <section className="bloque" aria-labelledby="h-comunas">
-        <h3 id="h-comunas">Las que más crecen y más bajan</h3>
-        <ul className="barras">
-          {[...cambios.slice(0, 4), ...cambios.slice(-3)].map((c) => (
-            <li key={c.codigo}>
-              <span className="barra-txt">{c.nombre}</span>
-              <span className="barra-num">
-                {fmtSigned(c.pct, 1)} % · {fmtSigned(c.personas, 0)} personas
+      <section className="bloque" aria-labelledby="h-eventos">
+        <h3 id="h-eventos">Eventos</h3>
+        <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: '0.35rem' }}>
+          {EVENTOS.map((ev) => (
+            <li key={ev.id}>
+              <button
+                type="button"
+                aria-pressed={activos.has(ev.id)}
+                className="pestana-mapa"
+                disabled={ev.necesitaComuna && seleccionada < 0}
+                onClick={() => alternar(ev)}
+              >
+                {ev.texto}
+              </button>{' '}
+              <span className="prueba-frase">
+                {ev.detalle}
+                {ev.necesitaComuna && (seleccionada >= 0 ? `: ${nombre(seleccionada)}` : ' (elige una en el mapa)')}
               </span>
             </li>
           ))}
         </ul>
       </section>
 
-      {flujos.length > 0 && (
-        <section className="bloque" aria-labelledby="h-flujos">
-          <h3 id="h-flujos">Mayores mudanzas de {datos.anios[t]}</h3>
+      <section className="bloque" aria-labelledby="h-region" aria-busy={calculando}>
+        <h3 id="h-region">Región Metropolitana en {datos.anios[t]}</h3>
+        {!total ? (
+          <p className="prueba-frase">Simulando…</p>
+        ) : (
+          <>
+            <p className="prueba-frase">
+              <b>{fmt(total.p50[t]! / 1e6, 2)} millones</b> (entre {fmt(total.p10[t]! / 1e6, 2)} y {fmt(total.p90[t]! / 1e6, 2)} en el 80 % de las
+              corridas), {fmtSigned(((total.p50[t]! - total.p50[0]!) / total.p50[0]!) * 100, 1)} % desde {datos.anios[0]}.
+              {calculando && ' Recalculando…'}
+            </p>
+            <GraficoBanda
+              anios={datos.anios}
+              serie={{ p10: millones(total.p10), p50: millones(total.p50), p90: millones(total.p90) }}
+              idxAnio={t}
+              unidad="millones de personas"
+              nivelBanda={null}
+            />
+          </>
+        )}
+      </section>
+
+      {total && (
+        <section className="bloque" aria-labelledby="h-saturan">
+          <h3 id="h-saturan">Qué se satura hasta {datos.anios[t]}</h3>
+          <p className="prueba-frase">
+            {saturadas.length === 0 ? 'Ninguna comuna se llena todavía.' : `${saturadas.length} comunas se llenan en al menos una corrida.`} Personas
+            que no cupieron en su primera opción y se fueron a otra: <b>{fmt(derrames, 0)}</b>. Sin lugar en ninguna comuna: <b>{fmt(sinLugar, 0)}</b>{' '}
+            (medianas).
+          </p>
           <ul className="barras">
-            {flujos.map((f) => (
-              <li key={`${f.origen}-${f.destino}`}>
-                <span className="barra-txt">
-                  {nombre(f.origen)} → {nombre(f.destino)}
+            {saturadas.slice(0, 8).map((s) => (
+              <li key={s.comuna}>
+                <span className="barra-txt">{nombre(s.comuna)}</span>
+                <span className="barra-pista">
+                  <span className="barra barra-tinta" style={{ width: `${(s.corridas / corridas.length) * 100}%` }} />
                 </span>
-                <span className="barra-num">{fmt(f.personas, 0)} personas</span>
+                <span className="barra-num">
+                  {s.corridas} de {corridas.length}
+                </span>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section className="bloque" aria-labelledby="h-hallazgos">
-        <h3 id="h-hallazgos">Lo que medimos</h3>
-        <ul>
-          <li className="prueba-frase">Quienes llegan de afuera van a donde llegaron otros antes: la geografía de 2012–2017 predice la de 2019–2024 (correlación 0,93).</li>
-          <li className="prueba-frase">La vivienda nueva del centro la ocupó la inmigración, no las mudanzas entre comunas (permisos y llegadas del extranjero: 0,76).</li>
-          <li className="prueba-frase">Desde 2017 los nacimientos cayeron 31 %: con tasas antiguas, cualquier proyección sobreestima la población.</li>
-        </ul>
-        {datos.supuestos.length > 0 && <p className="aviso aviso-honesto">{datos.supuestos.join(' ')}</p>}
+      <section className="bloque" aria-labelledby="h-supuestos">
+        <h3 id="h-supuestos">Supuestos</h3>
+        <p className="aviso aviso-honesto">
+          Grupos de {tamano} personas. Capacidad: viviendas del censo 2024 por personas por vivienda ocupada; crece con los permisos del MINVU (media
+          2015–2024). Las mudanzas internas repiten los destinos de 2012–2017. El aire no cambia a dónde se muda la gente. Detalle en
+          docs/modelo-mudanzas-abm.md.
+        </p>
       </section>
     </div>
   )

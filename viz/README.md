@@ -76,7 +76,7 @@ Pensada para escritorio 16:9 y 16:10 (1920×1080, 1440×900, 1280×720), sin des
 
 | Tecla | Qué hace |
 |---|---|
-| `1` … `3` (`4`) | Vistas: Riesgo, El plan, La leña y, si el archivo trae `validacion`, La prueba |
+| `1` … `3` (`4`, `5`) | Vistas: Riesgo, El plan, La leña y, si el archivo trae `validacion`, La prueba; si existe `datos/demografia.json`, Las mudanzas |
 | `Q` `W` `E` `R` … | Enciende o apaga el plan de esa fila en El plan (la letra está impresa en cada fila) |
 | `←` `→` | Año anterior o siguiente |
 | `Espacio` | Reproduce o pausa los años |
@@ -97,6 +97,7 @@ Con `prefers-reduced-motion` los cambios son instantáneos.
 |---|---|---|
 | `viz/datos/simulacion.json` (lo sirve y empaqueta `vite.config.ts` como `datos/simulacion.json`) | El modelo: `python -m experiments.simular` | Se usa `viz/ejemplo/simulacion.json` (se sirve como `datos/ejemplo.json` por un plugin de `vite.config.ts`) y aparece «Datos de ejemplo» si `meta.es_ejemplo` es true |
 | `viz/public/datos/lena.json` | `datos/viz/build_lena.py` | La vista La leña lo dice en palabras |
+| `viz/public/datos/demografia.json` | `python -m experiments.exportar_demografia` | La vista Las mudanzas no aparece. Es la simulación por agentes de `docs/modelo-mudanzas-abm.md`: corre en un Web Worker (`src/lib/abm.worker.ts`), 20 corridas por cambio, y el mapa pinta la ocupación de la vivienda |
 | `viz/public/geo/comunas_rm.geojson` | Frente de cartografía | Cada comuna se dibuja como un círculo en su lat/lon |
 
 Si el JSON no cumple el contrato (`docs/plan-comunas.md`), la página muestra un estado de error con la

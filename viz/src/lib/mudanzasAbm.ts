@@ -293,3 +293,25 @@ export function simularReplicas(p: ParametrosAbm, o: OpcionesAbm, replicas: numb
     corridas,
   }
 }
+
+/** Occupancy of each comuna in year `t`, in percent of capacity, as a band over runs; null without a limit. */
+export function bandaOcupacion(corridas: readonly ResultadoAbm[], t: number): ({ p10: number; p50: number; p90: number } | null)[] {
+  const n = corridas[0]?.ocupacion[t]?.length ?? 0
+  return Array.from({ length: n }, (_, i) => {
+    const xs = corridas.map((c) => c.ocupacion[t]![i]).filter((v): v is number => v !== null).map((v) => v * 100)
+    if (xs.length === 0) return null
+    xs.sort((a, b) => a - b)
+    return { p10: cuantil(xs, 0.1), p50: cuantil(xs, 0.5), p90: cuantil(xs, 0.9) }
+  })
+}
+
+/** Comunas that saturated at least once by step `hasta` (inclusive), with how many runs did so; most frequent first. */
+export function frecuenciaSaturacion(corridas: readonly ResultadoAbm[], hasta: number): { comuna: number; corridas: number }[] {
+  const veces = new Map<number, number>()
+  for (const c of corridas) {
+    const vistas = new Set<number>()
+    for (let t = 0; t < Math.min(hasta, c.saturadas.length); t++) for (const j of c.saturadas[t]!) vistas.add(j)
+    for (const j of vistas) veces.set(j, (veces.get(j) ?? 0) + 1)
+  }
+  return [...veces].map(([comuna, k]) => ({ comuna, corridas: k })).sort((a, b) => b.corridas - a.corridas || a.comuna - b.comuna)
+}
