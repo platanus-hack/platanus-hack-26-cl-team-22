@@ -1,0 +1,34 @@
+{
+ "comando": "python -m experiments.aire_v1_pruebas",
+ "estaciones": 10,
+ "loo_rmse": {
+  "v0": 2.048,
+  "media_de_las_otras": 2.833,
+  "estacional": 2.104,
+  "viento": 2.048,
+  "v0_mas_residuos_interpolados": 2.041
+ },
+ "niveles_2024": {
+  "estaciones": 10,
+  "v0": 2.569,
+  "v0_anclado_al_residuo_2023": 1.91,
+  "persistencia": 1.91
+ },
+ "rosas_de_viento": {
+  "archivo": "data/aire/viento_rosa_2023.csv",
+  "estaciones": [
+   "D12",
+   "D13",
+   "D14",
+   "D15",
+   "D17",
+   "D18",
+   "D27",
+   "D28"
+  ]
+ },
+ "supuestos": [
+  "Industry and transport 2024 use the 2023 values (transport missing in 2024; industry 2024 has the Las Condes jump).",
+  "Each source commune uses the wind rose of its nearest station with wind data."
+ ]
+}
