@@ -1,19 +1,44 @@
 {
- "fuente": "Dirección General de Aguas, decretos de escasez hídrica",
- "filas_rm_descartadas": [
-  "N° 54 de 06 de abril de 2020",
-  "N° 100  de 04 de septiembre de 2020"
- ],
- "archivos": {
-  "data/raw/dga/pagina.html": {
-   "url": "https://dga.mop.gob.cl/derechos-de-agua/proteccion-de-las-fuentes/decretos-de-escasez-2/",
-   "descargado": "2026-11-21",
-   "sha256": "2e01ee4255ac30c095ee1ada04975069cf1835b5667abe66f157385665037e5a"
+  "fuente": "Dirección General de Aguas, decretos de escasez hídrica",
+  "filas_rm_descartadas": [
+    "N° 54 de 06 de abril de 2020",
+    "N° 100  de 04 de septiembre de 2020"
+  ],
+  "archivos": {
+    "data/raw/dga/pagina.html": {
+      "url": "https://dga.mop.gob.cl/derechos-de-agua/proteccion-de-las-fuentes/decretos-de-escasez-2/",
+      "descargado": "2026-11-21",
+      "sha256": "2e01ee4255ac30c095ee1ada04975069cf1835b5667abe66f157385665037e5a"
+    },
+    "data/raw/dga/Decretos_zonas_escasez_historico_04-09-2026.xls": {
+      "url": "https://dga.mop.gob.cl/uploads/sites/13/2024/07/Decretos_zonas_escasez_historico_04-09-2026.xls",
+      "descargado": "2026-11-21",
+      "sha256": "93dd0e6629f887f36f0c8cbb0032b4c3c25ca070153eaea2475fca746a3a8f6e"
+    },
+    "data/raw/dga/cr2_caudales_pagina.html": {
+      "url": "https://www.cr2.cl/datos-de-caudales/",
+      "descargado": "2026-11-21",
+      "sha256": "7aece55a3b0f837d24e0117a09ff2f27d48f5d3ffa84298f0e064e1d9fa7f4ad"
+    },
+    "data/raw/dga/cr2_qflxAmon_2018.zip": {
+      "url": "https://www.cr2.cl/download/cr2_qflxamon_2018-zip/?wpdmdl=15415&refresh=6b0221fccd5cd1795301884",
+      "descargado": "2026-11-21",
+      "sha256": "7ea689d7428586a96694d960c9739a686d4f066302aad39e3fb8a303b54368e7"
+    }
   },
-  "data/raw/dga/Decretos_zonas_escasez_historico_04-09-2026.xls": {
-   "url": "https://dga.mop.gob.cl/uploads/sites/13/2024/07/Decretos_zonas_escasez_historico_04-09-2026.xls",
-   "descargado": "2026-11-21",
-   "sha256": "93dd0e6629f887f36f0c8cbb0032b4c3c25ca070153eaea2475fca746a3a8f6e"
+  "caudales_rm": {
+    "fuente": "DGA vía (CR)2, caudales medios mensuales 2018 (CC0); OpenStreetMap vía Overpass (ODbL)",
+    "fecha": "2026-11-21",
+    "overpass": "failed: Overpass unreachable: connection timed out on overpass-api.de and overpass.kumi.systems (checked 2026-11-21)",
+    "consulta_overpass": "[out:json][timeout:240];\n(\n  way[\"waterway\"=\"river\"](-34.35,-71.75,-32.85,-69.7);\n  way[\"waterway\"=\"stream\"][\"name\"~\"^([eé]st[eé]r[oó] [aá]lh[uúü][eé]|[eé]st[eé]r[oó] [aá]rr[aá]y[aá][nñ]|[eé]st[eé]r[oó] P[uúü][aá][nñ]g[uúü][eé]|[eé]st[eé]r[oó] Y[eé]rb[aá] L[oó]c[aá]|Q[uúü][eé]br[aá]d[aá] R[aá]m[oó][nñ]|R[ií][oó] [aá][nñ]g[oó]st[uúü]r[aá]|R[ií][oó] C[oó]l[oó]r[aá]d[oó]|R[ií][oó] M[aá][ií]p[oó]|R[ií][oó] M[aá]p[oó]ch[oó]|R[ií][oó] [oó]l[ií]v[aá]r[eé]s|R[ií][oó] V[oó]lc[aá][nñ])$\",i](-34.35,-71.75,-32.85,-69.7);\n);\nout geom;"
+  },
+  "rios_teselas": {
+    "url": "https://tiles.openfreemap.org/planet/20261115_080022_pt/{z}/{x}/{y}.pbf",
+    "descargado": "2026-11-21",
+    "zoom": 12,
+    "zoom_esteros": 13,
+    "teselas": 586,
+    "licencia": "ODbL, © OpenStreetMap contributors",
+    "enlaces_vivo": "https://caudalrio.cl/sitemap.xml"
   }
- }
 }
