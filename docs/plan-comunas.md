@@ -2,6 +2,8 @@
 
 Estado al 21 de noviembre de 2026. Este plan reparte el trabajo en frentes que avanzan
 en paralelo. Complementa `work-plan.md` (roles y horas) y las observaciones al whitepaper.
+El contexto base del proyecto (decisiones, modelo, datos, validación, demo) está en
+[`contexto-proyecto.md`](./contexto-proyecto.md).
 
 ## La decisión de arquitectura
 
