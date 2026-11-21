@@ -317,6 +317,29 @@ def test_handle_simulate_returns_expected_cli_json_structure() -> None:
         _valid_payload(reference_time="2026-11-25"),
         _valid_payload(reference_time="not-a-date"),
         _valid_payload(reference_time=12345),
+        _valid_payload(include_day_trips="true"),
+        _valid_payload(include_day_trips="false"),
+        _valid_payload(include_day_trips=1),
+        _valid_payload(include_day_trips=0),
+        _valid_payload(include_day_trips=None),
+        _valid_payload(include_day_trips=[]),
+        _valid_payload(payment_method=""),
+        _valid_payload(payment_method="   "),
+        _valid_payload(payment_method="CARD"),
+        _valid_payload(payment_method="CASH"),
+        _valid_payload(payment_method="INTERNATIONAL_CARD"),
+        _valid_payload(payment_method="MIXED"),
+        _valid_payload(payment_method="crypto"),
+        _valid_payload(payment_method=123),
+        _valid_payload(payment_method=True),
+        _valid_payload(payment_method=None),
+        _valid_payload(include_unverified="true"),
+        _valid_payload(include_unverified="false"),
+        _valid_payload(include_unverified=1),
+        _valid_payload(include_unverified=0),
+        _valid_payload(include_unverified=None),
+        _valid_payload(include_unverified=[]),
+        _valid_payload(dining_preference="CASUAL"),
         _valid_payload(extra_unexpected_field="boom"),
     ],
 )
@@ -1339,3 +1362,230 @@ def test_socket_rejects_duplicate_and_conflicting_content_type_headers(
     assert status_comma == 415
     _assert_security_headers(hdr_comma)
     assert "Content-Type" in json.loads(body_comma)["error"]
+
+
+@pytest.mark.parametrize(
+    ("field_name", "bad_value"),
+    [
+        ("include_day_trips", "true"),
+        ("include_day_trips", "false"),
+        ("include_day_trips", 1),
+        ("include_day_trips", 0),
+        ("include_day_trips", None),
+        ("include_day_trips", ["true"]),
+        ("payment_method", ""),
+        ("payment_method", "   "),
+        ("payment_method", "CARD"),
+        ("payment_method", "CASH"),
+        ("payment_method", "INTERNATIONAL_CARD"),
+        ("payment_method", "CASH_ONLY"),
+        ("payment_method", "MIXED"),
+        ("payment_method", "debit"),
+        ("payment_method", 123),
+        ("payment_method", True),
+        ("payment_method", None),
+        ("payment_method", ["card"]),
+        ("include_unverified", "true"),
+        ("include_unverified", "false"),
+        ("include_unverified", 1),
+        ("include_unverified", 0),
+        ("include_unverified", None),
+        ("include_unverified", ["false"]),
+    ],
+)
+def test_new_optional_fields_invalid_type_or_value_returns_400_with_field_name(
+    field_name: str,
+    bad_value: Any,
+) -> None:
+    payload = _valid_payload(**{field_name: bad_value})
+    status, data = handle_simulate(payload, reference_time=FIXED_REF_TIME)
+    assert status == 400
+    assert data.get("field") == field_name
+    assert field_name in data.get("error", "")
+    assert "Traceback" not in json.dumps(data)
+
+
+def test_new_optional_fields_defaults_match_explicit_defaults() -> None:
+    status_default, data_default = handle_simulate(
+        _valid_payload(),
+        reference_time=FIXED_REF_TIME,
+    )
+    status_explicit, data_explicit = handle_simulate(
+        _valid_payload(
+            include_day_trips=True,
+            payment_method="card",
+            include_unverified=False,
+        ),
+        reference_time=FIXED_REF_TIME,
+    )
+    assert status_default == 200
+    assert status_explicit == 200
+    assert data_default == data_explicit
+    assert "DAY_TRIP" in data_default["categories"]
+    assert data_default["include_unverified"] is False
+
+
+def test_include_day_trips_false_removes_day_trip_category() -> None:
+    status_with, data_with = handle_simulate(
+        _valid_payload(include_day_trips=True),
+        reference_time=FIXED_REF_TIME,
+    )
+    status_without, data_without = handle_simulate(
+        _valid_payload(include_day_trips=False),
+        reference_time=FIXED_REF_TIME,
+    )
+    assert status_with == 200
+    assert status_without == 200
+
+    assert "DAY_TRIP" in data_with["categories"]
+    assert any(
+        choice["category"] == "DAY_TRIP"
+        for scenario in data_with["scenarios"]
+        for choice in scenario["choices"]
+    )
+
+    assert "DAY_TRIP" not in data_without["categories"]
+    assert "DAY_TRIP" not in data_without["missing_categories"]
+    for scenario in data_without["scenarios"]:
+        for choice in scenario["choices"]:
+            assert choice["category"] != "DAY_TRIP"
+
+    totals_with = [s["total_cost_usd"] for s in data_with["scenarios"]]
+    totals_without = [s["total_cost_usd"] for s in data_without["scenarios"]]
+    assert all(w < t for w, t in zip(totals_without, totals_with, strict=True))
+
+
+def test_payment_method_cash_never_returns_option_requiring_international_card() -> None:
+    repo = JsonOptionRepository(DEFAULT_DATA_DIR)
+    scl_options = repo.list_options("scl")
+    card_required_ids = {
+        opt.id for opt in scl_options if opt.requires_international_card
+    }
+    assert len(card_required_ids) >= 1
+
+    # With payment_method='card' (default), at least one international-card option is chosen
+    status_card, data_card = handle_simulate(
+        _valid_payload(payment_method="card"),
+        reference_time=FIXED_REF_TIME,
+    )
+    assert status_card == 200
+    chosen_card_ids = {
+        choice["option_id"]
+        for scenario in data_card["scenarios"]
+        for choice in scenario["choices"]
+    }
+    assert chosen_card_ids & card_required_ids
+
+    # With payment_method='cash', no option requiring an international card is ever chosen
+    for inc_unverified in (False, True):
+        status_cash, data_cash = handle_simulate(
+            _valid_payload(payment_method="cash", include_unverified=inc_unverified),
+            reference_time=FIXED_REF_TIME,
+        )
+        assert status_cash == 200
+        for scenario in data_cash["scenarios"]:
+            for choice in scenario["choices"]:
+                assert choice["option_id"] not in card_required_ids, (
+                    f"Scenario {scenario['scenario_type']} selected card-requiring option "
+                    f"{choice['option_id']} when payment_method='cash'"
+                )
+
+        rejected_by_id = {
+            item["option_id"]: item["reasons"] for item in data_cash["rejected_options"]
+        }
+        for card_opt_id in card_required_ids:
+            assert card_opt_id in rejected_by_id
+            assert "PAYMENT_METHOD_INCOMPATIBLE" in rejected_by_id[card_opt_id]
+
+
+def test_include_unverified_true_changes_totals_vs_default_and_default_lists_unverified_rejections() -> None:
+    status_default, data_default = handle_simulate(
+        _valid_payload(),
+        reference_time=FIXED_REF_TIME,
+    )
+    status_unverified, data_unverified = handle_simulate(
+        _valid_payload(include_unverified=True),
+        reference_time=FIXED_REF_TIME,
+    )
+    assert status_default == 200
+    assert status_unverified == 200
+
+    assert data_default["include_unverified"] is False
+    assert data_unverified["include_unverified"] is True
+
+    # Default response lists UNVERIFIED_SOURCE rejections for every unverified option
+    unverified_rejections_default = [
+        item
+        for item in data_default["rejected_options"]
+        if "UNVERIFIED_SOURCE" in item["reasons"]
+    ]
+    assert len(unverified_rejections_default) >= 1
+    assert {item["option_id"] for item in unverified_rejections_default} == set(
+        data_default["unverified_option_ids"]
+    )
+    for scenario in data_default["scenarios"]:
+        for choice in scenario["choices"]:
+            assert choice["unverified"] is False
+
+    # When include_unverified=True, no option is rejected with UNVERIFIED_SOURCE
+    unverified_rejections_included = [
+        item
+        for item in data_unverified["rejected_options"]
+        if "UNVERIFIED_SOURCE" in item["reasons"]
+    ]
+    assert unverified_rejections_included == []
+    assert any(
+        choice["unverified"] is True
+        for scenario in data_unverified["scenarios"]
+        for choice in scenario["choices"]
+    )
+
+    # Scenario totals on the Santiago seed change when include_unverified=True
+    default_totals_usd = [s["total_cost_usd"] for s in data_default["scenarios"]]
+    unverified_totals_usd = [s["total_cost_usd"] for s in data_unverified["scenarios"]]
+    assert default_totals_usd != unverified_totals_usd
+
+    default_totals_clp = [s["total_cost_clp"] for s in data_default["scenarios"]]
+    unverified_totals_clp = [s["total_cost_clp"] for s in data_unverified["scenarios"]]
+    assert default_totals_clp != unverified_totals_clp
+
+
+def test_socket_simulate_accepts_and_validates_new_trip_inputs(
+    live_server: tuple[Any, str, int],
+) -> None:
+    _server, host, port = live_server
+
+    valid_custom = _valid_payload(
+        include_day_trips=False,
+        payment_method="cash",
+        include_unverified=True,
+    )
+    status_ok, hdr_ok, _hl, body_ok = _post_json(
+        host,
+        port,
+        "/api/simulate",
+        json.dumps(valid_custom).encode("utf-8"),
+    )
+    assert status_ok == 200
+    _assert_security_headers(hdr_ok)
+    parsed_ok = json.loads(body_ok)
+    assert "DAY_TRIP" not in parsed_ok["categories"]
+    assert parsed_ok["include_unverified"] is True
+
+    for bad_field, bad_val in (
+        ("include_day_trips", "no"),
+        ("payment_method", "bitcoin"),
+        ("include_unverified", 1),
+        ("dining_preference", "CASUAL"),
+    ):
+        status_bad, hdr_bad, _hl, body_bad = _post_json(
+            host,
+            port,
+            "/api/simulate",
+            json.dumps(_valid_payload(**{bad_field: bad_val})).encode("utf-8"),
+        )
+        assert status_bad == 400
+        _assert_security_headers(hdr_bad)
+        parsed_bad = json.loads(body_bad)
+        assert parsed_bad["field"] == bad_field
+        assert bad_field in parsed_bad["error"]

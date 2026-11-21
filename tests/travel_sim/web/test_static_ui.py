@@ -58,6 +58,9 @@ class _StaticHtmlInspector(HTMLParser):
                         "tag": tag_lower,
                         "id": attr_map.get("id"),
                         "name": attr_map.get("name"),
+                        "type": input_type,
+                        "value": attr_map.get("value"),
+                        "checked": "checked" in attr_map,
                         "wrapped_in_label": self._label_depth > 0,
                     }
                 )
@@ -121,7 +124,7 @@ def test_index_html_complies_with_strict_csp_and_accessible_labels() -> None:
         assert script["has_src"] is True, "Every <script> must reference an external local src"
         assert str(script["body"]).strip() == "", "Inline <script> body violates strict CSP"
 
-    assert len(inspector.controls) >= 12
+    assert len(inspector.controls) >= 16
     for control in inspector.controls:
         ctrl_id = control["id"]
         assert isinstance(ctrl_id, str) and ctrl_id, f"Form control missing id: {control}"
@@ -129,6 +132,7 @@ def test_index_html_complies_with_strict_csp_and_accessible_labels() -> None:
         assert has_label, f"Form control {ctrl_id!r} has no associated <label>"
 
     assert inspector.details_open.get("manual-data-details") is False
+    assert inspector.details_open.get("advanced-options-details") is False
     assert inspector.details_open.get("rejected-details") is False
 
 
@@ -150,6 +154,12 @@ def test_trip_description_form_sections_and_plain_choices_present() -> None:
         "Normal (redes y mapas)",
         "Intenso (video y hotspot)",
         "Ajustar a mano",
+        "Quiero hacer una escapada de un dia (Valparaiso / Vina del Mar)",
+        "Pagos",
+        "Pago con tarjeta internacional",
+        "Solo efectivo",
+        "Opciones avanzadas",
+        "Incluir opciones sin verificar (estimaciones)",
     )
     for phrase in expected_phrases:
         assert phrase in html_text, f"Missing expected form text {phrase!r} in index.html"
@@ -203,3 +213,62 @@ def test_gb_presets_defined_once_in_app_js() -> None:
     assert len(re.findall(r"\bLIGHT\s*:\s*3\b", app_js)) == 1
     assert len(re.findall(r"\bNORMAL\s*:\s*10\b", app_js)) == 1
     assert len(re.findall(r"\bINTENSE\s*:\s*30\b", app_js)) == 1
+
+
+def test_three_new_controls_exist_with_labels_and_defaults_and_no_dining_control() -> None:
+    html_text = _read_static("index.html")
+    app_js = _read_static("app.js")
+
+    inspector = _StaticHtmlInspector()
+    inspector.feed(html_text)
+    inspector.close()
+
+    by_id = {str(c["id"]): c for c in inspector.controls if c.get("id")}
+
+    # 1. include_day_trips checkbox in 'Tu viaje' checked by default
+    day_trip_ctrl = by_id.get("include-day-trips-input")
+    assert day_trip_ctrl is not None
+    assert day_trip_ctrl["name"] == "include_day_trips"
+    assert day_trip_ctrl["type"] == "checkbox"
+    assert day_trip_ctrl["checked"] is True
+    assert "include-day-trips-input" in inspector.label_fors
+    assert "Quiero hacer una escapada de un dia (Valparaiso / Vina del Mar)" in html_text
+
+    # 2. payment_method radios in 'Pagos' ('card' default, 'cash')
+    card_ctrl = by_id.get("payment-method-card")
+    cash_ctrl = by_id.get("payment-method-cash")
+    assert card_ctrl is not None and cash_ctrl is not None
+    assert card_ctrl["name"] == "payment_method"
+    assert card_ctrl["type"] == "radio"
+    assert card_ctrl["value"] == "card"
+    assert card_ctrl["checked"] is True
+    assert "payment-method-card" in inspector.label_fors
+    assert cash_ctrl["name"] == "payment_method"
+    assert cash_ctrl["type"] == "radio"
+    assert cash_ctrl["value"] == "cash"
+    assert cash_ctrl["checked"] is False
+    assert "payment-method-cash" in inspector.label_fors
+    assert "Pago con tarjeta internacional" in html_text
+    assert "Solo efectivo" in html_text
+
+    # 3. include_unverified checkbox in collapsed 'Opciones avanzadas' details unchecked by default
+    unverified_ctrl = by_id.get("include-unverified-input")
+    assert unverified_ctrl is not None
+    assert unverified_ctrl["name"] == "include_unverified"
+    assert unverified_ctrl["type"] == "checkbox"
+    assert unverified_ctrl["checked"] is False
+    assert "include-unverified-input" in inspector.label_fors
+    assert inspector.details_open.get("advanced-options-details") is False
+    assert "Opciones avanzadas" in html_text
+    assert "Incluir opciones sin verificar (estimaciones)" in html_text
+
+    # No dining preference control exists
+    assert "dining_preference" not in html_text
+    assert "dining_preference" not in app_js
+
+    # Unverified exclusion note and rejection reason copy in app.js
+    assert "Sin fuente verificada" in app_js
+    assert (
+        "opciones sin verificar quedaron fuera. Puedes incluirlas en Opciones avanzadas."
+        in app_js
+    )

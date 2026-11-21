@@ -19,7 +19,11 @@ from urllib.parse import unquote, urlsplit
 from travel_sim.application.ports import OptionRepository
 from travel_sim.application.simulate import simulate
 from travel_sim.cli import DEFAULT_DATA_DIR, simulation_to_dict
-from travel_sim.domain import DeviceProfile, FrictionTolerance
+from travel_sim.domain import (
+    DeviceProfile,
+    FrictionTolerance,
+    PaymentMethodPreference,
+)
 from travel_sim.infrastructure.json_repository import (
     JsonOptionRepository,
     RepositoryValidationError,
@@ -51,6 +55,10 @@ _ACCEPTED_LOOPBACK_HOSTS: frozenset[str] = frozenset({"localhost", "127.0.0.1", 
 MAX_TARGET_BYTES: int = 2048
 
 _DEVICE_CHOICES: tuple[str, ...] = ("esim-only", "physical-only", "dual")
+_PAYMENT_METHOD_CHOICES: dict[str, PaymentMethodPreference] = {
+    "card": PaymentMethodPreference.INTERNATIONAL_CARD,
+    "cash": PaymentMethodPreference.CASH,
+}
 _REQUIRED_SIMULATE_FIELDS: tuple[str, ...] = (
     "city",
     "days",
@@ -59,7 +67,12 @@ _REQUIRED_SIMULATE_FIELDS: tuple[str, ...] = (
     "has_local_id",
     "tolerance",
 )
-_OPTIONAL_SIMULATE_FIELDS: tuple[str, ...] = ("reference_time",)
+_OPTIONAL_SIMULATE_FIELDS: tuple[str, ...] = (
+    "reference_time",
+    "include_day_trips",
+    "payment_method",
+    "include_unverified",
+)
 _ALLOWED_SIMULATE_FIELDS: frozenset[str] = frozenset(
     _REQUIRED_SIMULATE_FIELDS + _OPTIONAL_SIMULATE_FIELDS
 )
@@ -375,6 +388,43 @@ def handle_simulate(
         if ref_err is not None:
             return ref_err
 
+    if "include_day_trips" in payload:
+        raw_include_day_trips = payload["include_day_trips"]
+        if not isinstance(raw_include_day_trips, bool):
+            return _invalid_field(
+                "include_day_trips",
+                "Invalid 'include_day_trips': must be a boolean.",
+            )
+        include_day_trips = raw_include_day_trips
+    else:
+        include_day_trips = True
+
+    if "payment_method" in payload:
+        raw_payment_method = payload["payment_method"]
+        if (
+            not isinstance(raw_payment_method, str)
+            or raw_payment_method not in _PAYMENT_METHOD_CHOICES
+        ):
+            allowed_payments = ", ".join(_PAYMENT_METHOD_CHOICES)
+            return _invalid_field(
+                "payment_method",
+                f"Invalid 'payment_method': must be one of {allowed_payments}.",
+            )
+        payment_method_pref = _PAYMENT_METHOD_CHOICES[raw_payment_method]
+    else:
+        payment_method_pref = PaymentMethodPreference.INTERNATIONAL_CARD
+
+    if "include_unverified" in payload:
+        raw_include_unverified = payload["include_unverified"]
+        if not isinstance(raw_include_unverified, bool):
+            return _invalid_field(
+                "include_unverified",
+                "Invalid 'include_unverified': must be a boolean.",
+            )
+        include_unverified = raw_include_unverified
+    else:
+        include_unverified = False
+
     try:
         repo = _resolve_repository(repository=repository, data_dir=data_dir)
         city = repo.get_city(city_id)
@@ -416,7 +466,10 @@ def handle_simulate(
             has_local_id=has_local_id,
             target_data_gb=data_gb,
             friction_tolerance=tolerance,
+            include_day_trips=include_day_trips,
+            payment_method_preference=payment_method_pref,
             reference_time=ref_time,
+            include_unverified=include_unverified,
         )
         return 200, simulation_to_dict(result, device_choice=device_choice)
     except (ValueError, TypeError):

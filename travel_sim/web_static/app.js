@@ -102,7 +102,8 @@
     REQUIRES_LOCAL_ID: "Requiere documento de identidad local (RUT)",
     PAYMENT_METHOD_INCOMPATIBLE: "Método de pago incompatible",
     INSUFFICIENT_DATA_QUOTA: "Cuota de datos insuficiente para el viaje",
-    INCOMPATIBLE_WITH_SELECTED: "Incompatible con otra opción seleccionada"
+    INCOMPATIBLE_WITH_SELECTED: "Incompatible con otra opción seleccionada",
+    UNVERIFIED_SOURCE: "Sin fuente verificada"
   });
 
   const FRESHNESS_LABELS = Object.freeze({
@@ -115,6 +116,9 @@
     days: "#days-input",
     data_gb: "#data-gb-input",
     has_local_id: "#has-local-id-input",
+    include_day_trips: "#include-day-trips-input",
+    payment_method: 'input[name="payment_method"]',
+    include_unverified: "#include-unverified-input",
     device: 'input[name="device"]',
     tolerance: 'input[name="tolerance"]'
   });
@@ -200,6 +204,12 @@
         details.open = true;
       }
     }
+    if (fieldName === "include_unverified") {
+      const advDetails = document.getElementById("advanced-options-details");
+      if (advDetails) {
+        advDetails.open = true;
+      }
+    }
     const selector = FIELD_SELECTORS[fieldName];
     const target =
       document.querySelector(selector + ":checked") ||
@@ -215,6 +225,12 @@
     if (warningBanner) {
       clearChildren(warningBanner);
       warningBanner.hidden = true;
+    }
+
+    const unverifiedNote = document.getElementById("unverified-excluded-note");
+    if (unverifiedNote) {
+      clearChildren(unverifiedNote);
+      unverifiedNote.hidden = true;
     }
 
     const summarySection = document.getElementById("summary-section");
@@ -636,14 +652,56 @@
     container.appendChild(block);
   }
 
+  function renderUnverifiedExcludedNote(data) {
+    const noteBox = document.getElementById("unverified-excluded-note");
+    if (!noteBox) {
+      return;
+    }
+    clearChildren(noteBox);
+
+    const rejected = Array.isArray(data.rejected_options) ? data.rejected_options : [];
+    const excludedCount = rejected.filter(function (item) {
+      return (
+        item &&
+        Array.isArray(item.reasons) &&
+        item.reasons.indexOf("UNVERIFIED_SOURCE") !== -1
+      );
+    }).length;
+
+    if (excludedCount <= 0) {
+      noteBox.hidden = true;
+      return;
+    }
+
+    const text =
+      String(excludedCount) +
+      " opciones sin verificar quedaron fuera. Puedes incluirlas en Opciones avanzadas.";
+    noteBox.appendChild(createElement("p", "neutral-note-text", text));
+    noteBox.hidden = false;
+  }
+
   function renderCategoriesSection(data) {
     const categoriesSection = document.getElementById("categories-section");
     const container = document.getElementById("categories-container");
     clearChildren(container);
 
     const scenariosByType = indexScenariosByType(data.scenarios);
+    const activeCategories =
+      Array.isArray(data.categories) && data.categories.length > 0
+        ? data.categories
+        : null;
 
     CATEGORY_SECTIONS.forEach(function (sectionDef) {
+      const categoriesToRender = activeCategories
+        ? sectionDef.categories.filter(function (categoryDef) {
+            return activeCategories.indexOf(categoryDef.code) !== -1;
+          })
+        : sectionDef.categories;
+
+      if (categoriesToRender.length === 0) {
+        return;
+      }
+
       const sectionCard = createElement("article", "panel category-panel");
       sectionCard.setAttribute("data-category-group", sectionDef.key);
 
@@ -652,7 +710,7 @@
       header.appendChild(createElement("p", "category-panel-subtitle", sectionDef.subtitle));
       sectionCard.appendChild(header);
 
-      sectionDef.categories.forEach(function (categoryDef) {
+      categoriesToRender.forEach(function (categoryDef) {
         renderCategoryBlock(sectionCard, categoryDef, scenariosByType, data);
       });
 
@@ -715,6 +773,7 @@
   function renderSimulationResult(data) {
     hideError();
     renderWarnings(data);
+    renderUnverifiedExcludedNote(data);
     renderTripSummary(data);
     renderCategoriesSection(data);
     renderRejectedOptions(data);
@@ -771,9 +830,18 @@
     const presetKey = getCheckedRadioValue("data_preset");
     const device = getCheckedRadioValue("device");
     const tolerance = getCheckedRadioValue("tolerance");
+    const paymentMethod = getCheckedRadioValue("payment_method");
     const hasLocalId = Boolean(
       document.getElementById("has-local-id-input").checked
     );
+    const includeDayTripsEl = document.getElementById("include-day-trips-input");
+    const includeDayTrips = includeDayTripsEl
+      ? Boolean(includeDayTripsEl.checked)
+      : true;
+    const includeUnverifiedEl = document.getElementById("include-unverified-input");
+    const includeUnverified = includeUnverifiedEl
+      ? Boolean(includeUnverifiedEl.checked)
+      : false;
 
     const days = Number(daysRaw);
 
@@ -817,6 +885,12 @@
         "Selecciona una preferencia de tolerancia a la fricción."
       );
     }
+    if (!paymentMethod) {
+      throw createValidationError(
+        "payment_method",
+        "Selecciona una preferencia de método de pago."
+      );
+    }
 
     return {
       city: city,
@@ -824,7 +898,10 @@
       data_gb: dataGb,
       device: device,
       has_local_id: hasLocalId,
-      tolerance: tolerance
+      tolerance: tolerance,
+      include_day_trips: includeDayTrips,
+      payment_method: paymentMethod,
+      include_unverified: includeUnverified
     };
   }
 

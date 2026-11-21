@@ -48,6 +48,16 @@
               >
             </div>
           </div>
+
+          <div class="field checkbox-field">
+            <input
+              id="include-day-trips-input"
+              name="include_day_trips"
+              type="checkbox"
+              checked
+            >
+            <label for="include-day-trips-input">Quiero hacer una escapada de un dia (Valparaiso / Vina del Mar)</label>
+          </div>
         </fieldset>
 
         <fieldset class="trip-section">
@@ -175,6 +185,63 @@
           </details>
         </fieldset>
 
+        <fieldset class="trip-section">
+          <legend class="section-legend">Pagos</legend>
+          <p class="section-helper">
+            Indica cómo prefieres pagar durante el viaje para filtrar opciones que requieren tarjeta internacional.
+          </p>
+
+          <div class="choice-group" role="group" aria-labelledby="payment-method-group-label">
+            <span id="payment-method-group-label" class="choice-group-label">
+              Método de pago durante el viaje
+            </span>
+            <div class="choice-cards two-col">
+              <div class="choice-option">
+                <input
+                  id="payment-method-card"
+                  name="payment_method"
+                  type="radio"
+                  value="card"
+                  checked
+                >
+                <label for="payment-method-card" class="choice-card">
+                  <span class="choice-title">Pago con tarjeta internacional</span>
+                  <span class="choice-desc">Permite apps, eSIM globales y servicios con tarjeta extranjera</span>
+                </label>
+              </div>
+              <div class="choice-option">
+                <input
+                  id="payment-method-cash"
+                  name="payment_method"
+                  type="radio"
+                  value="cash"
+                >
+                <label for="payment-method-cash" class="choice-card">
+                  <span class="choice-title">Solo efectivo</span>
+                  <span class="choice-desc">Descarta opciones que exigen tarjeta bancaria internacional</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <details id="advanced-options-details" class="advanced-details">
+          <summary class="details-summary">Opciones avanzadas</summary>
+          <div class="details-body">
+            <div class="field checkbox-field">
+              <input
+                id="include-unverified-input"
+                name="include_unverified"
+                type="checkbox"
+              >
+              <label for="include-unverified-input">Incluir opciones sin verificar (estimaciones)</label>
+            </div>
+            <p class="field-hint">
+              Las opciones sin verificar son estimaciones sin fuente confirmada y se excluyen por defecto.
+            </p>
+          </div>
+        </details>
+
         <div class="form-actions">
           <button type="submit" id="simulate-button" class="primary-button">
             Simular mi viaje
@@ -187,6 +254,8 @@
     <div id="error-banner" class="alert-box alert-error" role="alert" hidden></div>
 
     <div id="warning-banner" class="alert-box alert-warning" role="status" aria-live="polite" hidden></div>
+
+    <div id="unverified-excluded-note" class="alert-box alert-neutral" role="status" aria-live="polite" hidden></div>
 
     <section id="summary-section" class="panel summary-panel" aria-labelledby="summary-heading" hidden>
       <div class="section-header">
