@@ -29,6 +29,8 @@ const TITULOS: Record<string, string> = {
   cambio_2017_2023: 'Aire: cambio de 2017 a 2023',
   niveles_2024: 'Aire: niveles de 2024',
   hogares: 'Mudanzas entre comunas, 2019 a 2024',
+  poblacion: 'Población por comuna, 2017 a 2024',
+  vivienda: 'Vivienda nueva como atractor de mudanzas',
 }
 
 const RIVALES: Record<string, string> = {
@@ -42,6 +44,11 @@ const RIVALES: Record<string, string> = {
   persistencia_2022: 'repetir 2022',
   tendencia_2022_2023: 'seguir la tendencia',
   media_prepandemia_2017_2018: 'la media antes de la pandemia',
+  rmse_cerrado: 'el modelo cerrado',
+  rmse_proyeccion_ine: 'la proyección oficial del INE',
+  rmse_pivote_permisos: 'destinos ajustados por permisos',
+  rmse_gravedad_permisos: 'gravedad con permisos',
+  rmse_radiacion: 'el modelo de radiación',
 }
 
 const humano = (s: string) => s.replace(/^rmse_/, '').replace(/_/g, ' ')
@@ -75,7 +82,7 @@ export function resumirPruebas(v: Validacion): FilaPrueba[] {
       modelo: m.valor,
       rival: { nombre: RIVALES[r.clave] ?? humano(r.clave), valor: r.valor },
       resultado: comparar(m.valor, r.valor),
-      formato: b.id === 'hogares' ? 'personas' : 'aire',
+      formato: b.id === 'hogares' || b.unidad === 'personas' ? 'personas' : 'aire',
     })
   }
   return out

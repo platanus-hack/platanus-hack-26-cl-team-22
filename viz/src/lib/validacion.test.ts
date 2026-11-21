@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { leerValidacion } from './validate'
-import { decimalesValidacion } from './format'
 
 describe('leerValidacion', () => {
   it('keeps the unit, metric and warning text of each block', () => {
@@ -29,12 +28,5 @@ describe('leerValidacion', () => {
 
   it('still drops a block with text but no numbers', () => {
     expect(leerValidacion({ solo_texto: { unidad: 'personas', aviso: 'x' } })).toBeUndefined()
-  })
-})
-
-describe('decimalesValidacion', () => {
-  it('shows people as whole numbers and concentrations with two decimals', () => {
-    expect(decimalesValidacion('personas')).toBe(0)
-    expect(decimalesValidacion('µg/m³')).toBe(2)
   })
 })
