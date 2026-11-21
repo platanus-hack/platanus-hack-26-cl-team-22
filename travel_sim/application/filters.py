@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Protocol
 
 from travel_sim.domain import (
+    FrictionTolerance,
     PaymentMethodPreference,
     ServiceCategory,
     ServiceOption,
@@ -21,7 +22,51 @@ from travel_sim.domain.value_objects import NumericInput, to_decimal
 
 DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD = Decimal("0.75")
 DEFAULT_BALANCED_MAX_FRICTION = Decimal(50)
+LOW_TOLERANCE_EFFICIENCY_THRESHOLD_USD = Decimal("1.50")
+HIGH_TOLERANCE_EFFICIENCY_THRESHOLD_USD = Decimal("0.375")
+LOW_TOLERANCE_MAX_FRICTION = Decimal(25)
+HIGH_TOLERANCE_MAX_FRICTION = Decimal(75)
 _LEXICOGRAPHIC_WEIGHT = Decimal(1000)
+_TOLERANCE_TO_UNIT: dict[FrictionTolerance, Decimal] = {
+    FrictionTolerance.LOW: Decimal("0.0"),
+    FrictionTolerance.MEDIUM: Decimal("0.5"),
+    FrictionTolerance.HIGH: Decimal("1.0"),
+}
+
+
+def balanced_thresholds_for_tolerance(
+    friction_tolerance: FrictionTolerance | NumericInput,
+) -> tuple[Decimal, Decimal]:
+    """Map traveler.friction_tolerance to (theta_usd_per_friction_pt, max_friction).
+
+    Per engine-spec.md section 3.3, MEDIUM maps to ($0.75/pt, max friction 50).
+    LOW demands higher marginal savings ($1.50/pt) and caps friction at 25;
+    HIGH accepts lower marginal savings ($0.375/pt) and caps friction at 75.
+    Numeric tolerances in [0, 1] interpolate monotonically across [LOW, MEDIUM, HIGH].
+    """
+    if isinstance(friction_tolerance, FrictionTolerance):
+        unit = _TOLERANCE_TO_UNIT[friction_tolerance]
+    else:
+        unit = to_decimal(friction_tolerance, "friction_tolerance")
+        if not (Decimal(0) <= unit <= Decimal(1)):
+            raise ValueError(f"numeric friction_tolerance must be in [0, 1], got {unit}")
+
+    half = Decimal("0.5")
+    if unit <= half:
+        ratio = unit / half
+        theta = LOW_TOLERANCE_EFFICIENCY_THRESHOLD_USD - (
+            LOW_TOLERANCE_EFFICIENCY_THRESHOLD_USD - DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD
+        ) * ratio
+    else:
+        ratio = (unit - half) / half
+        theta = DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD - (
+            DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD - HIGH_TOLERANCE_EFFICIENCY_THRESHOLD_USD
+        ) * ratio
+
+    max_friction = LOW_TOLERANCE_MAX_FRICTION + (
+        HIGH_TOLERANCE_MAX_FRICTION - LOW_TOLERANCE_MAX_FRICTION
+    ) * unit
+    return theta, max_friction
 
 
 class RejectionReason(str, Enum):
@@ -30,6 +75,7 @@ class RejectionReason(str, Enum):
     CITY_MISMATCH = "CITY_MISMATCH"
     UNSUPPORTED_PHYSICAL_SIM = "UNSUPPORTED_PHYSICAL_SIM"
     UNSUPPORTED_ESIM = "UNSUPPORTED_ESIM"
+    INVALID_CONNECTIVITY_SIM_TYPE = "INVALID_CONNECTIVITY_SIM_TYPE"
     REQUIRES_LOCAL_ID = "REQUIRES_LOCAL_ID"
     PAYMENT_METHOD_INCOMPATIBLE = "PAYMENT_METHOD_INCOMPATIBLE"
     INSUFFICIENT_DATA_QUOTA = "INSUFFICIENT_DATA_QUOTA"
@@ -117,13 +163,14 @@ def evaluate_hard_filters(
         reasons.append(RejectionReason.CITY_MISMATCH)
 
     if option.category == ServiceCategory.CONNECTIVITY:
-        if (
-            option.sim_type == SimType.PHYSICAL_SIM
-            and not traveler.device_profile.supports_physical_sim
-        ):
-            reasons.append(RejectionReason.UNSUPPORTED_PHYSICAL_SIM)
-        elif option.sim_type == SimType.ESIM and not traveler.device_profile.supports_esim:
-            reasons.append(RejectionReason.UNSUPPORTED_ESIM)
+        if option.sim_type == SimType.PHYSICAL_SIM:
+            if not traveler.device_profile.supports_physical_sim:
+                reasons.append(RejectionReason.UNSUPPORTED_PHYSICAL_SIM)
+        elif option.sim_type == SimType.ESIM:
+            if not traveler.device_profile.supports_esim:
+                reasons.append(RejectionReason.UNSUPPORTED_ESIM)
+        else:
+            reasons.append(RejectionReason.INVALID_CONNECTIVITY_SIM_TYPE)
 
     if option.requires_local_id and not traveler.has_local_id:
         reasons.append(RejectionReason.REQUIRES_LOCAL_ID)

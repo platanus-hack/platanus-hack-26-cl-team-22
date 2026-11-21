@@ -7,14 +7,13 @@ from decimal import Decimal
 from types import MappingProxyType
 
 from travel_sim.application.filters import (
-    DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD,
-    DEFAULT_BALANCED_MAX_FRICTION,
     HardFilterResult,
     OptionCriteria,
     ScoredOption,
     apply_hard_filters,
     apply_soft_filters,
     are_options_compatible,
+    balanced_thresholds_for_tolerance,
     local_optimized_scorer,
     make_balanced_substitution_predicate,
     zero_friction_scorer,
@@ -266,7 +265,7 @@ class ScenarioBuildResult:
 def _is_option_unverified(option: ServiceOption, unverified_ids: Collection[str]) -> bool:
     if option.id in unverified_ids:
         return True
-    return getattr(option, "last_verified_at", None) is None
+    return not option.is_verified
 
 
 def _build_category_choice(
@@ -354,8 +353,8 @@ def build_category_scenarios(
     options: Sequence[ServiceOption],
     traveler: TravelerProfile,
     *,
-    efficiency_threshold_usd: NumericInput = DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD,
-    max_balanced_friction: NumericInput = DEFAULT_BALANCED_MAX_FRICTION,
+    efficiency_threshold_usd: NumericInput | None = None,
+    max_balanced_friction: NumericInput | None = None,
     unverified_option_ids: Collection[str] = (),
 ) -> CategoryScenarioBundle:
     """Build Cero Friccion, Balanceado, and Optimizado Local choices for one category.
@@ -392,10 +391,18 @@ def build_category_scenarios(
     zero_scored = zero_ranked[0]
     local_scored = local_ranked[0]
 
+    default_theta, default_max_friction = balanced_thresholds_for_tolerance(
+        traveler.friction_tolerance
+    )
+    eff_theta = default_theta if efficiency_threshold_usd is None else efficiency_threshold_usd
+    eff_max_friction = (
+        default_max_friction if max_balanced_friction is None else max_balanced_friction
+    )
+
     balanced_predicate = make_balanced_substitution_predicate(
         zero_scored.criteria,
-        min_usd_per_friction_point=efficiency_threshold_usd,
-        max_friction=max_balanced_friction,
+        min_usd_per_friction_point=eff_theta,
+        max_friction=eff_max_friction,
     )
     balanced_ranked = apply_soft_filters(
         eligible,
@@ -439,7 +446,6 @@ def build_category_scenarios(
 
 
 def _resolve_categories(
-    all_seen_options: Sequence[ServiceOption],
     traveler: TravelerProfile,
     explicit_categories: Sequence[ServiceCategory] | None,
 ) -> tuple[ServiceCategory, ...]:
@@ -450,13 +456,11 @@ def _resolve_categories(
                 ordered.append(cat)
         return tuple(ordered)
 
-    seen_set = {opt.category for opt in all_seen_options}
     resolved: list[ServiceCategory] = []
     for cat in ServiceCategory:
         if cat == ServiceCategory.DAY_TRIP and not traveler.include_day_trips:
             continue
-        if cat in seen_set:
-            resolved.append(cat)
+        resolved.append(cat)
     return tuple(resolved)
 
 
@@ -647,8 +651,8 @@ def build_scenarios(
     traveler: TravelerProfile,
     *,
     categories: Sequence[ServiceCategory] | None = None,
-    efficiency_threshold_usd: NumericInput = DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD,
-    max_balanced_friction: NumericInput = DEFAULT_BALANCED_MAX_FRICTION,
+    efficiency_threshold_usd: NumericInput | None = None,
+    max_balanced_friction: NumericInput | None = None,
     penalty_handoff: NumericInput = Decimal(0),
     incompatible_pairs: Collection[tuple[str, str]] = (),
     unverified_option_ids: Collection[str] = (),
@@ -660,20 +664,23 @@ def build_scenarios(
     option are recorded in `missing_categories` without raising an exception.
     """
     if isinstance(options, HardFilterResult):
-        all_seen: tuple[ServiceOption, ...] = (
-            *options.eligible,
-            *(r.option for r in options.rejected),
-        )
         eligible = options.eligible
     else:
-        all_seen = tuple(options)
         eligible = apply_hard_filters(
-            all_seen,
+            tuple(options),
             traveler,
             incompatible_pairs=incompatible_pairs,
         ).eligible
 
-    resolved_categories = _resolve_categories(all_seen, traveler, categories)
+    resolved_categories = _resolve_categories(traveler, categories)
+
+    default_theta, default_max_friction = balanced_thresholds_for_tolerance(
+        traveler.friction_tolerance
+    )
+    eff_theta = default_theta if efficiency_threshold_usd is None else efficiency_threshold_usd
+    eff_max_friction = (
+        default_max_friction if max_balanced_friction is None else max_balanced_friction
+    )
 
     selected_by_scenario: dict[ScenarioType, list[ServiceOption]] = {
         ScenarioType.ZERO_FRICTION: [],
@@ -689,8 +696,8 @@ def build_scenarios(
             traveler,
             selected_by_scenario=selected_by_scenario,
             incompatible_pairs=incompatible_pairs,
-            efficiency_threshold_usd=efficiency_threshold_usd,
-            max_balanced_friction=max_balanced_friction,
+            efficiency_threshold_usd=eff_theta,
+            max_balanced_friction=eff_max_friction,
             unverified_option_ids=unverified_option_ids,
         )
         category_bundles[category] = bundle

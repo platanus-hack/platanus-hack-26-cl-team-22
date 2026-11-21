@@ -1,14 +1,13 @@
 """Simulation use case orchestrating OptionRepository, hard filters, and scenarios."""
 from __future__ import annotations
 
-from collections.abc import Collection, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Collection, Mapping, Sequence
+from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import Decimal
 from types import MappingProxyType
 
 from travel_sim.application.filters import (
-    DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD,
-    DEFAULT_BALANCED_MAX_FRICTION,
     HardFilterResult,
     RejectedOption,
     apply_hard_filters,
@@ -25,12 +24,14 @@ from travel_sim.domain import (
     City,
     DeviceProfile,
     DiningPreference,
+    FreshnessStatus,
     FrictionTolerance,
     PaymentMethodPreference,
     ScenarioType,
     ServiceCategory,
     ServiceOption,
     TravelerProfile,
+    freshness_status,
 )
 from travel_sim.domain.value_objects import NumericInput, to_decimal
 
@@ -42,21 +43,20 @@ class SimulationRequest:
     city_id: str | None = None
     traveler: TravelerProfile | None = None
     device_profile: DeviceProfile | None = None
-    trip_duration_days: int = 7
-    has_local_id: bool = False
-    target_data_gb: NumericInput = Decimal(0)
-    friction_tolerance: FrictionTolerance | Decimal = FrictionTolerance.MEDIUM
-    include_day_trips: bool = True
-    dining_preference: DiningPreference = DiningPreference.CASUAL
-    payment_method_preference: PaymentMethodPreference = (
-        PaymentMethodPreference.INTERNATIONAL_CARD
-    )
+    trip_duration_days: int | None = None
+    has_local_id: bool | None = None
+    target_data_gb: NumericInput | None = None
+    friction_tolerance: FrictionTolerance | Decimal | None = None
+    include_day_trips: bool | None = None
+    dining_preference: DiningPreference | None = None
+    payment_method_preference: PaymentMethodPreference | None = None
     traveler_id: str = "traveler-default"
     categories: tuple[ServiceCategory, ...] | None = None
-    efficiency_threshold_usd: NumericInput = DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD
-    max_balanced_friction: NumericInput = DEFAULT_BALANCED_MAX_FRICTION
+    efficiency_threshold_usd: NumericInput | None = None
+    max_balanced_friction: NumericInput | None = None
     penalty_handoff: NumericInput = Decimal(0)
     incompatible_pairs: tuple[tuple[str, str], ...] = ()
+    reference_time: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,6 +99,14 @@ class SimulationResult:
     city_unverified: bool
     unverified_option_ids: tuple[str, ...]
     unverified_options: tuple[ServiceOption, ...]
+    city_freshness: FreshnessStatus | None = None
+    option_freshness: Mapping[str, FreshnessStatus] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+    stale_option_ids: tuple[str, ...] = ()
+    expired_option_ids: tuple[str, ...] = ()
+    stale_options: tuple[ServiceOption, ...] = ()
+    expired_options: tuple[ServiceOption, ...] = ()
 
     @property
     def device_profile(self) -> DeviceProfile:
@@ -125,6 +133,21 @@ class SimulationResult:
         """Return True if any option in the city catalog or result is unverified."""
         return bool(self.unverified_option_ids)
 
+    @property
+    def has_stale_options(self) -> bool:
+        """Return True if city metadata or any verified option is STALE."""
+        return bool(self.stale_option_ids) or self.city_freshness == FreshnessStatus.STALE
+
+    @property
+    def has_expired_options(self) -> bool:
+        """Return True if city metadata or any verified option is EXPIRED."""
+        return bool(self.expired_option_ids) or self.city_freshness == FreshnessStatus.EXPIRED
+
+    @property
+    def has_freshness_warnings(self) -> bool:
+        """Return True if any verified record is STALE or EXPIRED."""
+        return self.has_stale_options or self.has_expired_options
+
     def scenario_for(self, scenario_type: ScenarioType) -> TripScenario:
         """Return the TripScenario for the given ScenarioType."""
         return self.scenarios[scenario_type]
@@ -150,27 +173,69 @@ def _resolve_traveler_and_city(
     payment_method_preference: PaymentMethodPreference | None,
     traveler_id: str,
     categories: Sequence[ServiceCategory] | None,
-    efficiency_threshold_usd: NumericInput,
-    max_balanced_friction: NumericInput,
+    efficiency_threshold_usd: NumericInput | None,
+    max_balanced_friction: NumericInput | None,
     penalty_handoff: NumericInput,
     incompatible_pairs: Collection[tuple[str, str]],
+    reference_time: datetime | None,
 ) -> tuple[
     str,
     TravelerProfile,
     Sequence[ServiceCategory] | None,
-    NumericInput,
-    NumericInput,
+    NumericInput | None,
+    NumericInput | None,
     NumericInput,
     Collection[tuple[str, str]],
+    datetime | None,
 ]:
     if isinstance(city_or_traveler, SimulationRequest):
         req = city_or_traveler
+        effective_traveler = traveler if traveler is not None else req.traveler
+        eff_req_threshold = (
+            efficiency_threshold_usd
+            if efficiency_threshold_usd is not None
+            else req.efficiency_threshold_usd
+        )
+        eff_req_max_friction = (
+            max_balanced_friction
+            if max_balanced_friction is not None
+            else req.max_balanced_friction
+        )
+        eff_req_penalty = (
+            penalty_handoff if penalty_handoff != Decimal(0) else req.penalty_handoff
+        )
+        eff_req_reference_time = (
+            reference_time if reference_time is not None else req.reference_time
+        )
+        if effective_traveler is not None:
+            return _resolve_traveler_and_city(
+                city_or_traveler=None,
+                traveler_or_device=None,
+                device_or_none=None,
+                city_id=city_id,
+                traveler=effective_traveler,
+                device_profile=device_profile,
+                trip_duration_days=trip_duration_days,
+                has_local_id=has_local_id,
+                target_data_gb=target_data_gb,
+                friction_tolerance=friction_tolerance,
+                include_day_trips=include_day_trips,
+                dining_preference=dining_preference,
+                payment_method_preference=payment_method_preference,
+                traveler_id=traveler_id,
+                categories=categories if categories is not None else req.categories,
+                efficiency_threshold_usd=eff_req_threshold,
+                max_balanced_friction=eff_req_max_friction,
+                penalty_handoff=eff_req_penalty,
+                incompatible_pairs=incompatible_pairs or req.incompatible_pairs,
+                reference_time=eff_req_reference_time,
+            )
         return _resolve_traveler_and_city(
             city_or_traveler=None,
             traveler_or_device=None,
             device_or_none=None,
             city_id=city_id if city_id is not None else req.city_id,
-            traveler=traveler if traveler is not None else req.traveler,
+            traveler=None,
             device_profile=(
                 device_profile if device_profile is not None else req.device_profile
             ),
@@ -205,10 +270,11 @@ def _resolve_traveler_and_city(
             ),
             traveler_id=req.traveler_id or traveler_id,
             categories=categories if categories is not None else req.categories,
-            efficiency_threshold_usd=req.efficiency_threshold_usd,
-            max_balanced_friction=req.max_balanced_friction,
-            penalty_handoff=req.penalty_handoff,
+            efficiency_threshold_usd=eff_req_threshold,
+            max_balanced_friction=eff_req_max_friction,
+            penalty_handoff=eff_req_penalty,
             incompatible_pairs=incompatible_pairs or req.incompatible_pairs,
+            reference_time=eff_req_reference_time,
         )
 
     pos_city_id: str | None = None
@@ -233,7 +299,9 @@ def _resolve_traveler_and_city(
     eff_device = device_profile if device_profile is not None else pos_device
 
     if base_traveler is not None:
-        final_city_id = eff_city_id if eff_city_id is not None else base_traveler.destination_city_id
+        final_city_id = (
+            eff_city_id if eff_city_id is not None else base_traveler.destination_city_id
+        )
         final_traveler = TravelerProfile(
             id=base_traveler.id,
             destination_city_id=final_city_id,
@@ -282,6 +350,7 @@ def _resolve_traveler_and_city(
             max_balanced_friction,
             penalty_handoff,
             incompatible_pairs,
+            reference_time,
         )
 
     if eff_city_id is None or not eff_city_id.strip():
@@ -321,6 +390,7 @@ def _resolve_traveler_and_city(
         max_balanced_friction,
         penalty_handoff,
         incompatible_pairs,
+        reference_time,
     )
 
 
@@ -339,7 +409,7 @@ def _collect_unverified_options(
         pass
 
     for opt in catalog_options:
-        if getattr(opt, "last_verified_at", None) is None:
+        if not opt.is_verified:
             unverified_id_set.add(opt.id)
             continue
         try:
@@ -351,6 +421,59 @@ def _collect_unverified_options(
     ordered_unverified = tuple(opt for opt in catalog_options if opt.id in unverified_id_set)
     ordered_ids = tuple(opt.id for opt in ordered_unverified)
     return ordered_unverified, ordered_ids
+
+
+def _collect_freshness(
+    repository: OptionRepository,
+    city: City | None,
+    city_unverified: bool,
+    catalog_options: Sequence[ServiceOption],
+    unverified_option_ids: Collection[str],
+    reference_time: datetime | None,
+) -> tuple[
+    FreshnessStatus | None,
+    Mapping[str, FreshnessStatus],
+    tuple[ServiceOption, ...],
+    tuple[str, ...],
+    tuple[ServiceOption, ...],
+    tuple[str, ...],
+]:
+    if reference_time is None:
+        return None, MappingProxyType({}), (), (), (), ()
+
+    city_freshness: FreshnessStatus | None = None
+    if city is not None and not city_unverified and isinstance(city.last_verified_at, str):
+        city_freshness = freshness_status(city.last_verified_at, reference_time)
+
+    unverified_set = set(unverified_option_ids)
+    freshness_map: dict[str, FreshnessStatus] = {}
+    stale_opts: list[ServiceOption] = []
+    expired_opts: list[ServiceOption] = []
+
+    for opt in catalog_options:
+        if opt.id in unverified_set or not opt.is_verified:
+            continue
+        status: FreshnessStatus | None
+        try:
+            status = repository.get_freshness_status(opt.id, reference_time=reference_time)
+        except (AttributeError, KeyError, NotImplementedError):
+            status = opt.freshness_status(reference_time)
+        if status is None:
+            continue
+        freshness_map[opt.id] = status
+        if status == FreshnessStatus.STALE:
+            stale_opts.append(opt)
+        elif status == FreshnessStatus.EXPIRED:
+            expired_opts.append(opt)
+
+    return (
+        city_freshness,
+        MappingProxyType(freshness_map),
+        tuple(stale_opts),
+        tuple(opt.id for opt in stale_opts),
+        tuple(expired_opts),
+        tuple(opt.id for opt in expired_opts),
+    )
 
 
 def simulate(
@@ -371,10 +494,12 @@ def simulate(
     payment_method_preference: PaymentMethodPreference | None = None,
     traveler_id: str = "traveler-default",
     categories: Sequence[ServiceCategory] | None = None,
-    efficiency_threshold_usd: NumericInput = DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD,
-    max_balanced_friction: NumericInput = DEFAULT_BALANCED_MAX_FRICTION,
+    efficiency_threshold_usd: NumericInput | None = None,
+    max_balanced_friction: NumericInput | None = None,
     penalty_handoff: NumericInput = Decimal(0),
     incompatible_pairs: Collection[tuple[str, str]] = (),
+    reference_time: datetime | None = None,
+    clock: Callable[[], datetime] | None = None,
 ) -> SimulationResult:
     """Execute the deterministic travel cost-vs-friction simulation use case."""
     (
@@ -385,6 +510,7 @@ def simulate(
         eff_max_friction,
         eff_penalty,
         eff_incompat_pairs,
+        resolved_reference_time,
     ) = _resolve_traveler_and_city(
         city_or_traveler=city_or_traveler,
         traveler_or_device=traveler_or_device,
@@ -405,16 +531,38 @@ def simulate(
         max_balanced_friction=max_balanced_friction,
         penalty_handoff=penalty_handoff,
         incompatible_pairs=incompatible_pairs,
+        reference_time=reference_time,
+    )
+
+    eff_reference_time = (
+        resolved_reference_time
+        if resolved_reference_time is not None
+        else (clock() if clock is not None else None)
     )
 
     city = repository.get_city(resolved_city_id)
-    city_unverified = city is not None and getattr(city, "last_verified_at", None) is None
+    city_unverified = city is not None and not city.is_verified
 
     catalog_options = tuple(repository.list_options(resolved_city_id))
     unverified_options, unverified_option_ids = _collect_unverified_options(
         repository,
         resolved_city_id,
         catalog_options,
+    )
+    (
+        city_freshness,
+        option_freshness,
+        stale_options,
+        stale_option_ids,
+        expired_options,
+        expired_option_ids,
+    ) = _collect_freshness(
+        repository,
+        city,
+        city_unverified,
+        catalog_options,
+        unverified_option_ids,
+        eff_reference_time,
     )
 
     hard_filter_result: HardFilterResult = apply_hard_filters(
@@ -483,14 +631,26 @@ def simulate(
         city_unverified=city_unverified,
         unverified_option_ids=unverified_option_ids,
         unverified_options=unverified_options,
+        city_freshness=city_freshness,
+        option_freshness=option_freshness,
+        stale_option_ids=stale_option_ids,
+        expired_option_ids=expired_option_ids,
+        stale_options=stale_options,
+        expired_options=expired_options,
     )
 
 
 class SimulateTripUseCase:
     """Application use case wrapping `simulate` with an injected OptionRepository."""
 
-    def __init__(self, repository: OptionRepository) -> None:
+    def __init__(
+        self,
+        repository: OptionRepository,
+        *,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
         self._repository = repository
+        self._clock = clock
 
     @property
     def repository(self) -> OptionRepository:
@@ -515,10 +675,12 @@ class SimulateTripUseCase:
         payment_method_preference: PaymentMethodPreference | None = None,
         traveler_id: str = "traveler-default",
         categories: Sequence[ServiceCategory] | None = None,
-        efficiency_threshold_usd: NumericInput = DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD,
-        max_balanced_friction: NumericInput = DEFAULT_BALANCED_MAX_FRICTION,
+        efficiency_threshold_usd: NumericInput | None = None,
+        max_balanced_friction: NumericInput | None = None,
         penalty_handoff: NumericInput = Decimal(0),
         incompatible_pairs: Collection[tuple[str, str]] = (),
+        reference_time: datetime | None = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> SimulationResult:
         """Run the simulation against the configured OptionRepository."""
         return simulate(
@@ -542,6 +704,8 @@ class SimulateTripUseCase:
             max_balanced_friction=max_balanced_friction,
             penalty_handoff=penalty_handoff,
             incompatible_pairs=incompatible_pairs,
+            reference_time=reference_time,
+            clock=clock if clock is not None else self._clock,
         )
 
     run = execute

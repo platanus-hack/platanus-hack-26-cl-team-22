@@ -29,7 +29,7 @@
       "is_tourist_friendly": true,
       "last_verified_at": null,
       "verification_source_url": "https://www.wom.cl/centro-de-ayuda/como-activo-la-esim/",
-      "notes": "WOM Plan Zero eSIM Prepago. Acepta pasaporte extranjero en flujo web.",
+      "notes": "WOM Plan Zero eSIM Prepago. Validación con pasaporte extranjero reportada, no confirmada para eSIM prepago.",
       "requires_international_card": false,
       "allows_top_up": true,
       "incompatible_option_ids": []
@@ -211,7 +211,7 @@
       "is_tourist_friendly": true,
       "last_verified_at": null,
       "verification_source_url": "",
-      "notes": "Costo tarjeta bip! ~1550 CLP + pasaje medio ~830 CLP/viaje. Compra física en estación.",
+      "notes": "Costo tarjeta bip! ~1550 CLP + pasaje medio ~830 CLP/viaje. Compra física en estación. La cantidad de viajes diarios no está modelada.",
       "requires_international_card": false,
       "allows_top_up": true,
       "incompatible_option_ids": []
@@ -224,7 +224,7 @@
       "name": "Apps de Movilidad (Uber/Cabify diario)",
       "cost_local_currency": 6000,
       "cost_usd_reference": 6.30,
-      "pricing_model": "PER_TRIP",
+      "pricing_model": "PER_DAY",
       "validity_days": 1,
       "data_quota_gb": null,
       "setup_time_minutes": 5,

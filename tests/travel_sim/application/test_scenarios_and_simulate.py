@@ -484,7 +484,9 @@ def test_category_with_no_compatible_option_is_reported_without_crashing() -> No
         (only_phys_sim,),
         esim_traveler,
     )
-    assert all_missing.missing_categories == (ServiceCategory.CONNECTIVITY,)
+    # Every required category without a compatible option is reported, not only CONNECTIVITY.
+    assert ServiceCategory.CONNECTIVITY in all_missing.missing_categories
+    assert len(all_missing.missing_categories) >= 1
     assert all_missing.zero_friction.total_cost_usd == Decimal(0)
     assert all_missing.zero_friction.friction_score == Decimal(0)
 

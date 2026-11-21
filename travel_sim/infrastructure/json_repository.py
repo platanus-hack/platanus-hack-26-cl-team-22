@@ -113,6 +113,18 @@ class JsonOptionRepository(OptionRepository):
         city = self._validate_and_build_city(payload, source=source)
         options = self._validate_and_build_options(payload, city_id=city.id, source=source)
 
+        seen_in_payload: set[str] = set()
+        for option, _ in options:
+            if option.id in seen_in_payload:
+                raise RepositoryValidationError(
+                    f"Duplicate option id '{option.id}' within {source}"
+                )
+            if option.id in self._options:
+                raise RepositoryValidationError(
+                    f"Duplicate option id '{option.id}' in {source} (already registered)"
+                )
+            seen_in_payload.add(option.id)
+
         self._cities[city.id] = city
         for option, is_unverified in options:
             self._options[option.id] = option
@@ -284,6 +296,15 @@ class JsonOptionRepository(OptionRepository):
                 f"Allowed values: {allowed}"
             ) from exc
 
+        if category == ServiceCategory.CONNECTIVITY and sim_type not in (
+            SimType.PHYSICAL_SIM,
+            SimType.ESIM,
+        ):
+            raise RepositoryValidationError(
+                f"CONNECTIVITY option '{opt_id}' requires sim_type PHYSICAL_SIM or ESIM, "
+                f"got '{sim_type.value}'"
+            )
+
         provider = str(raw["provider"]).strip()
         if not provider:
             raise RepositoryValidationError(f"provider cannot be empty in option '{opt_id}'")
@@ -398,11 +419,18 @@ class JsonOptionRepository(OptionRepository):
                 f"got {type(lva_raw).__name__}"
             )
 
-        source_url = raw.get("verification_source_url") or ""
-        if not isinstance(source_url, str):
+        source_url_raw = raw.get("verification_source_url")
+        if source_url_raw is None:
+            source_url = ""
+        elif isinstance(source_url_raw, str):
+            source_url = source_url_raw.strip()
+        else:
             raise RepositoryValidationError(
                 f"verification_source_url in option '{opt_id}' must be a string"
             )
+
+        if last_verified_at_str is None or not source_url:
+            is_unverified = True
 
         notes = str(raw.get("notes") or "")
         incompatible_raw = raw.get("incompatible_option_ids") or []
@@ -412,7 +440,7 @@ class JsonOptionRepository(OptionRepository):
             )
         incompatible_set = frozenset(str(x) for x in incompatible_raw)
 
-        if not is_unverified and last_verified_at_str is not None:
+        if last_verified_at_str is not None:
             option_instance = ServiceOption(
                 id=str(raw["id"]).strip(),
                 city_id=opt_city_id,

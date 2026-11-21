@@ -79,6 +79,11 @@ class City:
         object.__setattr__(self, "local_currency", currency)
         object.__setattr__(self, "default_usd_exchange_rate", rate)
 
+    @property
+    def is_verified(self) -> bool:
+        """Return True when last_verified_at is a non-empty timestamp string."""
+        return isinstance(self.last_verified_at, str) and bool(self.last_verified_at.strip())
+
 
 @dataclass(frozen=True, slots=True)
 class TravelerProfile:
@@ -273,6 +278,16 @@ class ServiceOption:
     def friction_score(self) -> Decimal:
         """Scalar operational friction score in [0, 100]."""
         return _friction.friction_score(self)
+
+    @property
+    def is_verified(self) -> bool:
+        """Return True only when both last_verified_at and verification_source_url are non-empty."""
+        return (
+            isinstance(self.last_verified_at, str)
+            and bool(self.last_verified_at.strip())
+            and isinstance(self.verification_source_url, str)
+            and bool(self.verification_source_url.strip())
+        )
 
     def freshness_status(self, reference_time: datetime) -> FreshnessStatus:
         """Freshness classification relative to an explicit reference timestamp."""

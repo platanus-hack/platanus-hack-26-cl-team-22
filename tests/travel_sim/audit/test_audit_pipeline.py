@@ -335,10 +335,11 @@ def test_validity_accounting_infeasible_flagging_and_exact_overpayment() -> None
     assert rep_cheap.score.overpayment_vs_local_usd == Decimal(30)
     assert rep_cheap.score.overpayment_vs_zero_friction_usd == Decimal(-23)
 
-    # Aggregated mean overpayment vs local across the 3 valid replies: ( -2 + 53 + 30 ) / 3 = 27
+    # Only FEASIBLE replies feed the cost aggregates (an infeasible reply would hide overcharge):
+    # the infeasible -2 reply is excluded, so the mean is ( 53 + 30 ) / 2 = 41.5
     assert summary.overpayment_vs_local_usd is not None
-    assert summary.overpayment_vs_local_usd.sample_size == 3
-    assert summary.overpayment_vs_local_usd.mean == Decimal(27)
+    assert summary.overpayment_vs_local_usd.sample_size == 2
+    assert summary.overpayment_vs_local_usd.mean == Decimal("41.5")
     assert summary.overpayment_vs_local_usd.lower < summary.overpayment_vs_local_usd.mean
     assert summary.overpayment_vs_local_usd.upper > summary.overpayment_vs_local_usd.mean
 

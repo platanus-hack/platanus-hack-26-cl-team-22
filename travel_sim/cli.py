@@ -4,14 +4,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
 from travel_sim.application.scenarios import TripScenario
 from travel_sim.application.simulate import SimulationResult, simulate
-from travel_sim.domain import DeviceProfile, FrictionTolerance, ScenarioType
+from travel_sim.domain import DeviceProfile, FreshnessStatus, FrictionTolerance, ScenarioType
 from travel_sim.infrastructure.json_repository import (
     JsonOptionRepository,
     RepositoryValidationError,
@@ -149,6 +150,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
         help="Output format (default: text).",
     )
+    sim_parser.add_argument(
+        "--reference-time",
+        default=None,
+        metavar="ISO8601",
+        help="Reference UTC timestamp for freshness checks (ISO 8601; defaults to clock).",
+    )
 
     cities_parser = subparsers.add_parser(
         "cities",
@@ -191,14 +198,56 @@ def _format_table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> list
 def format_simulation_text(result: SimulationResult, *, device_choice: str) -> str:
     """Format a SimulationResult as readable per-scenario tables."""
     lines: list[str] = []
+    warning_lines: list[str] = []
 
     if result.unverified:
         unverified_count = len(result.unverified_option_ids)
-        lines.append(
-            "WARNING [UNVERIFIED DATA]: "
-            f"{unverified_count} option(s) in this catalog lack verification timestamps "
-            "(last_verified_at is null)."
+        if result.city_unverified and unverified_count == 0:
+            warning_lines.append(
+                "WARNING [UNVERIFIED DATA]: city metadata lacks a verification timestamp "
+                "(last_verified_at is null)."
+            )
+        elif result.city_unverified:
+            warning_lines.append(
+                "WARNING [UNVERIFIED DATA]: "
+                f"city metadata and {unverified_count} option(s) in this catalog are "
+                "unverified (missing last_verified_at or verification_source_url)."
+            )
+        else:
+            warning_lines.append(
+                "WARNING [UNVERIFIED DATA]: "
+                f"{unverified_count} option(s) in this catalog are unverified "
+                "(missing last_verified_at or verification_source_url)."
+            )
+
+    city_expired = result.city_freshness == FreshnessStatus.EXPIRED
+    if city_expired or result.expired_option_ids:
+        parts: list[str] = []
+        if city_expired:
+            parts.append("city metadata")
+        if result.expired_option_ids:
+            ids_text = ", ".join(result.expired_option_ids)
+            parts.append(f"{len(result.expired_option_ids)} option(s) ({ids_text})")
+        warning_lines.append(
+            f"WARNING [EXPIRED DATA]: {' and '.join(parts)} exceeded the 180-day "
+            "freshness window (re-verification required)."
         )
+
+    city_stale = result.city_freshness == FreshnessStatus.STALE
+    if city_stale or result.stale_option_ids:
+        parts = []
+        if city_stale:
+            parts.append("city metadata")
+        if result.stale_option_ids:
+            ids_text = ", ".join(result.stale_option_ids)
+            parts.append(f"{len(result.stale_option_ids)} option(s) ({ids_text})")
+        warning_lines.append(
+            f"WARNING [STALE DATA]: {' and '.join(parts)} are in the 61-180 day "
+            "stale freshness window."
+        )
+
+    if warning_lines:
+        lines.extend(warning_lines)
         lines.append("")
 
     city_name = result.city.name if result.city is not None else result.city_id
@@ -214,6 +263,9 @@ def format_simulation_text(result: SimulationResult, *, device_choice: str) -> s
         f"Local ID: {'yes' if result.traveler.has_local_id else 'no'} | "
         f"Tolerance: {tolerance_val}"
     )
+    if result.missing_categories:
+        missing_text = ", ".join(cat.value for cat in result.missing_categories)
+        lines.append(f"Missing categories: {missing_text}")
 
     for scenario_type in _SCENARIO_ORDER:
         scenario = result.scenarios[scenario_type]
@@ -340,6 +392,9 @@ def simulation_to_dict(result: SimulationResult, *, device_choice: str) -> dict[
         "country_code": result.city.country_code if result.city is not None else None,
         "local_currency": result.city.local_currency if result.city is not None else "CLP",
         "unverified": result.city_unverified,
+        "freshness_status": (
+            result.city_freshness.value if result.city_freshness is not None else None
+        ),
     }
     return {
         "city": city_info,
@@ -356,6 +411,11 @@ def simulation_to_dict(result: SimulationResult, *, device_choice: str) -> dict[
         },
         "unverified": result.unverified,
         "unverified_option_ids": list(result.unverified_option_ids),
+        "stale_option_ids": list(result.stale_option_ids),
+        "expired_option_ids": list(result.expired_option_ids),
+        "option_freshness": {
+            opt_id: status.value for opt_id, status in result.option_freshness.items()
+        },
         "categories": [cat.value for cat in result.categories],
         "missing_categories": [cat.value for cat in result.missing_categories],
         "scenarios": [_scenario_to_dict(result.scenarios[s]) for s in _SCENARIO_ORDER],
@@ -394,7 +454,11 @@ def _handle_cities(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_simulate(args: argparse.Namespace) -> int:
+def _handle_simulate(
+    args: argparse.Namespace,
+    *,
+    clock: Callable[[], datetime] | None = None,
+) -> int:
     city_id = args.city.strip()
     if not city_id:
         sys.stderr.write("Error: --city must be a non-empty city identifier.\n")
@@ -409,6 +473,13 @@ def _handle_simulate(args: argparse.Namespace) -> int:
         )
         return 2
 
+    if args.reference_time is not None:
+        ref_time = datetime.fromisoformat(args.reference_time)
+    elif clock is not None:
+        ref_time = clock()
+    else:
+        ref_time = datetime.now(UTC)
+
     device_profile = _device_profile_from_choice(args.device)
     result = simulate(
         repository,
@@ -418,6 +489,7 @@ def _handle_simulate(args: argparse.Namespace) -> int:
         has_local_id=args.has_local_id,
         target_data_gb=args.data_gb,
         friction_tolerance=args.tolerance,
+        reference_time=ref_time,
     )
 
     if args.format == "json":
@@ -427,7 +499,11 @@ def _handle_simulate(args: argparse.Namespace) -> int:
     return 0
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(
+    argv: Sequence[str] | None = None,
+    *,
+    clock: Callable[[], datetime] | None = None,
+) -> int:
     """CLI entrypoint returning process exit code (0 on success, 2 on invalid input)."""
     parser = build_parser()
     try:
@@ -439,7 +515,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "cities":
             return _handle_cities(args)
         if args.command == "simulate":
-            return _handle_simulate(args)
+            return _handle_simulate(args, clock=clock)
         sys.stderr.write(f"Error: unknown command {args.command!r}\n")
         return 2
     except (

@@ -11,6 +11,7 @@ from typing import Any
 
 from travel_sim.application.filters import (
     RejectionReason,
+    apply_hard_filters,
     compute_option_criteria,
     evaluate_hard_filters,
 )
@@ -18,6 +19,8 @@ from travel_sim.application.ports import AssistantPort, OptionRepository
 from travel_sim.application.scenarios import TripScenario
 from travel_sim.application.simulate import simulate
 from travel_sim.domain import (
+    MAX_FRICTION_SCORE,
+    MIN_FRICTION_SCORE,
     City,
     ServiceCategory,
     ServiceOption,
@@ -26,6 +29,7 @@ from travel_sim.domain import (
 )
 from travel_sim.domain.value_objects import NumericInput, to_decimal
 
+UNMAPPED_RECOMMENDATION_FLAG = "UNMAPPED_RECOMMENDATION"
 _ZERO = Decimal(0)
 _HUNDRED = Decimal(100)
 _NORMAL_95_Z = 1.959963984540054
@@ -88,6 +92,8 @@ class RecommendationScore:
     overpayment_vs_zero_friction_clp: Decimal
     overpayment_vs_zero_friction_pct: Decimal
     extra_friction_vs_zero_friction: Decimal
+    unmapped_categories: tuple[ServiceCategory, ...] = ()
+    flags: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize recommendation score to JSON-compatible primitives."""
@@ -98,6 +104,8 @@ class RecommendationScore:
             },
             "selected_option_ids": [opt.id for opt in self.selected_options],
             "null_categories": [cat.value for cat in self.null_categories],
+            "unmapped_categories": [cat.value for cat in self.unmapped_categories],
+            "flags": list(self.flags),
             "is_feasible": self.is_feasible,
             "infeasibility_reasons": {
                 cat.value: [reason.value for reason in reasons]
@@ -623,23 +631,88 @@ def parse_and_validate_reply(
     )
 
 
+def _impute_unmapped_category(
+    category: ServiceCategory,
+    *,
+    traveler: TravelerProfile,
+    catalog_options: Sequence[ServiceOption] | None,
+    zero_friction: TripScenario,
+    local_optimized: TripScenario,
+) -> tuple[Decimal, Decimal, Decimal] | None:
+    """Return (avg_usd, avg_local, avg_friction) across compatible options, or None."""
+    if catalog_options is not None:
+        candidates = [
+            opt
+            for opt in catalog_options
+            if opt.city_id == traveler.destination_city_id and opt.category == category
+        ]
+        compatible = apply_hard_filters(candidates, traveler).eligible
+        if not compatible:
+            return None
+        criteria = compute_option_criteria(compatible, traveler)
+        count = Decimal(len(criteria))
+        avg_usd = sum((c.total_cost_usd for c in criteria), start=_ZERO) / count
+        avg_local = sum((c.total_cost_local for c in criteria), start=_ZERO) / count
+        avg_friction = sum((c.friction_score for c in criteria), start=_ZERO) / count
+        return avg_usd, avg_local, avg_friction
+
+    baseline_choices = [
+        choice
+        for choice in (
+            zero_friction.choice_for(category),
+            local_optimized.choice_for(category),
+        )
+        if choice is not None
+    ]
+    if not baseline_choices:
+        return None
+    count = Decimal(len(baseline_choices))
+    avg_usd = sum((c.total_cost_usd for c in baseline_choices), start=_ZERO) / count
+    avg_local = sum((c.total_cost_local for c in baseline_choices), start=_ZERO) / count
+    avg_friction = sum((c.friction_score for c in baseline_choices), start=_ZERO) / count
+    return avg_usd, avg_local, avg_friction
+
+
 def score_recommendation(
     selections: Mapping[ServiceCategory, ServiceOption | None],
     *,
     traveler: TravelerProfile,
     zero_friction: TripScenario,
     local_optimized: TripScenario,
+    catalog_options: Sequence[ServiceOption] | None = None,
     penalty_handoff: NumericInput = _ZERO,
     incompatible_pairs: Collection[tuple[str, str]] = (),
 ) -> RecommendationScore:
-    """Evaluate feasibility via hard filters and compute exact cost/friction/overpayment."""
+    """Evaluate feasibility via hard filters and compute exact cost/friction/overpayment.
+
+    Per engine-spec.md section 5.2, a missing/unclassifiable (null) recommendation for
+    a category with compatible options is flagged UNMAPPED_RECOMMENDATION and charged
+    the category's average cost and friction over compatible options.
+    """
     infeasibility_reasons: dict[ServiceCategory, tuple[RejectionReason, ...]] = {}
     selected_options: list[ServiceOption] = []
     null_categories: list[ServiceCategory] = []
+    unmapped_categories: list[ServiceCategory] = []
+    imputed_usd = _ZERO
+    imputed_local = _ZERO
+    imputed_frictions: list[Decimal] = []
 
     for cat, opt in selections.items():
         if opt is None:
             null_categories.append(cat)
+            imputed = _impute_unmapped_category(
+                cat,
+                traveler=traveler,
+                catalog_options=catalog_options,
+                zero_friction=zero_friction,
+                local_optimized=local_optimized,
+            )
+            if imputed is not None:
+                unmapped_categories.append(cat)
+                cat_usd, cat_local, cat_friction = imputed
+                imputed_usd += cat_usd
+                imputed_local += cat_local
+                imputed_frictions.append(cat_friction)
             continue
         selected_options.append(opt)
         other_options = [
@@ -656,19 +729,33 @@ def score_recommendation(
         if reasons:
             infeasibility_reasons[cat] = reasons
 
+    selected_frictions: list[Decimal] = []
     if selected_options:
         criteria_list = compute_option_criteria(selected_options, traveler)
-        total_usd = sum((c.total_cost_usd for c in criteria_list), start=_ZERO)
-        total_local = sum((c.total_cost_local for c in criteria_list), start=_ZERO)
-        total_friction = sum((c.friction_score for c in criteria_list), start=_ZERO)
+        selected_usd = sum((c.total_cost_usd for c in criteria_list), start=_ZERO)
+        selected_local = sum((c.total_cost_local for c in criteria_list), start=_ZERO)
+        selected_frictions = [c.friction_score for c in criteria_list]
+    else:
+        selected_usd = _ZERO
+        selected_local = _ZERO
+
+    total_usd = selected_usd + imputed_usd
+    total_local = selected_local + imputed_local
+    all_frictions = [*selected_frictions, *imputed_frictions]
+    total_friction = sum(all_frictions, start=_ZERO)
+
+    if selected_options and not imputed_frictions:
         agg_friction = scenario_friction_score(
             selected_options,
             penalty_handoff=penalty_handoff,
         )
+    elif all_frictions:
+        penalty = to_decimal(penalty_handoff, "penalty_handoff")
+        if penalty < _ZERO:
+            raise ValueError(f"penalty_handoff must be non-negative, got {penalty}")
+        mean_friction = total_friction / Decimal(len(all_frictions))
+        agg_friction = max(MIN_FRICTION_SCORE, min(MAX_FRICTION_SCORE, mean_friction + penalty))
     else:
-        total_usd = _ZERO
-        total_local = _ZERO
-        total_friction = _ZERO
         agg_friction = _ZERO
 
     over_local_usd = total_usd - local_optimized.total_cost_usd
@@ -689,6 +776,8 @@ def score_recommendation(
     )
     extra_friction_zero = agg_friction - zero_friction.friction_score
 
+    flags: tuple[str, ...] = (UNMAPPED_RECOMMENDATION_FLAG,) if unmapped_categories else ()
+
     return RecommendationScore(
         selections=MappingProxyType(dict(selections)),
         selected_options=tuple(selected_options),
@@ -708,6 +797,8 @@ def score_recommendation(
         overpayment_vs_zero_friction_clp=over_zero_clp,
         overpayment_vs_zero_friction_pct=over_zero_pct,
         extra_friction_vs_zero_friction=extra_friction_zero,
+        unmapped_categories=tuple(unmapped_categories),
+        flags=flags,
     )
 
 
@@ -779,6 +870,7 @@ def audit_assistant(
             traveler=traveler,
             zero_friction=zero_friction,
             local_optimized=local_optimized,
+            catalog_options=catalog_options,
             penalty_handoff=penalty_handoff,
             incompatible_pairs=incompatible_pairs,
         )
@@ -798,7 +890,8 @@ def audit_assistant(
     total_count = len(rep_results)
     valid_count = len(valid_scores)
     invalid_count = total_count - valid_count
-    feasible_count = sum(1 for item in valid_scores if item.is_feasible)
+    feasible_scores = [item for item in valid_scores if item.is_feasible]
+    feasible_count = len(feasible_scores)
     infeasible_count = valid_count - feasible_count
 
     validity_rate = Decimal(valid_count) / Decimal(total_count)
@@ -817,37 +910,37 @@ def audit_assistant(
         validity_rate=validity_rate,
         infeasibility_rate=infeasibility_rate,
         total_cost_usd=compute_confidence_interval_95(
-            [s.total_cost_usd for s in valid_scores]
+            [s.total_cost_usd for s in feasible_scores]
         ),
         total_cost_clp=compute_confidence_interval_95(
-            [s.total_cost_clp for s in valid_scores]
+            [s.total_cost_clp for s in feasible_scores]
         ),
         friction_score=compute_confidence_interval_95(
-            [s.friction_score for s in valid_scores]
+            [s.friction_score for s in feasible_scores]
         ),
         overpayment_vs_local_usd=compute_confidence_interval_95(
-            [s.overpayment_vs_local_usd for s in valid_scores]
+            [s.overpayment_vs_local_usd for s in feasible_scores]
         ),
         overpayment_vs_local_clp=compute_confidence_interval_95(
-            [s.overpayment_vs_local_clp for s in valid_scores]
+            [s.overpayment_vs_local_clp for s in feasible_scores]
         ),
         overpayment_vs_local_pct=compute_confidence_interval_95(
-            [s.overpayment_vs_local_pct for s in valid_scores]
+            [s.overpayment_vs_local_pct for s in feasible_scores]
         ),
         extra_friction_vs_local=compute_confidence_interval_95(
-            [s.extra_friction_vs_local for s in valid_scores]
+            [s.extra_friction_vs_local for s in feasible_scores]
         ),
         overpayment_vs_zero_friction_usd=compute_confidence_interval_95(
-            [s.overpayment_vs_zero_friction_usd for s in valid_scores]
+            [s.overpayment_vs_zero_friction_usd for s in feasible_scores]
         ),
         overpayment_vs_zero_friction_clp=compute_confidence_interval_95(
-            [s.overpayment_vs_zero_friction_clp for s in valid_scores]
+            [s.overpayment_vs_zero_friction_clp for s in feasible_scores]
         ),
         overpayment_vs_zero_friction_pct=compute_confidence_interval_95(
-            [s.overpayment_vs_zero_friction_pct for s in valid_scores]
+            [s.overpayment_vs_zero_friction_pct for s in feasible_scores]
         ),
         extra_friction_vs_zero_friction=compute_confidence_interval_95(
-            [s.extra_friction_vs_zero_friction for s in valid_scores]
+            [s.extra_friction_vs_zero_friction for s in feasible_scores]
         ),
     )
 
@@ -864,18 +957,19 @@ def run_audit(
     incompatible_pairs: Collection[tuple[str, str]] = (),
 ) -> AuditReport:
     """Run the full AI-assistant audit pipeline against the deterministic simulator."""
+    catalog_options = tuple(repository.list_options(traveler.destination_city_id))
+    audit_categories = _resolve_audit_categories(catalog_options, traveler, categories)
     sim_result = simulate(
         repository,
         traveler=traveler,
-        categories=categories,
+        categories=audit_categories,
         penalty_handoff=penalty_handoff,
         incompatible_pairs=incompatible_pairs,
     )
-    catalog_options = tuple(repository.list_options(traveler.destination_city_id))
     prompt = build_audit_prompt(
         traveler,
         catalog_options,
-        categories=sim_result.categories,
+        categories=audit_categories,
         city=sim_result.city,
     )
 
@@ -888,7 +982,7 @@ def run_audit(
             prompt=prompt,
             traveler=traveler,
             catalog_options=catalog_options,
-            expected_categories=sim_result.categories,
+            expected_categories=audit_categories,
             zero_friction=sim_result.zero_friction,
             local_optimized=sim_result.local_optimized,
             replications=replications,
@@ -902,7 +996,7 @@ def run_audit(
         city_name=sim_result.city.name if sim_result.city is not None else None,
         local_currency=sim_result.city.local_currency if sim_result.city is not None else None,
         traveler=sim_result.traveler,
-        categories=sim_result.categories,
+        categories=audit_categories,
         prompt=prompt,
         zero_friction_baseline=sim_result.zero_friction,
         local_optimized_baseline=sim_result.local_optimized,
@@ -1029,6 +1123,7 @@ class AuditAIAssistantsUseCase:
 
 
 __all__ = [
+    "UNMAPPED_RECOMMENDATION_FLAG",
     "AssistantAuditSummary",
     "AuditAIAssistantsUseCase",
     "AuditReport",

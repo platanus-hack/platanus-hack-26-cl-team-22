@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from travel_sim.application.audit import (
+    UNMAPPED_RECOMMENDATION_FLAG,
     AssistantAuditSummary,
     AuditAIAssistantsUseCase,
     AuditReport,
@@ -31,6 +32,7 @@ from travel_sim.application.filters import (
     apply_hard_filters,
     apply_soft_filters,
     are_options_compatible,
+    balanced_thresholds_for_tolerance,
     compute_option_criteria,
     evaluate_hard_filters,
     is_option_eligible,
@@ -71,6 +73,7 @@ from travel_sim.application.simulate import (
 __all__ = [
     "DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD",
     "DEFAULT_BALANCED_MAX_FRICTION",
+    "UNMAPPED_RECOMMENDATION_FLAG",
     "AssistantAuditSummary",
     "AssistantPort",
     "AuditAIAssistantsUseCase",
@@ -107,6 +110,7 @@ __all__ = [
     "apply_soft_filters",
     "are_options_compatible",
     "audit_assistant",
+    "balanced_thresholds_for_tolerance",
     "build_audit_prompt",
     "build_category_scenarios",
     "build_scenarios",
