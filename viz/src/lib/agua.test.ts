@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { anchoRio, cauceDe, caucesMedidos, claveCauce, estacionDeComuna, factorAnio, leerAgua, regimenDe, tonoCambio, variabilidad } from './agua'
+import { caudalEn, estadoCaudal, fraccionNormal, anchoRio, cauceDe, caucesMedidos, claveCauce, estacionDeComuna, factorAnio, leerAgua, regimenDe, tonoCambio, variabilidad } from './agua'
 
 const estacion = (extra: Record<string, unknown> = {}) => ({
   codigo: '5710001',
@@ -120,6 +120,19 @@ describe('lecturas del caudal', () => {
     expect(factorAnio(e, 0)).toBeCloseTo(100 / 70)
     expect(factorAnio(e, 1)).toBe(1)
     expect(factorAnio(e, null)).toBe(1)
+  })
+  it('el estado compara el caudal con lo normal de esa estación', () => {
+    const e = leerAgua(archivo([estacion()]), null)!.estaciones[0]!
+    expect(caudalEn(e, null)).toBe(70)
+    expect(caudalEn(e, 'sequia')).toBe(50)
+    expect(caudalEn(e, 1)).toBeNull()
+    expect(fraccionNormal(e, 0)).toBeCloseTo(100 / 90)
+    expect(estadoCaudal(fraccionNormal(e, 0))).toBe('normal')
+    expect(estadoCaudal(fraccionNormal(e, 3))).toBe('bajo') // 60 de 90
+    expect(estadoCaudal(fraccionNormal(e, 4))).toBe('critico') // 40 de 90
+    expect(estadoCaudal(fraccionNormal(e, 'sequia'))).toBe('critico') // 50 de 90
+    expect(estadoCaudal(fraccionNormal(e, 1))).toBe('sin')
+    expect(factorAnio(e, 'sequia')).toBeCloseTo(50 / 70)
   })
   it('el ancho del cauce crece con el caudal, con piso y techo', () => {
     expect(anchoRio(100, 'river')).toBeGreaterThan(anchoRio(5, 'river'))

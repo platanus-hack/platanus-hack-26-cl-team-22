@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { anchoRio, factorAnio, radioEstacion, tonoCambio, type CauceDato, type Estacion, type Rio } from '../lib/agua'
+import { anchoRio, estadoCaudal, factorAnio, fraccionNormal, radioEstacion, type AnioAgua, type CauceDato, type EstadoCaudal, type Estacion, type Rio } from '../lib/agua'
 import type { AportePolitica } from '../lib/capas'
 import { apilarLabios, apilarNivel, PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
@@ -48,8 +48,8 @@ export interface AguaMapa {
   /** comunas por donde pasa el río elegido */
   pasa: ReadonlySet<string>
   porCodigo: ReadonlyMap<string, Estacion>
-  /** índice del año mostrado; null = promedio del período */
-  idxAnio: number | null
+  /** qué se mira: promedio (null), megasequía o un año */
+  anio: AnioAgua
   elegida: string | null
   onElegir: (codigo: string) => void
   etiqueta: (e: Estacion) => Etiqueta
@@ -58,7 +58,13 @@ export interface AguaMapa {
 /** Caudal con que se dibuja un cauce en el año mostrado; null si ninguna estación lo mide. */
 export function caudalDeRio(r: Rio, a: AguaMapa): number | null {
   const e = r.estacion ? a.porCodigo.get(r.estacion) : undefined
-  return e ? e.medio * factorAnio(e, a.idxAnio) : null
+  return e ? e.medio * factorAnio(e, a.anio) : null
+}
+
+/** Estado del caudal de un cauce en lo que se mira; los que nadie mide se dibujan como normales. */
+export function estadoDeRio(r: Rio, a: AguaMapa): EstadoCaudal {
+  const e = r.estacion ? a.porCodigo.get(r.estacion) : undefined
+  return e ? estadoCaudal(fraccionNormal(e, a.anio)) : 'normal'
 }
 
 export interface PropsMapa {
@@ -419,7 +425,7 @@ export function MapaPapel(p: PropsMapa) {
                 {rios.map((x, i) => {
                   const w = anchoRio(caudalDeRio(x.r, p.agua!), x.r.clase)
                   return (
-                    <g key={i} aria-hidden="true">
+                    <g key={i} aria-hidden="true" className={`rio-${estadoDeRio(x.r, p.agua!)}`}>
                       <path d={x.d} className="rio-filo" style={{ strokeWidth: w + 2.4 }} />
                       <path d={x.d} className="rio" style={{ strokeWidth: w }} />
                       <path d={x.d} className="rio-flujo" style={{ strokeWidth: Math.max(0.7, w * 0.42) }} />
@@ -429,13 +435,14 @@ export function MapaPapel(p: PropsMapa) {
                 {p.agua.estaciones.map((e) => {
                   const c = proj(e.lon, e.lat)
                   const elegida = e.codigo === p.agua!.elegida
+                  const estado = estadoCaudal(fraccionNormal(e, p.agua!.anio))
                   return (
                     <circle
                       key={e.codigo}
                       cx={c[0]}
                       cy={c[1]}
                       r={(radioEstacion(e.medio) + (elegida ? 2 : 0)) / k}
-                      className={`estacion agua-tono-${tonoCambio(e.cambio)}${elegida ? ' estacion-elegida' : ''}`}
+                      className={`estacion agua-estado-${estado}${estado === 'critico' ? ' estacion-late' : ''}${elegida ? ' estacion-elegida' : ''}`}
                       role="button"
                       tabIndex={0}
                       aria-label={`${e.nombre}: ${e.medio} metros cúbicos por segundo`}

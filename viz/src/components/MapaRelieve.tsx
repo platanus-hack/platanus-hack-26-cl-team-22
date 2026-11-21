@@ -6,12 +6,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import urlWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 setWorkerUrl(urlWorker)
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { anchoRio, caucesMedidos, factorAnio, radioEstacion, tonoCambio, type Estacion, type TonoCambio } from '../lib/agua'
+import { anchoRio, caucesMedidos, estadoCaudal, factorAnio, fraccionNormal, radioEstacion, type EstadoCaudal, type Estacion } from '../lib/agua'
 import { apilarNivel } from '../lib/capas'
 import { claseFondo, variableDeClase } from '../lib/fondo'
 import { radioDisco } from '../lib/lena'
 import { poligonoMayor, proyectarGeometria, puntoInterior, type Pt } from '../lib/proyeccion'
-import { anchoCauces, aRgb, CAPAS, CAPAS_RIOS, curva, estiloRelieve, filtroCauces, mezclar, textoRgb, TRAZOS_FLUJO, type RGB } from '../lib/relieve'
+import { anchoCauces, porCauce, aRgb, CAPAS, CAPAS_RIOS, curva, estiloRelieve, filtroCauces, mezclar, textoRgb, TRAZOS_FLUJO, type RGB } from '../lib/relieve'
 import { esGranSantiago, limitesDe, type Limites } from '../lib/vista'
 import type { PropsMapa } from './MapaPapel'
 import { TarjetaMapa } from './Papel'
@@ -36,8 +36,10 @@ const RADIO_DISCO_M = 7000
 const PASO_FLUJO_MS = 55
 const LATIDO_MS = 2400
 const DURACION_CAUDAL = 380
-/** papel de cada grado de caída del caudal, para el punto de la estación */
-const PAPEL_TONO: Record<TonoCambio, string> = { sin: '--tinta-2', estable: '--agua', baja: '--nivel-1', fuerte: '--nivel-3', critica: '--nivel-5' }
+/** papel de cada estado del caudal: el del río y el del punto de su estación */
+const PAPEL_ESTADO: Record<EstadoCaudal, string> = { sin: '--tinta-2', normal: '--agua', bajo: '--agua-baja', critico: '--agua-critica' }
+/** cuánto se ve el brillo que corre: un río en estado crítico casi no corre */
+const BRILLO_ESTADO: Record<EstadoCaudal, number> = { sin: 0.5, normal: 0.9, bajo: 0.55, critico: 0.18 }
 
 type Datos = Parameters<GeoJSONSource['setData']>[0]
 const fc = (features: unknown[]) => ({ type: 'FeatureCollection', features }) as unknown as Datos
@@ -321,7 +323,14 @@ export default function MapaRelieve(p: Props) {
     const nombrados = (w: number[]) => cauces.map((c, i) => ({ nombres: c.nombres, ancho: w[i]! }))
     const filtro = filtroCauces(nombrados(cauces.map(() => 1)), prep.limites.region) as Parameters<MapaGL['setFilter']>[1]
     for (const id of [CAPAS.riosFilo, CAPAS.rios, CAPAS.flujo]) if (m.getLayer(id)) m.setFilter(id, filtro)
-    const destino = cauces.map((c) => anchoRio(c.estacion.medio * factorAnio(c.estacion, aguaActiva.idxAnio), 'river'))
+    const destino = cauces.map((c) => anchoRio(c.estacion.medio * factorAnio(c.estacion, aguaActiva.anio), 'river'))
+    // Color y brillo según el estado del caudal de cada río en lo que se mira.
+    const cs = getComputedStyle(document.documentElement)
+    const estados = cauces.map((c) => estadoCaudal(fraccionNormal(c.estacion, aguaActiva.anio)))
+    const color = porCauce(cauces.map((c, i) => ({ nombres: c.nombres, valor: cs.getPropertyValue(PAPEL_ESTADO[estados[i]!]).trim() || '#1f6fb2' })), cs.getPropertyValue('--agua').trim() || '#1f6fb2')
+    const brillo = porCauce(cauces.map((c, i) => ({ nombres: c.nombres, valor: BRILLO_ESTADO[estados[i]!] })), 0.9)
+    if (m.getLayer(CAPAS.rios)) m.setPaintProperty(CAPAS.rios, 'line-color', color as string)
+    if (m.getLayer(CAPAS.flujo)) m.setPaintProperty(CAPAS.flujo, 'line-opacity', brillo as number)
     const desde = anchos.current.length === destino.length ? [...anchos.current] : destino
     type Ancho = number // la expresión se arma en relieve.ts sin los tipos de MapLibre
     const poner = (t: number) => {
@@ -343,7 +352,7 @@ export default function MapaRelieve(p: Props) {
       if (t < 1) cuadro = requestAnimationFrame(paso)
     })
     return () => cancelAnimationFrame(cuadro)
-  }, [listo, aguaActiva, cauces, aguaActiva?.idxAnio, prep.limites.region, p.reducido])
+  }, [listo, aguaActiva, cauces, aguaActiva?.anio, prep.limites.region, p.reducido])
 
   // Estaciones: un punto por estación, del color de su caída en la megasequía.
   useEffect(() => {
@@ -351,20 +360,24 @@ export default function MapaRelieve(p: Props) {
     if (!m || !listo) return
     const cs = getComputedStyle(document.documentElement)
     const puntos = aguaActiva
-      ? aguaActiva.estaciones.map((e) => ({
-          type: 'Feature',
-          properties: {
-            codigo: e.codigo,
-            r: radioEstacion(e.medio),
-            color: cs.getPropertyValue(PAPEL_TONO[tonoCambio(e.cambio)]).trim() || '#1f6fb2',
-            sel: e.codigo === aguaActiva.elegida,
-          },
-          geometry: { type: 'Point', coordinates: [e.lon, e.lat] },
-        }))
+      ? aguaActiva.estaciones.map((e) => {
+          const estado = estadoCaudal(fraccionNormal(e, aguaActiva.anio))
+          return {
+            type: 'Feature',
+            properties: {
+              codigo: e.codigo,
+              r: radioEstacion(e.medio),
+              color: cs.getPropertyValue(PAPEL_ESTADO[estado]).trim() || '#1f6fb2',
+              sel: e.codigo === aguaActiva.elegida,
+              late: estado === 'critico',
+            },
+            geometry: { type: 'Point', coordinates: [e.lon, e.lat] },
+          }
+        })
       : []
     ;(m.getSource('estaciones') as GeoJSONSource | undefined)?.setData(fc(puntos))
     if (!aguaActiva) setSobreEstacion(null)
-  }, [listo, aguaActiva, aguaActiva?.estaciones, aguaActiva?.elegida])
+  }, [listo, aguaActiva, aguaActiva?.estaciones, aguaActiva?.elegida, aguaActiva?.anio])
 
   // Movimiento del agua: el brillo corre aguas abajo y las estaciones laten. Quieto si se pidió menos movimiento.
   const hayAgua = !!aguaActiva

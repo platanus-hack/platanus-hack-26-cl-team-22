@@ -2877,6 +2877,13 @@ body:has(.estado) {
 .agua-veredicto > span:last-child {
   flex-basis: 100%;
 }
+.agua-veredicto .agua-lugar {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .agua-veredicto {
   margin-top: calc(var(--u) * 0.35);
   display: flex;
@@ -3002,7 +3009,7 @@ body:has(.estado) {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 2px;
-  height: calc(var(--u) * 2.1);
+  height: calc(var(--u) * 1.7);
 }
 .agua-meses li {
   display: grid;
@@ -3137,4 +3144,74 @@ body:has(.estado) {
 .peso-fila .desplegable-lista {
   right: 0;
   left: auto;
+}
+
+/* ---------- El agua reacciona al caudal: normal, bajo o crítico frente a lo habitual ---------- */
+.agua-estado-sin { fill: var(--tinta-2); background: var(--tinta-2); color: var(--papel); }
+.agua-estado-normal { fill: var(--agua); background: var(--agua); color: var(--agua-txt); }
+.agua-estado-bajo { fill: var(--agua-baja); background: var(--agua-baja); color: #111111; }
+.agua-estado-critico { fill: var(--agua-critica); background: var(--agua-critica); color: #fafaf7; }
+.agua-cifra,
+.agua-sello {
+  transition: background-color var(--t-capa) var(--ease), color var(--t-capa) var(--ease);
+}
+.agua-barra.agua-estado-normal,
+.agua-barra.agua-estado-bajo,
+.agua-barra.agua-estado-critico,
+.agua-barra.agua-estado-sin {
+  background: none;
+}
+.agua-barra.agua-estado-normal .agua-barra-cuerpo { fill: var(--agua); }
+.agua-barra.agua-estado-bajo .agua-barra-cuerpo { fill: var(--agua-baja); }
+.agua-barra.agua-estado-critico .agua-barra-cuerpo { fill: var(--agua-critica); }
+.agua-barra.agua-estado-sin .agua-barra-cuerpo { fill: var(--corte); }
+.agua-barra.agua-barra-elegida .agua-barra-cuerpo { stroke: var(--tinta); stroke-width: 2px; }
+.agua-barra-elegida .agua-barra-zona { fill: var(--tinta); opacity: 0.16; }
+.agua-franja-activa { opacity: 0.95; }
+.agua-periodos {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.3);
+}
+.agua-periodos .accion-ligera[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.agua-anio-actual {
+  margin-left: calc(var(--u) * 0.4);
+  font-size: var(--t-l);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.agua-variable h4 {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 0.5);
+}
+/* mapa plano: el cauce toma el color de su estado y el brillo se apaga cuando casi no corre */
+.rio-bajo .rio { stroke: var(--agua-baja); }
+.rio-critico .rio { stroke: var(--agua-critica); }
+.rio-bajo .rio-flujo { opacity: 0.55; animation-duration: 2s; }
+.rio-critico .rio-flujo { opacity: 0.2; animation-duration: 4s; }
+.rio { transition: stroke var(--t-capa) var(--ease), stroke-width 380ms var(--ease); }
+.estacion-late {
+  animation: estacion-late 1.6s ease-in-out infinite;
+}
+@keyframes estacion-late {
+  50% { fill-opacity: 0.35; }
+}
+.quieto .estacion-late { animation: none; }
+.leyenda .leyenda-agua li:first-child {
+  grid-column: auto;
+}
+.leyenda-late {
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  margin: 0 0.75em 0 0.3em;
+  vertical-align: middle;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.3em color-mix(in srgb, var(--agua-critica) 35%, transparent);
 }

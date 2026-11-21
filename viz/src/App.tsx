@@ -4,7 +4,7 @@ import logoRoot from './assets/logo-root.png'
 import { Mapa } from './components/Mapa'
 import type { AguaMapa, Cinta, Encuadre } from './components/MapaPapel'
 import { VistaAgua } from './components/VistaAgua'
-import { cauceDe, decimalesCaudal, estacionDeComuna, leerAgua, TEXTO_TONO, tonoCambio, type Estacion } from './lib/agua'
+import { cauceDe, caudalEn, decimalesCaudal, estacionDeComuna, estadoCaudal, fraccionNormal, leerAgua, TEXTO_ESTADO as TEXTO_CAUDAL, type AnioAgua, type Estacion } from './lib/agua'
 import { VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
 import { GENERAL, PERSONALIZADO, VistaRiesgo } from './components/VistaRiesgo'
 import type { AportePolitica } from './lib/capas'
@@ -105,8 +105,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   // Caudales reales de los ríos: medición histórica de la DGA, aparte de la simulación.
   const agua = useMemo(() => leerAgua(aguaRaw?.caudales, aguaRaw?.rios), [aguaRaw])
   const [aguaEstacion, setAguaEstacion] = useState<string | null>(null)
-  /** año de caudal mostrado (índice de agua.anios); null = promedio del período */
-  const [aguaAnio, setAguaAnio] = useState<number | null>(null)
+  /** qué caudal se mira: la megasequía (lo primero que se ve), el promedio (null) o un año (índice de agua.anios) */
+  const [aguaAnio, setAguaAnio] = useState<AnioAgua>('sequia')
   const [aguaJugando, setAguaJugando] = useState(false)
   const vistas = PESTANAS
   const reducido = useMovimientoReducido()
@@ -350,7 +350,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
     if (!aguaJugando || !agua) return
     const t = window.setInterval(() => {
       setAguaAnio((i) => {
-        const sig = i === null ? 0 : i + 1
+        const sig = typeof i === 'number' ? i + 1 : 0
         if (sig >= agua.anios.length - 1) setAguaJugando(false)
         return Math.min(sig, agua.anios.length - 1)
       })
@@ -358,7 +358,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
     return () => window.clearInterval(t)
   }, [aguaJugando, agua])
   const jugarAgua = (v: boolean) => {
-    if (v && agua && (aguaAnio === null || aguaAnio >= agua.anios.length - 1)) setAguaAnio(0)
+    if (v && agua && (typeof aguaAnio !== 'number' || aguaAnio >= agua.anios.length - 1)) setAguaAnio(0)
     setAguaJugando(v)
   }
   const irAAgua = () => {
@@ -736,17 +736,18 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             cauces: agua.cauces,
             pasa,
             porCodigo: agua.porCodigo,
-            idxAnio: aguaAnio,
+            anio: aguaAnio,
             elegida: estacion?.codigo ?? null,
             onElegir: setAguaEstacion,
             etiqueta: (e) => {
-              const v = aguaAnio === null ? e.medio : (e.anual[aguaAnio] ?? null)
-              const cuando = aguaAnio === null ? 'promedio' : String(agua.anios[aguaAnio])
+              const v = caudalEn(e, aguaAnio)
+              const f = fraccionNormal(e, aguaAnio)
+              const cuando = aguaAnio === null ? 'promedio' : aguaAnio === 'sequia' ? 'megasequía' : String(agua.anios[aguaAnio])
               return {
                 titulo: e.nombre,
                 valor: v === null ? '—' : fmt(v, decimalesCaudal(v)),
                 unidad: `m³/s · ${cuando}`,
-                lineas: [e.cambio === null ? TEXTO_TONO.sin : `${TEXTO_TONO[tonoCambio(e.cambio)]}: ${fmt(e.cambio, 0)} % en la megasequía`],
+                lineas: [f === null ? TEXTO_CAUDAL.sin : `${TEXTO_CAUDAL[estadoCaudal(f)]}: ${fmt(f * 100, 0)} % de lo normal`, 'Estación de medición de la DGA'],
               }
             },
           }
@@ -883,11 +884,11 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
           const sim = features.find((f) => f.properties.codigo === codigo)?.properties.simCodigo
           if (sim) setSeleccionada(sim)
         }}
-        idxAnio={aguaAnio}
+        anio={aguaAnio}
         jugando={aguaJugando}
-        onAnio={(i) => {
+        onAnio={(a) => {
           setAguaJugando(false)
-          setAguaAnio(i)
+          setAguaAnio(a)
         }}
         onJugar={jugarAgua}
         onEstacion={setAguaEstacion}
@@ -956,7 +957,14 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             difMax={difMax}
             baseNombre={referencia.nombre}
             lena={lena}
-            agua={modoMapa === 'agua' && agua ? { anio: aguaAnio === null ? null : (agua.anios[aguaAnio] ?? null), rango: `${agua.anios[0]}–${agua.anios[agua.anios.length - 1]}` } : null}
+            agua={
+              modoMapa === 'agua' && agua
+                ? {
+                    cuando: aguaAnio === null ? `promedio ${agua.anios[0]}–${agua.anios[agua.anios.length - 1]}` : aguaAnio === 'sequia' ? `megasequía ${agua.sequia[0]}–${agua.sequia[1]}` : String(agua.anios[aguaAnio]),
+                    normal: `${agua.base[0]}–${agua.base[1]}`,
+                  }
+                : null
+            }
             hayPiezas={aportesMapa.size > 0}
             riesgo={
               mapaRiesgo && modoMapa === 'valor'

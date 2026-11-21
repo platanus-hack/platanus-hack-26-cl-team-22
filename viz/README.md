@@ -56,11 +56,14 @@ En el resumen, cada fila de variable lleva a su pestaña y sección.
 
 **El agua** (`src/lib/agua.ts`, `src/components/VistaAgua.tsx`): caudal medio mensual medido por las estaciones
 de la DGA entre 1980 y 2017. Es medición histórica, no sale del modelo y no cambia con el año de la simulación.
-El mapa dibuja cada cauce con un ancho que crece con la raíz de su caudal y un brillo que corre aguas abajo; cada
-estación es un punto coloreado según cuánto cayó su caudal en la megasequía (2010–2017 frente a 1980–2009). La
-hoja muestra el caudal de la estación elegida, su serie anual, el régimen (de deshielo o de lluvia, por el mes
-de más agua) y la variabilidad. Elegir un año, o «Ver secarse los ríos», cambia el ancho de los cauces en el
-mapa. Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
+Todo reacciona al **estado del caudal**: el de lo que se mira dividido por lo normal de esa estación (su
+promedio 1980–2009). Con 85 % o más es normal (azul); entre 60 y 85 %, bajo (naranja); con menos, crítico
+(rojo). Ese color lo llevan el río, el punto de su estación, la cifra y cada barra de la serie. El mapa dibuja
+cada cauce con un ancho que crece con la raíz de su caudal y un brillo que corre aguas abajo y se apaga cuando
+el caudal es crítico; cada punto es una estación de la DGA y **late solo si su caudal está en nivel crítico**
+(la leyenda lo dice). Se puede mirar la megasequía 2010–2017 (lo primero que se ve), el promedio 1980–2017 o
+un año, y «Ver año por año» los recorre. La hoja muestra además el régimen (de deshielo o de lluvia, por el
+mes de más agua) y la variabilidad. Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
 tiene. Cada río con nombre trae las comunas por donde pasa, de aguas arriba a aguas abajo (`cauces` en
 `caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el caso «Energía hidráulica» el resumen ofrece un botón directo a esta sección. El caudal no entra
 al índice de riesgo: solo 14 estaciones cumplen el filtro y no hay un valor por comuna.

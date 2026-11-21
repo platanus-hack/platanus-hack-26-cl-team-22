@@ -123,6 +123,13 @@ export function filtroCauces(cauces: readonly CauceAncho[], limites: readonly [n
   ]
 }
 
+/** Un valor por nombre de cauce (color, opacidad…), con uno por defecto para los demás. */
+export function porCauce<T>(cauces: readonly { nombres: readonly string[]; valor: T }[], defecto: T): unknown {
+  const con = cauces.filter((c) => c.nombres.length > 0)
+  if (con.length === 0) return defecto
+  return ['match', ['get', 'name'], ...con.flatMap((c) => [[...c.nombres], c.valor]), defecto]
+}
+
 /** Ancho de línea por nombre de cauce, multiplicado por `k` y con `mas` píxeles de filo. */
 export function anchoCauces(cauces: readonly CauceAncho[], k = 1, mas = 0, piso = 0): unknown {
   const con = cauces.filter((c) => c.nombres.length > 0)
@@ -243,6 +250,8 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
       id: CAPAS.pulso,
       type: 'circle',
       source: 'estaciones',
+      // solo laten las estaciones con caudal crítico en lo que se mira
+      filter: ['==', ['get', 'late'], true],
       paint: { 'circle-radius': ['get', 'r'], 'circle-color': ['get', 'color'], 'circle-opacity': 0, 'circle-pitch-alignment': 'map' },
     },
     {

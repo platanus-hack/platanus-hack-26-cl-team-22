@@ -13,8 +13,8 @@ interface LeyendaProps {
   difMax: number
   baseNombre?: string
   lena: Lena | null
-  /** mapa del agua: año de caudal mostrado (null = promedio) y período medido */
-  agua?: { anio: number | null; rango: string } | null
+  /** mapa del agua: qué período se mira y cuál es el de referencia */
+  agua?: { cuando: string; normal: string } | null
   hayPiezas: boolean
   /** el mapa pinta posición de riesgo (0 a 100) en vez de un valor con unidad */
   riesgo?: { titulo: string; total: number } | null
@@ -25,25 +25,28 @@ export function Leyenda(p: LeyendaProps) {
   if (p.modo === 'agua')
     return (
       <div className="leyenda" aria-label="Leyenda del mapa">
-        <p className="leyenda-titulo">Caudal de los ríos, {p.agua?.anio ?? `promedio ${p.agua?.rango ?? ''}`}</p>
+        <p className="leyenda-titulo">Caudal de los ríos, {p.agua?.cuando}</p>
         <ul className="leyenda-agua">
           <li>
-            <i className="leyenda-rio" /> Ancho del río: su caudal
+            <i className="leyenda-rio" /> Río: más ancho, más caudal
           </li>
           <li>
-            <Muestra clase="agua-tono-estable" forma="disco" /> Se mantiene
+            <Muestra clase="agua-estado-normal" forma="disco" /> Punto: estación que lo mide
           </li>
           <li>
-            <Muestra clase="agua-tono-baja" forma="disco" /> Baja hasta 25 %
+            <Muestra clase="agua-estado-normal" /> Normal
           </li>
           <li>
-            <Muestra clase="agua-tono-fuerte" forma="disco" /> Baja hasta 45 %
+            <Muestra clase="agua-estado-bajo" /> Bajo: 60 a 85 % de lo normal
           </li>
           <li>
-            <Muestra clase="agua-tono-critica" forma="disco" /> Baja más de 45 %
+            <Muestra clase="agua-estado-critico" /> Crítico: menos de 60 %
+          </li>
+          <li>
+            <i className="leyenda-late agua-estado-critico" /> Late: caudal crítico
           </li>
         </ul>
-        <p className="leyenda-nota">Punto: estación de la DGA, según cuánto cayó su caudal en la megasequía (2010–2017).</p>
+        <p className="leyenda-nota">Lo normal es el promedio {p.agua?.normal} de cada estación. Toca un punto para ver su río.</p>
       </div>
     )
   if (p.modo === 'lena') {

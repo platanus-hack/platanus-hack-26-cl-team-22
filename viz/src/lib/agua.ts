@@ -240,11 +240,46 @@ export function variabilidad(cv: number | null): string {
   return 'Caudal muy variable'
 }
 
-/** Caudal del año `i` sobre el caudal medio; 1 si se pide el promedio (i null) o el año no tiene dato. */
-export function factorAnio(e: Estacion, i: number | null): number {
-  if (i === null || e.medio <= 0) return 1
-  const v = e.anual[i]
-  return v === null || v === undefined ? 1 : v / e.medio
+/** Qué se mira: el promedio del período (null), el promedio de la megasequía o un año (índice de `anios`). */
+export type AnioAgua = number | null | 'sequia'
+
+/** Caudal de la estación en lo que se mira; null si ese año no tiene dato. */
+export function caudalEn(e: Estacion, a: AnioAgua): number | null {
+  if (a === null) return e.medio
+  if (a === 'sequia') return e.sequia
+  return e.anual[a] ?? null
+}
+
+/** Caudal sobre lo normal de esa estación (el promedio del período base; si falta, el de todo el período). */
+export function fraccionNormal(e: Estacion, a: AnioAgua): number | null {
+  const v = caudalEn(e, a)
+  const normal = e.base ?? e.medio
+  return v === null || normal <= 0 ? null : v / normal
+}
+
+export type EstadoCaudal = 'sin' | 'normal' | 'bajo' | 'critico'
+/** Bajo estos cortes sobre lo normal el caudal es bajo o crítico. */
+export const CORTE_BAJO = 0.85
+export const CORTE_CRITICO = 0.6
+
+export function estadoCaudal(fraccion: number | null): EstadoCaudal {
+  if (fraccion === null) return 'sin'
+  if (fraccion >= CORTE_BAJO) return 'normal'
+  if (fraccion >= CORTE_CRITICO) return 'bajo'
+  return 'critico'
+}
+
+export const TEXTO_ESTADO: Record<EstadoCaudal, string> = {
+  sin: 'Sin dato',
+  normal: 'Caudal normal',
+  bajo: 'Caudal bajo',
+  critico: 'Caudal crítico',
+}
+
+/** Caudal de lo que se mira sobre el caudal medio (para el ancho del río); 1 si no hay dato. */
+export function factorAnio(e: Estacion, a: AnioAgua): number {
+  const v = caudalEn(e, a)
+  return v === null || e.medio <= 0 ? 1 : v / e.medio
 }
 
 /** Ancho en píxeles de un cauce: crece con la raíz del caudal, para que un estero no desaparezca junto al Maipo. */
