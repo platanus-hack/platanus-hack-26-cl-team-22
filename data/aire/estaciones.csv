@@ -1,0 +1,15 @@
+estacion_id,estacion,comuna,lat,lon,primera_fecha,ultima_fecha,pct_dias_con_dato_2017_2024
+D16,Cerrillos I,Cerrillos,-33.49288,-70.71933,2017-01-01,2017-01-11,0.4
+D29,Quilicura I,Quilicura,-33.36586,-70.74822,,,0.0
+D15,Pudahuel (Acreditada),Pudahuel,-33.43779,-70.75014,2017-01-01,2024-12-31,96.2
+D28,Talagante,Talagante,-33.67382,-70.953,2017-01-01,2024-12-31,78.8
+D31,Cerrillos,Cerrillos,-33.49578,-70.70421,2017-05-27,2021-07-14,48.3
+D18,Cerro Navia,Cerro Navia,-33.43307,-70.73206,2017-01-01,2024-12-31,97.4
+D27,Puente Alto,Puente Alto,-33.59136,-70.59443,2017-01-01,2024-12-31,96.1
+D13,Las Condes (Acreditada),Las Condes,-33.37678,-70.52326,2017-01-04,2024-12-31,95.8
+D17,El Bosque (Acreditada),El Bosque,-33.54994,-70.67652,2017-01-01,2024-12-31,95.8
+D12,La Florida (Acreditada),La Florida,-33.51667,-70.58816,2017-01-01,2024-12-31,95.3
+D30,Quilicura,Quilicura,-33.34963,-70.72385,2017-01-01,2024-12-31,96.5
+D11,Independencia,Independencia,-33.42226,-70.65114,2017-01-01,2021-07-29,55.3
+D14,Parque O'Higgins,Santiago,-33.46418,-70.6607,2017-01-01,2024-12-31,97.0
+D35,Cerrillos II,Cerrillos,-33.49461,-70.69325,2022-04-12,2024-12-31,33.3

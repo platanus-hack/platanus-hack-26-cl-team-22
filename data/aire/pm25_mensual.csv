@@ -1,0 +1,988 @@
+estacion_id,estacion,anio,mes,dias_validos,dias_mes,pm25_media
+D11,Independencia,2017,1,31,31,39.82
+D11,Independencia,2017,2,27,28,22.45
+D11,Independencia,2017,3,26,31,17.09
+D11,Independencia,2017,4,29,30,20.94
+D11,Independencia,2017,5,31,31,35.26
+D11,Independencia,2017,6,29,30,41.28
+D11,Independencia,2017,7,31,31,47.19
+D11,Independencia,2017,8,31,31,32.61
+D11,Independencia,2017,9,24,30,25.96
+D11,Independencia,2017,10,31,31,16.94
+D11,Independencia,2017,11,30,30,18.73
+D11,Independencia,2017,12,31,31,16.1
+D11,Independencia,2018,1,31,31,15.71
+D11,Independencia,2018,2,27,28,16.52
+D11,Independencia,2018,3,26,31,17.62
+D11,Independencia,2018,4,29,30,25.93
+D11,Independencia,2018,5,31,31,36.19
+D11,Independencia,2018,6,30,30,49.8
+D11,Independencia,2018,7,31,31,39.61
+D11,Independencia,2018,8,30,31,39.0
+D11,Independencia,2018,9,30,30,26.8
+D11,Independencia,2018,10,26,31,16.23
+D11,Independencia,2018,11,29,30,15.14
+D11,Independencia,2018,12,31,31,20.52
+D11,Independencia,2019,1,29,31,20.28
+D11,Independencia,2019,2,27,28,20.59
+D11,Independencia,2019,3,25,31,18.6
+D11,Independencia,2019,4,29,30,30.41
+D11,Independencia,2019,5,31,31,29.94
+D11,Independencia,2019,6,30,30,37.8
+D11,Independencia,2019,7,31,31,52.52
+D11,Independencia,2019,8,31,31,34.1
+D11,Independencia,2019,9,29,30,19.41
+D11,Independencia,2019,10,31,31,17.13
+D11,Independencia,2019,11,30,30,14.13
+D11,Independencia,2019,12,31,31,13.81
+D11,Independencia,2020,1,31,31,16.58
+D11,Independencia,2020,2,29,29,16.52
+D11,Independencia,2020,3,26,31,16.96
+D11,Independencia,2020,4,30,30,21.97
+D11,Independencia,2020,5,31,31,30.84
+D11,Independencia,2020,6,30,30,29.47
+D11,Independencia,2020,7,31,31,38.29
+D11,Independencia,2020,8,31,31,27.9
+D11,Independencia,2020,9,30,30,22.37
+D11,Independencia,2020,10,31,31,16.77
+D11,Independencia,2020,11,30,30,16.7
+D11,Independencia,2020,12,31,31,13.0
+D11,Independencia,2021,1,29,31,15.48
+D11,Independencia,2021,2,27,28,15.3
+D11,Independencia,2021,3,27,31,16.04
+D11,Independencia,2021,4,30,30,22.63
+D11,Independencia,2021,5,27,31,39.67
+D11,Independencia,2021,6,30,30,38.03
+D11,Independencia,2021,7,29,31,54.45
+D12,La Florida (Acreditada),2017,1,31,31,37.97
+D12,La Florida (Acreditada),2017,2,28,28,16.91
+D12,La Florida (Acreditada),2017,3,26,31,16.72
+D12,La Florida (Acreditada),2017,4,30,30,19.92
+D12,La Florida (Acreditada),2017,5,31,31,36.65
+D12,La Florida (Acreditada),2017,6,30,30,41.3
+D12,La Florida (Acreditada),2017,7,27,31,47.93
+D12,La Florida (Acreditada),2017,8,30,31,34.0
+D12,La Florida (Acreditada),2017,9,25,30,25.08
+D12,La Florida (Acreditada),2017,10,31,31,14.81
+D12,La Florida (Acreditada),2017,11,27,30,13.11
+D12,La Florida (Acreditada),2017,12,30,31,13.93
+D12,La Florida (Acreditada),2018,1,29,31,14.17
+D12,La Florida (Acreditada),2018,2,22,28,16.86
+D12,La Florida (Acreditada),2018,3,15,31,
+D12,La Florida (Acreditada),2018,4,30,30,26.8
+D12,La Florida (Acreditada),2018,5,30,31,34.07
+D12,La Florida (Acreditada),2018,6,30,30,44.83
+D12,La Florida (Acreditada),2018,7,31,31,36.0
+D12,La Florida (Acreditada),2018,8,31,31,37.19
+D12,La Florida (Acreditada),2018,9,30,30,23.7
+D12,La Florida (Acreditada),2018,10,30,31,16.23
+D12,La Florida (Acreditada),2018,11,28,30,10.5
+D12,La Florida (Acreditada),2018,12,31,31,11.77
+D12,La Florida (Acreditada),2019,1,29,31,13.66
+D12,La Florida (Acreditada),2019,2,28,28,16.75
+D12,La Florida (Acreditada),2019,3,25,31,17.6
+D12,La Florida (Acreditada),2019,4,30,30,32.63
+D12,La Florida (Acreditada),2019,5,31,31,30.23
+D12,La Florida (Acreditada),2019,6,30,30,36.43
+D12,La Florida (Acreditada),2019,7,31,31,48.19
+D12,La Florida (Acreditada),2019,8,31,31,31.94
+D12,La Florida (Acreditada),2019,9,29,30,18.93
+D12,La Florida (Acreditada),2019,10,22,31,
+D12,La Florida (Acreditada),2019,11,27,30,17.7
+D12,La Florida (Acreditada),2019,12,31,31,15.23
+D12,La Florida (Acreditada),2020,1,30,31,15.9
+D12,La Florida (Acreditada),2020,2,26,29,18.92
+D12,La Florida (Acreditada),2020,3,22,31,
+D12,La Florida (Acreditada),2020,4,30,30,22.0
+D12,La Florida (Acreditada),2020,5,29,31,29.97
+D12,La Florida (Acreditada),2020,6,30,30,27.57
+D12,La Florida (Acreditada),2020,7,31,31,33.16
+D12,La Florida (Acreditada),2020,8,31,31,27.74
+D12,La Florida (Acreditada),2020,9,30,30,20.73
+D12,La Florida (Acreditada),2020,10,31,31,14.19
+D12,La Florida (Acreditada),2020,11,30,30,12.23
+D12,La Florida (Acreditada),2020,12,31,31,10.81
+D12,La Florida (Acreditada),2021,1,31,31,12.16
+D12,La Florida (Acreditada),2021,2,28,28,13.39
+D12,La Florida (Acreditada),2021,3,29,31,14.48
+D12,La Florida (Acreditada),2021,4,30,30,22.5
+D12,La Florida (Acreditada),2021,5,31,31,37.0
+D12,La Florida (Acreditada),2021,6,30,30,36.0
+D12,La Florida (Acreditada),2021,7,31,31,48.42
+D12,La Florida (Acreditada),2021,8,31,31,37.84
+D12,La Florida (Acreditada),2021,9,30,30,18.43
+D12,La Florida (Acreditada),2021,10,29,31,14.9
+D12,La Florida (Acreditada),2021,11,30,30,12.8
+D12,La Florida (Acreditada),2021,12,29,31,15.21
+D12,La Florida (Acreditada),2022,1,28,31,11.25
+D12,La Florida (Acreditada),2022,2,28,28,13.86
+D12,La Florida (Acreditada),2022,3,19,31,
+D12,La Florida (Acreditada),2022,4,30,30,23.13
+D12,La Florida (Acreditada),2022,5,31,31,50.39
+D12,La Florida (Acreditada),2022,6,30,30,46.8
+D12,La Florida (Acreditada),2022,7,29,31,36.07
+D12,La Florida (Acreditada),2022,8,30,31,37.87
+D12,La Florida (Acreditada),2022,9,30,30,23.83
+D12,La Florida (Acreditada),2022,10,29,31,14.14
+D12,La Florida (Acreditada),2022,11,30,30,14.2
+D12,La Florida (Acreditada),2022,12,29,31,14.69
+D12,La Florida (Acreditada),2023,1,31,31,14.06
+D12,La Florida (Acreditada),2023,2,28,28,27.54
+D12,La Florida (Acreditada),2023,3,24,31,16.75
+D12,La Florida (Acreditada),2023,4,30,30,21.6
+D12,La Florida (Acreditada),2023,5,30,31,41.23
+D12,La Florida (Acreditada),2023,6,30,30,35.07
+D12,La Florida (Acreditada),2023,7,30,31,39.07
+D12,La Florida (Acreditada),2023,8,31,31,26.23
+D12,La Florida (Acreditada),2023,9,30,30,23.53
+D12,La Florida (Acreditada),2023,10,31,31,16.45
+D12,La Florida (Acreditada),2023,11,23,30,13.26
+D12,La Florida (Acreditada),2023,12,31,31,15.68
+D12,La Florida (Acreditada),2024,1,31,31,15.23
+D12,La Florida (Acreditada),2024,2,29,29,16.34
+D12,La Florida (Acreditada),2024,3,23,31,
+D12,La Florida (Acreditada),2024,4,30,30,18.43
+D12,La Florida (Acreditada),2024,5,31,31,30.0
+D12,La Florida (Acreditada),2024,6,30,30,29.33
+D12,La Florida (Acreditada),2024,7,31,31,45.45
+D12,La Florida (Acreditada),2024,8,30,31,28.6
+D12,La Florida (Acreditada),2024,9,30,30,20.37
+D12,La Florida (Acreditada),2024,10,31,31,15.45
+D12,La Florida (Acreditada),2024,11,30,30,11.6
+D12,La Florida (Acreditada),2024,12,31,31,13.29
+D13,Las Condes (Acreditada),2017,1,28,31,35.81
+D13,Las Condes (Acreditada),2017,2,28,28,16.47
+D13,Las Condes (Acreditada),2017,3,27,31,17.44
+D13,Las Condes (Acreditada),2017,4,29,30,17.17
+D13,Las Condes (Acreditada),2017,5,30,31,26.17
+D13,Las Condes (Acreditada),2017,6,30,30,25.43
+D13,Las Condes (Acreditada),2017,7,27,31,30.41
+D13,Las Condes (Acreditada),2017,8,31,31,25.42
+D13,Las Condes (Acreditada),2017,9,25,30,22.56
+D13,Las Condes (Acreditada),2017,10,31,31,13.81
+D13,Las Condes (Acreditada),2017,11,30,30,15.4
+D13,Las Condes (Acreditada),2017,12,31,31,15.32
+D13,Las Condes (Acreditada),2018,1,31,31,15.42
+D13,Las Condes (Acreditada),2018,2,28,28,14.82
+D13,Las Condes (Acreditada),2018,3,31,31,15.61
+D13,Las Condes (Acreditada),2018,4,30,30,24.47
+D13,Las Condes (Acreditada),2018,5,31,31,25.29
+D13,Las Condes (Acreditada),2018,6,30,30,27.8
+D13,Las Condes (Acreditada),2018,7,31,31,24.03
+D13,Las Condes (Acreditada),2018,8,31,31,28.13
+D13,Las Condes (Acreditada),2018,9,23,30,22.83
+D13,Las Condes (Acreditada),2018,10,27,31,19.59
+D13,Las Condes (Acreditada),2018,11,23,30,18.22
+D13,Las Condes (Acreditada),2018,12,30,31,20.07
+D13,Las Condes (Acreditada),2019,1,31,31,22.03
+D13,Las Condes (Acreditada),2019,2,25,28,21.96
+D13,Las Condes (Acreditada),2019,3,28,31,21.43
+D13,Las Condes (Acreditada),2019,4,30,30,26.93
+D13,Las Condes (Acreditada),2019,5,31,31,21.9
+D13,Las Condes (Acreditada),2019,6,30,30,19.5
+D13,Las Condes (Acreditada),2019,7,31,31,33.13
+D13,Las Condes (Acreditada),2019,8,31,31,22.19
+D13,Las Condes (Acreditada),2019,9,30,30,14.7
+D13,Las Condes (Acreditada),2019,10,31,31,12.52
+D13,Las Condes (Acreditada),2019,11,30,30,11.7
+D13,Las Condes (Acreditada),2019,12,29,31,12.93
+D13,Las Condes (Acreditada),2020,1,29,31,14.03
+D13,Las Condes (Acreditada),2020,2,29,29,15.0
+D13,Las Condes (Acreditada),2020,3,27,31,15.59
+D13,Las Condes (Acreditada),2020,4,30,30,17.07
+D13,Las Condes (Acreditada),2020,5,31,31,20.94
+D13,Las Condes (Acreditada),2020,6,30,30,14.83
+D13,Las Condes (Acreditada),2020,7,31,31,16.87
+D13,Las Condes (Acreditada),2020,8,31,31,20.39
+D13,Las Condes (Acreditada),2020,9,30,30,16.7
+D13,Las Condes (Acreditada),2020,10,31,31,11.77
+D13,Las Condes (Acreditada),2020,11,26,30,11.42
+D13,Las Condes (Acreditada),2020,12,29,31,10.28
+D13,Las Condes (Acreditada),2021,1,31,31,11.74
+D13,Las Condes (Acreditada),2021,2,28,28,13.21
+D13,Las Condes (Acreditada),2021,3,23,31,
+D13,Las Condes (Acreditada),2021,4,30,30,18.93
+D13,Las Condes (Acreditada),2021,5,31,31,26.55
+D13,Las Condes (Acreditada),2021,6,30,30,21.9
+D13,Las Condes (Acreditada),2021,7,31,31,28.71
+D13,Las Condes (Acreditada),2021,8,31,31,27.48
+D13,Las Condes (Acreditada),2021,9,30,30,15.23
+D13,Las Condes (Acreditada),2021,10,31,31,11.23
+D13,Las Condes (Acreditada),2021,11,30,30,11.5
+D13,Las Condes (Acreditada),2021,12,28,31,14.89
+D13,Las Condes (Acreditada),2022,1,31,31,13.19
+D13,Las Condes (Acreditada),2022,2,25,28,12.2
+D13,Las Condes (Acreditada),2022,3,25,31,13.4
+D13,Las Condes (Acreditada),2022,4,30,30,16.63
+D13,Las Condes (Acreditada),2022,5,31,31,35.87
+D13,Las Condes (Acreditada),2022,6,30,30,27.43
+D13,Las Condes (Acreditada),2022,7,30,31,20.97
+D13,Las Condes (Acreditada),2022,8,31,31,26.77
+D13,Las Condes (Acreditada),2022,9,30,30,17.57
+D13,Las Condes (Acreditada),2022,10,31,31,11.23
+D13,Las Condes (Acreditada),2022,11,27,30,12.15
+D13,Las Condes (Acreditada),2022,12,29,31,13.1
+D13,Las Condes (Acreditada),2023,1,31,31,13.45
+D13,Las Condes (Acreditada),2023,2,24,28,26.21
+D13,Las Condes (Acreditada),2023,3,24,31,13.62
+D13,Las Condes (Acreditada),2023,4,30,30,17.5
+D13,Las Condes (Acreditada),2023,5,31,31,27.26
+D13,Las Condes (Acreditada),2023,6,29,30,20.79
+D13,Las Condes (Acreditada),2023,7,26,31,22.88
+D13,Las Condes (Acreditada),2023,8,31,31,20.61
+D13,Las Condes (Acreditada),2023,9,28,30,19.21
+D13,Las Condes (Acreditada),2023,10,31,31,16.13
+D13,Las Condes (Acreditada),2023,11,30,30,13.73
+D13,Las Condes (Acreditada),2023,12,31,31,19.03
+D13,Las Condes (Acreditada),2024,1,31,31,15.16
+D13,Las Condes (Acreditada),2024,2,29,29,15.28
+D13,Las Condes (Acreditada),2024,3,27,31,12.26
+D13,Las Condes (Acreditada),2024,4,28,30,13.68
+D13,Las Condes (Acreditada),2024,5,26,31,20.62
+D13,Las Condes (Acreditada),2024,6,23,30,15.04
+D13,Las Condes (Acreditada),2024,7,30,31,31.4
+D13,Las Condes (Acreditada),2024,8,29,31,27.24
+D13,Las Condes (Acreditada),2024,9,30,30,16.97
+D13,Las Condes (Acreditada),2024,10,31,31,14.65
+D13,Las Condes (Acreditada),2024,11,30,30,12.23
+D13,Las Condes (Acreditada),2024,12,31,31,15.19
+D14,Parque O'Higgins,2017,1,30,31,33.77
+D14,Parque O'Higgins,2017,2,28,28,16.87
+D14,Parque O'Higgins,2017,3,26,31,17.58
+D14,Parque O'Higgins,2017,4,30,30,19.77
+D14,Parque O'Higgins,2017,5,31,31,36.26
+D14,Parque O'Higgins,2017,6,30,30,44.63
+D14,Parque O'Higgins,2017,7,31,31,47.87
+D14,Parque O'Higgins,2017,8,31,31,34.1
+D14,Parque O'Higgins,2017,9,25,30,26.2
+D14,Parque O'Higgins,2017,10,31,31,15.81
+D14,Parque O'Higgins,2017,11,30,30,14.23
+D14,Parque O'Higgins,2017,12,31,31,14.26
+D14,Parque O'Higgins,2018,1,31,31,15.03
+D14,Parque O'Higgins,2018,2,28,28,16.71
+D14,Parque O'Higgins,2018,3,28,31,19.07
+D14,Parque O'Higgins,2018,4,29,30,23.69
+D14,Parque O'Higgins,2018,5,31,31,34.87
+D14,Parque O'Higgins,2018,6,30,30,47.8
+D14,Parque O'Higgins,2018,7,31,31,39.71
+D14,Parque O'Higgins,2018,8,31,31,39.13
+D14,Parque O'Higgins,2018,9,30,30,25.47
+D14,Parque O'Higgins,2018,10,22,31,
+D14,Parque O'Higgins,2018,11,30,30,15.17
+D14,Parque O'Higgins,2018,12,28,31,17.75
+D14,Parque O'Higgins,2019,1,30,31,20.2
+D14,Parque O'Higgins,2019,2,28,28,21.86
+D14,Parque O'Higgins,2019,3,29,31,18.97
+D14,Parque O'Higgins,2019,4,30,30,30.2
+D14,Parque O'Higgins,2019,5,31,31,30.06
+D14,Parque O'Higgins,2019,6,30,30,40.17
+D14,Parque O'Higgins,2019,7,31,31,50.68
+D14,Parque O'Higgins,2019,8,31,31,31.84
+D14,Parque O'Higgins,2019,9,30,30,18.43
+D14,Parque O'Higgins,2019,10,31,31,15.77
+D14,Parque O'Higgins,2019,11,30,30,13.37
+D14,Parque O'Higgins,2019,12,31,31,13.03
+D14,Parque O'Higgins,2020,1,31,31,14.9
+D14,Parque O'Higgins,2020,2,29,29,16.34
+D14,Parque O'Higgins,2020,3,20,31,
+D14,Parque O'Higgins,2020,4,30,30,20.9
+D14,Parque O'Higgins,2020,5,31,31,30.0
+D14,Parque O'Higgins,2020,6,30,30,29.33
+D14,Parque O'Higgins,2020,7,31,31,38.52
+D14,Parque O'Higgins,2020,8,31,31,27.06
+D14,Parque O'Higgins,2020,9,30,30,20.47
+D14,Parque O'Higgins,2020,10,31,31,14.65
+D14,Parque O'Higgins,2020,11,30,30,11.83
+D14,Parque O'Higgins,2020,12,29,31,11.14
+D14,Parque O'Higgins,2021,1,31,31,12.26
+D14,Parque O'Higgins,2021,2,28,28,12.32
+D14,Parque O'Higgins,2021,3,28,31,13.18
+D14,Parque O'Higgins,2021,4,30,30,20.77
+D14,Parque O'Higgins,2021,5,31,31,36.06
+D14,Parque O'Higgins,2021,6,28,30,37.39
+D14,Parque O'Higgins,2021,7,31,31,50.32
+D14,Parque O'Higgins,2021,8,31,31,34.61
+D14,Parque O'Higgins,2021,9,30,30,17.53
+D14,Parque O'Higgins,2021,10,29,31,13.97
+D14,Parque O'Higgins,2021,11,30,30,11.63
+D14,Parque O'Higgins,2021,12,28,31,12.75
+D14,Parque O'Higgins,2022,1,31,31,10.35
+D14,Parque O'Higgins,2022,2,28,28,13.93
+D14,Parque O'Higgins,2022,3,27,31,14.78
+D14,Parque O'Higgins,2022,4,30,30,20.3
+D14,Parque O'Higgins,2022,5,31,31,47.77
+D14,Parque O'Higgins,2022,6,30,30,44.4
+D14,Parque O'Higgins,2022,7,31,31,34.16
+D14,Parque O'Higgins,2022,8,31,31,34.39
+D14,Parque O'Higgins,2022,9,30,30,21.53
+D14,Parque O'Higgins,2022,10,31,31,12.65
+D14,Parque O'Higgins,2022,11,30,30,12.47
+D14,Parque O'Higgins,2022,12,29,31,14.55
+D14,Parque O'Higgins,2023,1,31,31,12.94
+D14,Parque O'Higgins,2023,2,28,28,26.21
+D14,Parque O'Higgins,2023,3,29,31,14.31
+D14,Parque O'Higgins,2023,4,24,30,21.08
+D14,Parque O'Higgins,2023,5,31,31,41.65
+D14,Parque O'Higgins,2023,6,30,30,37.03
+D14,Parque O'Higgins,2023,7,31,31,38.61
+D14,Parque O'Higgins,2023,8,31,31,24.03
+D14,Parque O'Higgins,2023,9,30,30,19.73
+D14,Parque O'Higgins,2023,10,31,31,14.68
+D14,Parque O'Higgins,2023,11,30,30,9.6
+D14,Parque O'Higgins,2023,12,29,31,14.07
+D14,Parque O'Higgins,2024,1,31,31,13.87
+D14,Parque O'Higgins,2024,2,27,29,13.19
+D14,Parque O'Higgins,2024,3,31,31,11.61
+D14,Parque O'Higgins,2024,4,25,30,16.56
+D14,Parque O'Higgins,2024,5,31,31,29.61
+D14,Parque O'Higgins,2024,6,30,30,33.2
+D14,Parque O'Higgins,2024,7,31,31,47.71
+D14,Parque O'Higgins,2024,8,19,31,
+D14,Parque O'Higgins,2024,9,30,30,17.0
+D14,Parque O'Higgins,2024,10,31,31,12.77
+D14,Parque O'Higgins,2024,11,29,30,9.59
+D14,Parque O'Higgins,2024,12,31,31,12.16
+D15,Pudahuel (Acreditada),2017,1,31,31,31.79
+D15,Pudahuel (Acreditada),2017,2,28,28,17.38
+D15,Pudahuel (Acreditada),2017,3,26,31,16.64
+D15,Pudahuel (Acreditada),2017,4,27,30,22.6
+D15,Pudahuel (Acreditada),2017,5,31,31,42.03
+D15,Pudahuel (Acreditada),2017,6,30,30,52.37
+D15,Pudahuel (Acreditada),2017,7,30,31,54.63
+D15,Pudahuel (Acreditada),2017,8,31,31,33.65
+D15,Pudahuel (Acreditada),2017,9,22,30,
+D15,Pudahuel (Acreditada),2017,10,31,31,14.81
+D15,Pudahuel (Acreditada),2017,11,30,30,13.53
+D15,Pudahuel (Acreditada),2017,12,31,31,13.61
+D15,Pudahuel (Acreditada),2018,1,31,31,13.68
+D15,Pudahuel (Acreditada),2018,2,25,28,14.88
+D15,Pudahuel (Acreditada),2018,3,29,31,16.52
+D15,Pudahuel (Acreditada),2018,4,30,30,23.93
+D15,Pudahuel (Acreditada),2018,5,29,31,40.69
+D15,Pudahuel (Acreditada),2018,6,28,30,63.82
+D15,Pudahuel (Acreditada),2018,7,31,31,45.74
+D15,Pudahuel (Acreditada),2018,8,31,31,41.87
+D15,Pudahuel (Acreditada),2018,9,30,30,26.27
+D15,Pudahuel (Acreditada),2018,10,25,31,12.12
+D15,Pudahuel (Acreditada),2018,11,30,30,10.97
+D15,Pudahuel (Acreditada),2018,12,31,31,12.52
+D15,Pudahuel (Acreditada),2019,1,31,31,13.77
+D15,Pudahuel (Acreditada),2019,2,28,28,17.39
+D15,Pudahuel (Acreditada),2019,3,26,31,16.23
+D15,Pudahuel (Acreditada),2019,4,30,30,30.13
+D15,Pudahuel (Acreditada),2019,5,30,31,34.77
+D15,Pudahuel (Acreditada),2019,6,30,30,49.17
+D15,Pudahuel (Acreditada),2019,7,31,31,59.81
+D15,Pudahuel (Acreditada),2019,8,31,31,36.9
+D15,Pudahuel (Acreditada),2019,9,28,30,17.96
+D15,Pudahuel (Acreditada),2019,10,26,31,16.19
+D15,Pudahuel (Acreditada),2019,11,30,30,14.93
+D15,Pudahuel (Acreditada),2019,12,31,31,14.52
+D15,Pudahuel (Acreditada),2020,1,31,31,14.35
+D15,Pudahuel (Acreditada),2020,2,29,29,15.38
+D15,Pudahuel (Acreditada),2020,3,31,31,15.87
+D15,Pudahuel (Acreditada),2020,4,30,30,24.07
+D15,Pudahuel (Acreditada),2020,5,31,31,39.26
+D15,Pudahuel (Acreditada),2020,6,30,30,40.47
+D15,Pudahuel (Acreditada),2020,7,31,31,50.48
+D15,Pudahuel (Acreditada),2020,8,31,31,31.13
+D15,Pudahuel (Acreditada),2020,9,27,30,19.52
+D15,Pudahuel (Acreditada),2020,10,31,31,15.03
+D15,Pudahuel (Acreditada),2020,11,30,30,11.97
+D15,Pudahuel (Acreditada),2020,12,31,31,11.58
+D15,Pudahuel (Acreditada),2021,1,31,31,11.68
+D15,Pudahuel (Acreditada),2021,2,28,28,13.14
+D15,Pudahuel (Acreditada),2021,3,26,31,10.58
+D15,Pudahuel (Acreditada),2021,4,30,30,22.3
+D15,Pudahuel (Acreditada),2021,5,31,31,45.23
+D15,Pudahuel (Acreditada),2021,6,30,30,48.93
+D15,Pudahuel (Acreditada),2021,7,31,31,68.68
+D15,Pudahuel (Acreditada),2021,8,31,31,39.48
+D15,Pudahuel (Acreditada),2021,9,30,30,17.5
+D15,Pudahuel (Acreditada),2021,10,31,31,14.23
+D15,Pudahuel (Acreditada),2021,11,30,30,11.57
+D15,Pudahuel (Acreditada),2021,12,31,31,12.68
+D15,Pudahuel (Acreditada),2022,1,31,31,9.1
+D15,Pudahuel (Acreditada),2022,2,28,28,12.82
+D15,Pudahuel (Acreditada),2022,3,25,31,15.32
+D15,Pudahuel (Acreditada),2022,4,30,30,20.97
+D15,Pudahuel (Acreditada),2022,5,31,31,49.03
+D15,Pudahuel (Acreditada),2022,6,30,30,53.4
+D15,Pudahuel (Acreditada),2022,7,31,31,40.58
+D15,Pudahuel (Acreditada),2022,8,31,31,35.84
+D15,Pudahuel (Acreditada),2022,9,30,30,22.67
+D15,Pudahuel (Acreditada),2022,10,31,31,11.9
+D15,Pudahuel (Acreditada),2022,11,30,30,11.67
+D15,Pudahuel (Acreditada),2022,12,31,31,14.9
+D15,Pudahuel (Acreditada),2023,1,31,31,11.9
+D15,Pudahuel (Acreditada),2023,2,28,28,25.54
+D15,Pudahuel (Acreditada),2023,3,23,31,
+D15,Pudahuel (Acreditada),2023,4,30,30,20.27
+D15,Pudahuel (Acreditada),2023,5,31,31,44.0
+D15,Pudahuel (Acreditada),2023,6,30,30,46.73
+D15,Pudahuel (Acreditada),2023,7,31,31,48.13
+D15,Pudahuel (Acreditada),2023,8,31,31,26.65
+D15,Pudahuel (Acreditada),2023,9,29,30,19.62
+D15,Pudahuel (Acreditada),2023,10,23,31,
+D15,Pudahuel (Acreditada),2023,11,28,30,9.54
+D15,Pudahuel (Acreditada),2023,12,26,31,13.19
+D15,Pudahuel (Acreditada),2024,1,31,31,12.0
+D15,Pudahuel (Acreditada),2024,2,29,29,13.14
+D15,Pudahuel (Acreditada),2024,3,27,31,14.37
+D15,Pudahuel (Acreditada),2024,4,22,30,
+D15,Pudahuel (Acreditada),2024,5,30,31,40.0
+D15,Pudahuel (Acreditada),2024,6,30,30,46.07
+D15,Pudahuel (Acreditada),2024,7,31,31,61.0
+D15,Pudahuel (Acreditada),2024,8,19,31,
+D15,Pudahuel (Acreditada),2024,9,26,30,18.04
+D15,Pudahuel (Acreditada),2024,10,31,31,12.87
+D15,Pudahuel (Acreditada),2024,11,30,30,9.2
+D15,Pudahuel (Acreditada),2024,12,31,31,10.48
+D16,Cerrillos I,2017,1,11,31,
+D17,El Bosque (Acreditada),2017,1,29,31,34.98
+D17,El Bosque (Acreditada),2017,2,26,28,21.2
+D17,El Bosque (Acreditada),2017,3,24,31,20.38
+D17,El Bosque (Acreditada),2017,4,30,30,25.09
+D17,El Bosque (Acreditada),2017,5,31,31,47.77
+D17,El Bosque (Acreditada),2017,6,30,30,55.87
+D17,El Bosque (Acreditada),2017,7,31,31,59.61
+D17,El Bosque (Acreditada),2017,8,31,31,40.71
+D17,El Bosque (Acreditada),2017,9,25,30,30.56
+D17,El Bosque (Acreditada),2017,10,31,31,17.9
+D17,El Bosque (Acreditada),2017,11,30,30,16.67
+D17,El Bosque (Acreditada),2017,12,31,31,17.55
+D17,El Bosque (Acreditada),2018,1,31,31,16.68
+D17,El Bosque (Acreditada),2018,2,27,28,19.22
+D17,El Bosque (Acreditada),2018,3,26,31,20.69
+D17,El Bosque (Acreditada),2018,4,27,30,30.59
+D17,El Bosque (Acreditada),2018,5,31,31,42.71
+D17,El Bosque (Acreditada),2018,6,30,30,60.5
+D17,El Bosque (Acreditada),2018,7,31,31,50.97
+D17,El Bosque (Acreditada),2018,8,31,31,46.26
+D17,El Bosque (Acreditada),2018,9,27,30,27.56
+D17,El Bosque (Acreditada),2018,10,31,31,18.84
+D17,El Bosque (Acreditada),2018,11,29,30,15.38
+D17,El Bosque (Acreditada),2018,12,31,31,15.65
+D17,El Bosque (Acreditada),2019,1,31,31,19.32
+D17,El Bosque (Acreditada),2019,2,26,28,20.42
+D17,El Bosque (Acreditada),2019,3,26,31,19.73
+D17,El Bosque (Acreditada),2019,4,30,30,33.8
+D17,El Bosque (Acreditada),2019,5,31,31,34.74
+D17,El Bosque (Acreditada),2019,6,30,30,46.37
+D17,El Bosque (Acreditada),2019,7,30,31,55.67
+D17,El Bosque (Acreditada),2019,8,30,31,36.43
+D17,El Bosque (Acreditada),2019,9,30,30,18.7
+D17,El Bosque (Acreditada),2019,10,31,31,18.55
+D17,El Bosque (Acreditada),2019,11,30,30,14.5
+D17,El Bosque (Acreditada),2019,12,19,31,
+D17,El Bosque (Acreditada),2020,1,31,31,16.9
+D17,El Bosque (Acreditada),2020,2,27,29,19.04
+D17,El Bosque (Acreditada),2020,3,31,31,20.81
+D17,El Bosque (Acreditada),2020,4,30,30,27.03
+D17,El Bosque (Acreditada),2020,5,31,31,38.32
+D17,El Bosque (Acreditada),2020,6,30,30,39.23
+D17,El Bosque (Acreditada),2020,7,29,31,49.66
+D17,El Bosque (Acreditada),2020,8,31,31,33.35
+D17,El Bosque (Acreditada),2020,9,30,30,24.4
+D17,El Bosque (Acreditada),2020,10,31,31,18.35
+D17,El Bosque (Acreditada),2020,11,30,30,15.87
+D17,El Bosque (Acreditada),2020,12,31,31,15.9
+D17,El Bosque (Acreditada),2021,1,31,31,14.97
+D17,El Bosque (Acreditada),2021,2,28,28,15.32
+D17,El Bosque (Acreditada),2021,3,27,31,17.44
+D17,El Bosque (Acreditada),2021,4,30,30,27.43
+D17,El Bosque (Acreditada),2021,5,29,31,45.03
+D17,El Bosque (Acreditada),2021,6,30,30,50.97
+D17,El Bosque (Acreditada),2021,7,31,31,68.77
+D17,El Bosque (Acreditada),2021,8,31,31,45.42
+D17,El Bosque (Acreditada),2021,9,28,30,22.61
+D17,El Bosque (Acreditada),2021,10,30,31,17.2
+D17,El Bosque (Acreditada),2021,11,30,30,15.2
+D17,El Bosque (Acreditada),2021,12,30,31,17.23
+D17,El Bosque (Acreditada),2022,1,31,31,13.19
+D17,El Bosque (Acreditada),2022,2,28,28,18.0
+D17,El Bosque (Acreditada),2022,3,26,31,20.54
+D17,El Bosque (Acreditada),2022,4,30,30,26.2
+D17,El Bosque (Acreditada),2022,5,31,31,55.03
+D17,El Bosque (Acreditada),2022,6,30,30,55.97
+D17,El Bosque (Acreditada),2022,7,31,31,44.35
+D17,El Bosque (Acreditada),2022,8,31,31,41.55
+D17,El Bosque (Acreditada),2022,9,30,30,25.7
+D17,El Bosque (Acreditada),2022,10,31,31,13.32
+D17,El Bosque (Acreditada),2022,11,30,30,12.3
+D17,El Bosque (Acreditada),2022,12,31,31,15.03
+D17,El Bosque (Acreditada),2023,1,31,31,13.81
+D17,El Bosque (Acreditada),2023,2,28,28,28.86
+D17,El Bosque (Acreditada),2023,3,26,31,20.0
+D17,El Bosque (Acreditada),2023,4,30,30,24.5
+D17,El Bosque (Acreditada),2023,5,31,31,44.65
+D17,El Bosque (Acreditada),2023,6,30,30,42.67
+D17,El Bosque (Acreditada),2023,7,31,31,47.16
+D17,El Bosque (Acreditada),2023,8,31,31,28.74
+D17,El Bosque (Acreditada),2023,9,30,30,24.57
+D17,El Bosque (Acreditada),2023,10,30,31,18.17
+D17,El Bosque (Acreditada),2023,11,6,30,
+D17,El Bosque (Acreditada),2023,12,25,31,15.28
+D17,El Bosque (Acreditada),2024,1,27,31,13.89
+D17,El Bosque (Acreditada),2024,2,26,29,13.77
+D17,El Bosque (Acreditada),2024,3,26,31,17.38
+D17,El Bosque (Acreditada),2024,4,30,30,21.97
+D17,El Bosque (Acreditada),2024,5,31,31,37.94
+D17,El Bosque (Acreditada),2024,6,30,30,41.7
+D17,El Bosque (Acreditada),2024,7,31,31,58.35
+D17,El Bosque (Acreditada),2024,8,31,31,33.58
+D17,El Bosque (Acreditada),2024,9,30,30,23.43
+D17,El Bosque (Acreditada),2024,10,25,31,16.72
+D17,El Bosque (Acreditada),2024,11,30,30,13.37
+D17,El Bosque (Acreditada),2024,12,31,31,15.35
+D18,Cerro Navia,2017,1,31,31,32.12
+D18,Cerro Navia,2017,2,28,28,17.87
+D18,Cerro Navia,2017,3,21,31,
+D18,Cerro Navia,2017,4,30,30,25.08
+D18,Cerro Navia,2017,5,31,31,44.0
+D18,Cerro Navia,2017,6,28,30,54.21
+D18,Cerro Navia,2017,7,31,31,55.19
+D18,Cerro Navia,2017,8,31,31,35.32
+D18,Cerro Navia,2017,9,28,30,24.64
+D18,Cerro Navia,2017,10,27,31,16.3
+D18,Cerro Navia,2017,11,30,30,14.07
+D18,Cerro Navia,2017,12,31,31,14.97
+D18,Cerro Navia,2018,1,31,31,15.58
+D18,Cerro Navia,2018,2,28,28,16.39
+D18,Cerro Navia,2018,3,29,31,18.55
+D18,Cerro Navia,2018,4,30,30,27.8
+D18,Cerro Navia,2018,5,31,31,46.48
+D18,Cerro Navia,2018,6,30,30,68.6
+D18,Cerro Navia,2018,7,31,31,52.52
+D18,Cerro Navia,2018,8,31,31,48.71
+D18,Cerro Navia,2018,9,28,30,31.21
+D18,Cerro Navia,2018,10,27,31,17.41
+D18,Cerro Navia,2018,11,28,30,14.07
+D18,Cerro Navia,2018,12,30,31,15.47
+D18,Cerro Navia,2019,1,31,31,17.0
+D18,Cerro Navia,2019,2,28,28,19.29
+D18,Cerro Navia,2019,3,29,31,18.41
+D18,Cerro Navia,2019,4,30,30,33.4
+D18,Cerro Navia,2019,5,31,31,39.68
+D18,Cerro Navia,2019,6,30,30,55.7
+D18,Cerro Navia,2019,7,31,31,66.55
+D18,Cerro Navia,2019,8,31,31,40.13
+D18,Cerro Navia,2019,9,30,30,20.63
+D18,Cerro Navia,2019,10,31,31,18.1
+D18,Cerro Navia,2019,11,30,30,16.07
+D18,Cerro Navia,2019,12,31,31,15.84
+D18,Cerro Navia,2020,1,30,31,16.67
+D18,Cerro Navia,2020,2,29,29,19.0
+D18,Cerro Navia,2020,3,31,31,18.0
+D18,Cerro Navia,2020,4,30,30,26.6
+D18,Cerro Navia,2020,5,31,31,42.29
+D18,Cerro Navia,2020,6,28,30,47.36
+D18,Cerro Navia,2020,7,30,31,56.13
+D18,Cerro Navia,2020,8,31,31,35.94
+D18,Cerro Navia,2020,9,30,30,24.37
+D18,Cerro Navia,2020,10,31,31,17.55
+D18,Cerro Navia,2020,11,30,30,15.07
+D18,Cerro Navia,2020,12,31,31,14.19
+D18,Cerro Navia,2021,1,31,31,14.9
+D18,Cerro Navia,2021,2,28,28,15.46
+D18,Cerro Navia,2021,3,31,31,12.87
+D18,Cerro Navia,2021,4,30,30,25.3
+D18,Cerro Navia,2021,5,31,31,49.32
+D18,Cerro Navia,2021,6,30,30,51.8
+D18,Cerro Navia,2021,7,31,31,71.48
+D18,Cerro Navia,2021,8,31,31,41.16
+D18,Cerro Navia,2021,9,30,30,18.8
+D18,Cerro Navia,2021,10,31,31,14.94
+D18,Cerro Navia,2021,11,30,30,12.6
+D18,Cerro Navia,2021,12,31,31,14.97
+D18,Cerro Navia,2022,1,31,31,11.19
+D18,Cerro Navia,2022,2,28,28,14.5
+D18,Cerro Navia,2022,3,24,31,17.42
+D18,Cerro Navia,2022,4,30,30,25.03
+D18,Cerro Navia,2022,5,31,31,54.0
+D18,Cerro Navia,2022,6,30,30,56.13
+D18,Cerro Navia,2022,7,31,31,41.55
+D18,Cerro Navia,2022,8,31,31,41.48
+D18,Cerro Navia,2022,9,30,30,27.17
+D18,Cerro Navia,2022,10,31,31,14.77
+D18,Cerro Navia,2022,11,29,30,15.52
+D18,Cerro Navia,2022,12,31,31,17.68
+D18,Cerro Navia,2023,1,31,31,14.65
+D18,Cerro Navia,2023,2,28,28,28.18
+D18,Cerro Navia,2023,3,29,31,15.66
+D18,Cerro Navia,2023,4,27,30,21.44
+D18,Cerro Navia,2023,5,31,31,45.94
+D18,Cerro Navia,2023,6,30,30,46.47
+D18,Cerro Navia,2023,7,31,31,50.06
+D18,Cerro Navia,2023,8,31,31,27.55
+D18,Cerro Navia,2023,9,30,30,20.97
+D18,Cerro Navia,2023,10,30,31,13.67
+D18,Cerro Navia,2023,11,27,30,11.67
+D18,Cerro Navia,2023,12,19,31,
+D18,Cerro Navia,2024,1,29,31,11.07
+D18,Cerro Navia,2024,2,29,29,11.83
+D18,Cerro Navia,2024,3,27,31,12.26
+D18,Cerro Navia,2024,4,30,30,16.2
+D18,Cerro Navia,2024,5,31,31,42.81
+D18,Cerro Navia,2024,6,30,30,49.17
+D18,Cerro Navia,2024,7,31,31,65.94
+D18,Cerro Navia,2024,8,28,31,33.68
+D18,Cerro Navia,2024,9,30,30,19.63
+D18,Cerro Navia,2024,10,31,31,12.39
+D18,Cerro Navia,2024,11,28,30,8.61
+D18,Cerro Navia,2024,12,31,31,10.87
+D27,Puente Alto,2017,1,31,31,33.19
+D27,Puente Alto,2017,2,28,28,15.96
+D27,Puente Alto,2017,3,26,31,16.05
+D27,Puente Alto,2017,4,30,30,17.38
+D27,Puente Alto,2017,5,31,31,29.87
+D27,Puente Alto,2017,6,30,30,31.87
+D27,Puente Alto,2017,7,30,31,38.17
+D27,Puente Alto,2017,8,31,31,28.29
+D27,Puente Alto,2017,9,30,30,23.73
+D27,Puente Alto,2017,10,24,31,14.12
+D27,Puente Alto,2017,11,30,30,14.97
+D27,Puente Alto,2017,12,30,31,15.6
+D27,Puente Alto,2018,1,31,31,15.61
+D27,Puente Alto,2018,2,28,28,16.68
+D27,Puente Alto,2018,3,24,31,16.96
+D27,Puente Alto,2018,4,30,30,23.43
+D27,Puente Alto,2018,5,31,31,28.06
+D27,Puente Alto,2018,6,29,30,37.0
+D27,Puente Alto,2018,7,29,31,32.52
+D27,Puente Alto,2018,8,30,31,31.6
+D27,Puente Alto,2018,9,29,30,19.48
+D27,Puente Alto,2018,10,23,31,
+D27,Puente Alto,2018,11,29,30,7.76
+D27,Puente Alto,2018,12,27,31,9.67
+D27,Puente Alto,2019,1,31,31,12.58
+D27,Puente Alto,2019,2,28,28,13.43
+D27,Puente Alto,2019,3,26,31,14.31
+D27,Puente Alto,2019,4,30,30,28.57
+D27,Puente Alto,2019,5,31,31,25.55
+D27,Puente Alto,2019,6,30,30,30.23
+D27,Puente Alto,2019,7,31,31,40.03
+D27,Puente Alto,2019,8,31,31,27.71
+D27,Puente Alto,2019,9,30,30,17.07
+D27,Puente Alto,2019,10,30,31,16.4
+D27,Puente Alto,2019,11,30,30,14.67
+D27,Puente Alto,2019,12,31,31,14.19
+D27,Puente Alto,2020,1,31,31,16.45
+D27,Puente Alto,2020,2,29,29,18.03
+D27,Puente Alto,2020,3,31,31,17.48
+D27,Puente Alto,2020,4,30,30,22.5
+D27,Puente Alto,2020,5,28,31,30.21
+D27,Puente Alto,2020,6,28,30,29.86
+D27,Puente Alto,2020,7,31,31,30.39
+D27,Puente Alto,2020,8,31,31,26.77
+D27,Puente Alto,2020,9,30,30,21.7
+D27,Puente Alto,2020,10,31,31,18.32
+D27,Puente Alto,2020,11,30,30,16.47
+D27,Puente Alto,2020,12,31,31,15.58
+D27,Puente Alto,2021,1,30,31,17.27
+D27,Puente Alto,2021,2,28,28,16.86
+D27,Puente Alto,2021,3,31,31,16.65
+D27,Puente Alto,2021,4,28,30,19.36
+D27,Puente Alto,2021,5,31,31,31.84
+D27,Puente Alto,2021,6,30,30,31.17
+D27,Puente Alto,2021,7,31,31,41.42
+D27,Puente Alto,2021,8,31,31,34.03
+D27,Puente Alto,2021,9,30,30,17.8
+D27,Puente Alto,2021,10,31,31,13.58
+D27,Puente Alto,2021,11,30,30,11.97
+D27,Puente Alto,2021,12,31,31,13.45
+D27,Puente Alto,2022,1,31,31,11.23
+D27,Puente Alto,2022,2,28,28,15.29
+D27,Puente Alto,2022,3,24,31,17.21
+D27,Puente Alto,2022,4,30,30,20.17
+D27,Puente Alto,2022,5,31,31,41.06
+D27,Puente Alto,2022,6,30,30,37.9
+D27,Puente Alto,2022,7,31,31,27.39
+D27,Puente Alto,2022,8,29,31,31.38
+D27,Puente Alto,2022,9,30,30,20.1
+D27,Puente Alto,2022,10,31,31,11.81
+D27,Puente Alto,2022,11,30,30,12.33
+D27,Puente Alto,2022,12,29,31,12.76
+D27,Puente Alto,2023,1,31,31,11.74
+D27,Puente Alto,2023,2,28,28,26.71
+D27,Puente Alto,2023,3,26,31,15.31
+D27,Puente Alto,2023,4,30,30,17.33
+D27,Puente Alto,2023,5,31,31,31.39
+D27,Puente Alto,2023,6,30,30,26.67
+D27,Puente Alto,2023,7,31,31,30.71
+D27,Puente Alto,2023,8,30,31,21.07
+D27,Puente Alto,2023,9,30,30,20.73
+D27,Puente Alto,2023,10,22,31,
+D27,Puente Alto,2023,12,31,31,13.06
+D27,Puente Alto,2024,1,31,31,12.84
+D27,Puente Alto,2024,2,29,29,12.62
+D27,Puente Alto,2024,3,27,31,15.63
+D27,Puente Alto,2024,4,30,30,18.27
+D27,Puente Alto,2024,5,31,31,26.71
+D27,Puente Alto,2024,6,30,30,24.77
+D27,Puente Alto,2024,7,29,31,41.79
+D27,Puente Alto,2024,8,31,31,25.9
+D27,Puente Alto,2024,9,30,30,18.7
+D27,Puente Alto,2024,10,31,31,14.39
+D27,Puente Alto,2024,11,30,30,11.37
+D27,Puente Alto,2024,12,31,31,13.35
+D28,Talagante,2017,1,31,31,21.43
+D28,Talagante,2017,2,28,28,10.66
+D28,Talagante,2017,3,27,31,11.61
+D28,Talagante,2017,4,30,30,18.29
+D28,Talagante,2017,5,31,31,36.48
+D28,Talagante,2017,6,30,30,45.5
+D28,Talagante,2017,7,31,31,43.71
+D28,Talagante,2017,8,31,31,28.71
+D28,Talagante,2017,9,28,30,21.93
+D28,Talagante,2017,10,14,31,
+D28,Talagante,2017,11,21,30,
+D28,Talagante,2017,12,30,31,11.23
+D28,Talagante,2018,1,29,31,11.76
+D28,Talagante,2018,2,26,28,11.58
+D28,Talagante,2018,3,28,31,12.32
+D28,Talagante,2018,4,30,30,16.9
+D28,Talagante,2018,5,28,31,31.57
+D28,Talagante,2018,6,21,30,
+D28,Talagante,2018,7,31,31,40.0
+D28,Talagante,2018,8,31,31,34.71
+D28,Talagante,2018,9,27,30,18.85
+D28,Talagante,2018,10,22,31,
+D28,Talagante,2018,11,29,30,7.62
+D28,Talagante,2018,12,31,31,9.58
+D28,Talagante,2019,1,31,31,11.94
+D28,Talagante,2019,2,28,28,12.68
+D28,Talagante,2019,3,26,31,13.77
+D28,Talagante,2019,4,21,30,
+D28,Talagante,2019,5,31,31,28.55
+D28,Talagante,2019,6,30,30,37.37
+D28,Talagante,2019,7,31,31,47.19
+D28,Talagante,2019,8,31,31,26.84
+D28,Talagante,2019,9,28,30,13.5
+D28,Talagante,2019,10,31,31,14.19
+D28,Talagante,2019,11,30,30,14.43
+D28,Talagante,2019,12,31,31,17.55
+D28,Talagante,2020,1,22,31,
+D28,Talagante,2021,5,3,31,
+D28,Talagante,2021,6,25,30,44.28
+D28,Talagante,2021,7,25,31,64.48
+D28,Talagante,2021,8,31,31,37.74
+D28,Talagante,2021,9,30,30,16.27
+D28,Talagante,2021,10,31,31,14.58
+D28,Talagante,2021,11,30,30,12.5
+D28,Talagante,2021,12,31,31,14.81
+D28,Talagante,2022,1,31,31,11.9
+D28,Talagante,2022,2,26,28,15.08
+D28,Talagante,2022,3,26,31,16.92
+D28,Talagante,2022,4,30,30,19.63
+D28,Talagante,2022,5,30,31,44.0
+D28,Talagante,2022,6,30,30,49.87
+D28,Talagante,2022,7,31,31,37.84
+D28,Talagante,2022,8,28,31,30.32
+D28,Talagante,2022,9,30,30,19.53
+D28,Talagante,2022,10,31,31,11.94
+D28,Talagante,2022,11,30,30,11.03
+D28,Talagante,2022,12,31,31,15.52
+D28,Talagante,2023,1,31,31,11.77
+D28,Talagante,2023,2,28,28,24.18
+D28,Talagante,2023,3,31,31,13.55
+D28,Talagante,2023,4,23,30,19.09
+D28,Talagante,2023,5,31,31,39.45
+D28,Talagante,2023,6,30,30,38.7
+D28,Talagante,2023,7,31,31,41.87
+D28,Talagante,2023,8,31,31,23.39
+D28,Talagante,2023,9,30,30,14.3
+D28,Talagante,2023,10,28,31,10.82
+D28,Talagante,2023,11,29,30,9.28
+D28,Talagante,2023,12,29,31,10.07
+D28,Talagante,2024,1,29,31,11.28
+D28,Talagante,2024,2,29,29,12.31
+D28,Talagante,2024,3,27,31,12.52
+D28,Talagante,2024,4,30,30,13.23
+D28,Talagante,2024,5,27,31,36.52
+D28,Talagante,2024,6,30,30,36.83
+D28,Talagante,2024,7,31,31,51.65
+D28,Talagante,2024,8,30,31,21.97
+D28,Talagante,2024,9,30,30,13.63
+D28,Talagante,2024,10,31,31,9.52
+D28,Talagante,2024,11,30,30,7.83
+D28,Talagante,2024,12,31,31,9.77
+D30,Quilicura,2017,1,30,31,37.67
+D30,Quilicura,2017,2,28,28,18.92
+D30,Quilicura,2017,3,24,31,16.38
+D30,Quilicura,2017,4,30,30,20.48
+D30,Quilicura,2017,5,29,31,36.72
+D30,Quilicura,2017,6,28,30,47.86
+D30,Quilicura,2017,7,31,31,46.1
+D30,Quilicura,2017,8,30,31,31.4
+D30,Quilicura,2017,9,21,30,
+D30,Quilicura,2017,10,27,31,13.48
+D30,Quilicura,2017,11,30,30,14.73
+D30,Quilicura,2017,12,30,31,14.73
+D30,Quilicura,2018,1,27,31,13.0
+D30,Quilicura,2018,2,28,28,14.21
+D30,Quilicura,2018,3,26,31,16.42
+D30,Quilicura,2018,4,27,30,23.89
+D30,Quilicura,2018,5,31,31,34.94
+D30,Quilicura,2018,6,30,30,48.3
+D30,Quilicura,2018,7,31,31,36.94
+D30,Quilicura,2018,8,31,31,37.35
+D30,Quilicura,2018,9,30,30,24.27
+D30,Quilicura,2018,10,18,31,
+D30,Quilicura,2018,11,30,30,11.2
+D30,Quilicura,2018,12,31,31,11.9
+D30,Quilicura,2019,1,29,31,13.62
+D30,Quilicura,2019,2,28,28,17.39
+D30,Quilicura,2019,3,31,31,14.84
+D30,Quilicura,2019,4,29,30,28.86
+D30,Quilicura,2019,5,31,31,29.23
+D30,Quilicura,2019,6,30,30,37.87
+D30,Quilicura,2019,7,31,31,51.65
+D30,Quilicura,2019,8,31,31,32.06
+D30,Quilicura,2019,9,30,30,17.9
+D30,Quilicura,2019,10,31,31,16.39
+D30,Quilicura,2019,11,30,30,14.2
+D30,Quilicura,2019,12,31,31,13.74
+D30,Quilicura,2020,1,31,31,14.42
+D30,Quilicura,2020,2,29,29,16.76
+D30,Quilicura,2020,3,26,31,18.12
+D30,Quilicura,2020,4,30,30,22.2
+D30,Quilicura,2020,5,31,31,34.19
+D30,Quilicura,2020,6,30,30,33.47
+D30,Quilicura,2020,7,31,31,40.84
+D30,Quilicura,2020,8,31,31,28.52
+D30,Quilicura,2020,9,30,30,19.97
+D30,Quilicura,2020,10,30,31,15.67
+D30,Quilicura,2020,11,30,30,13.73
+D30,Quilicura,2020,12,31,31,12.1
+D30,Quilicura,2021,1,31,31,13.06
+D30,Quilicura,2021,2,28,28,12.57
+D30,Quilicura,2021,3,31,31,13.65
+D30,Quilicura,2021,4,27,30,25.44
+D30,Quilicura,2021,5,31,31,41.77
+D30,Quilicura,2021,6,30,30,42.17
+D30,Quilicura,2021,7,31,31,57.23
+D30,Quilicura,2021,8,31,31,37.42
+D30,Quilicura,2021,9,30,30,18.27
+D30,Quilicura,2021,10,29,31,14.07
+D30,Quilicura,2021,11,30,30,12.53
+D30,Quilicura,2021,12,29,31,14.83
+D30,Quilicura,2022,1,31,31,11.55
+D30,Quilicura,2022,2,28,28,14.21
+D30,Quilicura,2022,3,30,31,17.53
+D30,Quilicura,2022,4,26,30,21.23
+D30,Quilicura,2022,5,31,31,51.29
+D30,Quilicura,2022,6,30,30,49.67
+D30,Quilicura,2022,7,31,31,35.03
+D30,Quilicura,2022,8,31,31,35.55
+D30,Quilicura,2022,9,30,30,20.53
+D30,Quilicura,2022,10,31,31,12.26
+D30,Quilicura,2022,11,29,30,11.97
+D30,Quilicura,2022,12,28,31,13.39
+D30,Quilicura,2023,1,31,31,11.87
+D30,Quilicura,2023,2,23,28,26.65
+D30,Quilicura,2023,3,29,31,13.38
+D30,Quilicura,2023,4,30,30,18.47
+D30,Quilicura,2023,5,29,31,37.72
+D30,Quilicura,2023,6,30,30,37.83
+D30,Quilicura,2023,7,31,31,38.65
+D30,Quilicura,2023,8,31,31,25.23
+D30,Quilicura,2023,9,29,30,20.76
+D30,Quilicura,2023,10,31,31,15.87
+D30,Quilicura,2023,11,30,30,12.07
+D30,Quilicura,2023,12,31,31,16.77
+D30,Quilicura,2024,1,28,31,12.89
+D30,Quilicura,2024,2,22,29,12.86
+D30,Quilicura,2024,3,31,31,14.03
+D30,Quilicura,2024,4,30,30,17.33
+D30,Quilicura,2024,5,31,31,31.74
+D30,Quilicura,2024,6,30,30,32.53
+D30,Quilicura,2024,7,31,31,52.0
+D30,Quilicura,2024,8,27,31,27.07
+D30,Quilicura,2024,9,30,30,17.5
+D30,Quilicura,2024,10,31,31,12.0
+D30,Quilicura,2024,11,30,30,7.5
+D30,Quilicura,2024,12,31,31,9.94
+D31,Cerrillos,2017,5,5,31,
+D31,Cerrillos,2017,6,30,30,53.73
+D31,Cerrillos,2017,7,31,31,52.87
+D31,Cerrillos,2017,8,31,31,36.35
+D31,Cerrillos,2017,9,30,30,24.7
+D31,Cerrillos,2017,10,31,31,13.29
+D31,Cerrillos,2017,11,30,30,14.03
+D31,Cerrillos,2017,12,31,31,13.61
+D31,Cerrillos,2018,1,25,31,12.88
+D31,Cerrillos,2018,2,26,28,15.35
+D31,Cerrillos,2018,3,29,31,20.66
+D31,Cerrillos,2018,4,30,30,31.0
+D31,Cerrillos,2018,5,29,31,45.07
+D31,Cerrillos,2018,6,30,30,50.53
+D31,Cerrillos,2018,7,31,31,42.23
+D31,Cerrillos,2018,8,31,31,40.26
+D31,Cerrillos,2018,9,28,30,23.14
+D31,Cerrillos,2018,10,31,31,13.94
+D31,Cerrillos,2018,11,21,30,
+D31,Cerrillos,2018,12,31,31,11.81
+D31,Cerrillos,2019,1,31,31,14.0
+D31,Cerrillos,2019,2,28,28,15.82
+D31,Cerrillos,2019,3,31,31,15.81
+D31,Cerrillos,2019,4,26,30,29.0
+D31,Cerrillos,2019,5,31,31,32.03
+D31,Cerrillos,2019,6,30,30,44.63
+D31,Cerrillos,2019,7,30,31,55.27
+D31,Cerrillos,2019,8,31,31,33.29
+D31,Cerrillos,2019,9,29,30,17.48
+D31,Cerrillos,2019,10,31,31,17.13
+D31,Cerrillos,2019,11,30,30,13.37
+D31,Cerrillos,2019,12,30,31,15.6
+D31,Cerrillos,2020,1,31,31,14.9
+D31,Cerrillos,2020,2,29,29,16.62
+D31,Cerrillos,2020,3,13,31,
+D31,Cerrillos,2020,5,27,31,34.26
+D31,Cerrillos,2020,6,30,30,37.57
+D31,Cerrillos,2020,7,31,31,42.26
+D31,Cerrillos,2020,8,31,31,28.13
+D31,Cerrillos,2020,9,18,30,
+D31,Cerrillos,2020,10,31,31,15.77
+D31,Cerrillos,2020,11,30,30,12.43
+D31,Cerrillos,2020,12,31,31,13.23
+D31,Cerrillos,2021,1,31,31,14.84
+D31,Cerrillos,2021,2,27,28,12.93
+D31,Cerrillos,2021,3,28,31,14.18
+D31,Cerrillos,2021,4,30,30,23.6
+D31,Cerrillos,2021,5,31,31,41.87
+D31,Cerrillos,2021,6,30,30,46.3
+D31,Cerrillos,2021,7,14,31,
+D35,Cerrillos II,2022,4,19,30,
+D35,Cerrillos II,2022,5,31,31,53.26
+D35,Cerrillos II,2022,6,30,30,53.27
+D35,Cerrillos II,2022,7,31,31,41.13
+D35,Cerrillos II,2022,8,31,31,38.74
+D35,Cerrillos II,2022,9,30,30,24.27
+D35,Cerrillos II,2022,10,31,31,13.97
+D35,Cerrillos II,2022,11,28,30,13.36
+D35,Cerrillos II,2022,12,31,31,15.29
+D35,Cerrillos II,2023,1,29,31,13.07
+D35,Cerrillos II,2023,2,28,28,26.21
+D35,Cerrillos II,2023,3,31,31,15.39
+D35,Cerrillos II,2023,4,22,30,
+D35,Cerrillos II,2023,5,31,31,44.84
+D35,Cerrillos II,2023,6,30,30,41.27
+D35,Cerrillos II,2023,7,31,31,44.58
+D35,Cerrillos II,2023,8,31,31,25.65
+D35,Cerrillos II,2023,9,30,30,20.67
+D35,Cerrillos II,2023,10,31,31,16.39
+D35,Cerrillos II,2023,11,30,30,13.17
+D35,Cerrillos II,2023,12,29,31,16.69
+D35,Cerrillos II,2024,1,31,31,13.71
+D35,Cerrillos II,2024,2,29,29,14.97
+D35,Cerrillos II,2024,3,31,31,16.13
+D35,Cerrillos II,2024,4,25,30,16.64
+D35,Cerrillos II,2024,5,31,31,35.52
+D35,Cerrillos II,2024,6,30,30,41.17
+D35,Cerrillos II,2024,7,31,31,55.97
+D35,Cerrillos II,2024,8,28,31,31.93
+D35,Cerrillos II,2024,9,30,30,19.5
+D35,Cerrillos II,2024,10,31,31,14.74
+D35,Cerrillos II,2024,11,30,30,11.6
+D35,Cerrillos II,2024,12,31,31,13.32
