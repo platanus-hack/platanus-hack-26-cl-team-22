@@ -88,6 +88,69 @@ la suma de las 52 comunas en la tabla del INE.
 | 2024 | `D5_Migracion-interna.xlsx`, hoja `2`, «Población censada» (de derecho, equivale a residentes habituales) | `V1_Viviendas-y-hogares-censados.xlsx`, hoja `2`, «Viviendas censadas» (particulares ocupadas, desocupadas y colectivas). https://censo2024.ine.gob.cl/wp-content/uploads/2025/03/V1_Viviendas-y-hogares-censados.xlsx |
 | 2017 | `Poblacion-censada-y-residentes-habituales-Censo-2017.xlsx`, hoja `2`, «Residentes habituales» (comparable con 2024). https://censo2024.ine.gob.cl/wp-content/uploads/2025/04/Poblacion-censada-y-residentes-habituales-Censo-2017.xlsx | Microdatos de viviendas, filas con `P01` entre 1 y 8 (excluye los operativos de tránsito y calle, que no son viviendas). Suma 2.378.442, igual al total que publica el INE para la RM (https://geoarchivos.ine.cl/File/pub/poblaci%C3%B3n-y-vivienda-metropolitana.pdf). https://www.ine.gob.cl/docs/default-source/censo-de-poblacion-y-vivienda/bbdd/censo-2017/csv/csv-viviendas-censo-2017.zip |
 
+## Flujos externos: `flujos_externos.csv`
+
+Las matrices de mudanzas solo cuentan movimientos entre comunas de la RM. Esta tabla agrega lo
+que queda fuera, por comuna y período, para que el modelo de hogares deje de ser un sistema
+cerrado.
+
+| Columna | Qué cuenta (residentes de la comuna al censo, salvo `salen`) |
+|---|---|
+| `llegan_otras_regiones` | Hace 5 años vivían en otra región, ya sea con comuna conocida o con la comuna ignorada pero la región conocida |
+| `salen_a_otras_regiones` | Hace 5 años vivían en esta comuna y hoy viven en otra región |
+| `llegan_extranjero` | Hace 5 años vivían en otro país |
+| `menores_5` | Aún no nacían. Son los nacidos en el período que sobreviven y viven en la comuna; **no son nacimientos** |
+| `residencia_ignorada` | Sin comuna de origen utilizable: no respondieron, región ignorada, comuna de la RM ignorada y, solo en 2017, los casos ambiguos del censo de hecho |
+
+| Total RM | 2012→2017 | 2019→2024 |
+|---|---|---|
+| Llegan desde otras regiones | 224.945 | 179.275 |
+| Salen a otras regiones | 294.886 | 396.965 |
+| Llegan desde el extranjero | 309.103 | 338.266 |
+| Menores de 5 años | 459.039 | 348.546 |
+| Residencia ignorada | 149.443 | 69.283 |
+
+**La contabilidad cierra exacto.** Para cada comuna y cada período, la suma de su fila de la
+matriz interna más las cuatro categorías de llegada da su población: 7.028.421 en 2017 y
+7.400.741 en 2024. `tests/test_censo.py` lo comprueba comuna por comuna.
+
+Origen de cada período:
+
+- **2019→2024**: tabla D5, hoja `2`. Contiene las 346 comunas del país como origen, más las
+  columnas «Comuna ignorada, Región de …», «fuera del país», «región ignorada» e «ignorada».
+- **2012→2017**: microdatos, con las mismas reglas que la matriz interna. `P11` de 4 a 9
+  significa otro país (Perú, Argentina, Bolivia, Ecuador, Colombia u otro). Un código RR000
+  fuera de la RM cuenta como otra región.
+
+Lo que el censo no puede medir:
+
+- **Salidas al extranjero.** El censo solo cuenta a quienes viven en Chile.
+- **Salidas de personas cuya comuna de origen en la RM es ignorada.** Están en otra región y no
+  se pueden asignar a una comuna.
+- **Nacimientos y defunciones.** `menores_5` mezcla nacimientos, mortalidad infantil y
+  mudanzas de niños. Hay que sumar estadísticas vitales.
+
+
+Al comparar períodos:
+
+- Las salidas a otras regiones suben de 294.886 a 396.965 en un período que incluye la
+  pandemia.
+- `residencia_ignorada` es más alta en 2017 porque fue censo de hecho.
+
+## Proyección oficial del INE: `proyeccion_ine.csv`
+
+`codigo`, `comuna`, `anio`, `poblacion`. Las 52 comunas, de 2017 a 2035: 988 filas. Es la suma
+por sexo y edad simple de «Estimaciones y proyecciones de población 2002–2035, comunas» (INE,
+base censo 2017):
+https://www.ine.gob.cl/docs/default-source/proyecciones-de-poblacion/cuadros-estadisticos/base-2017/estimaciones-y-proyecciones-2002-2035-comunas.xlsx
+
+- Totales de la RM: 7.508.690 en 2017 y 8.420.729 en 2024. **No están en la misma escala que el
+  censo**: el INE corrige la omisión censal y estima la población a mitad de año. El censo 2024
+  contó 7.400.741 personas.
+- Se usa como alternativa de comparación en `docs/validacion-poblacion.md`.
+- El INE publicó una proyección base 2024, pero solo a nivel país. Cuando publique la versión
+  por comuna, conviene reemplazar esta.
+
 ## Cómo reejecutar
 
 ```bash

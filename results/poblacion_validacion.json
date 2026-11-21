@@ -1,0 +1,102 @@
+{
+  "comando": "python -m experiments.validar_poblacion",
+  "pregunta": "¿Abrir el modelo de hogares mejora la proyección de población por comuna?",
+  "prueba": "Población 2017 (censo) proyectada 7 años con tasas de 2012-2017; comparada con el censo 2024 por comuna.",
+  "real": {
+    "total_rm_2017": 7028421,
+    "total_rm_2024": 7400741
+  },
+  "errores": {
+    "sin_cambio": {
+      "rmse_personas": 15046.3,
+      "error_absoluto_medio_personas": 9759.9,
+      "error_porcentual_medio": 8.18,
+      "total_rm_predicho": 7028421,
+      "correlacion_crecimiento": null
+    },
+    "cerrado": {
+      "rmse_personas": 16903.6,
+      "error_absoluto_medio_personas": 8895.8,
+      "error_porcentual_medio": 5.92,
+      "total_rm_predicho": 7028421,
+      "correlacion_crecimiento": 0.221
+    },
+    "abierto": {
+      "rmse_personas": 18471.9,
+      "error_absoluto_medio_personas": 12665.7,
+      "error_porcentual_medio": 9.1,
+      "total_rm_predicho": 7838500,
+      "correlacion_crecimiento": 0.362
+    },
+    "ine_crecimiento": {
+      "rmse_personas": 18391.1,
+      "error_absoluto_medio_personas": 11115.3,
+      "error_porcentual_medio": 6.78,
+      "total_rm_predicho": 7879660,
+      "correlacion_crecimiento": 0.593
+    },
+    "ine_nivel": {
+      "rmse_personas": 31146.6,
+      "error_absoluto_medio_personas": 19972.4,
+      "error_porcentual_medio": 12.21,
+      "total_rm_predicho": 8420729,
+      "correlacion_crecimiento": 0.489
+    }
+  },
+  "diagnostico": {
+    "abierto_vitales_observados": {
+      "rmse_personas": 14509.9,
+      "error_absoluto_medio_personas": 9316.1,
+      "error_porcentual_medio": 6.9,
+      "total_rm_predicho": 7643230,
+      "correlacion_crecimiento": 0.491
+    },
+    "aviso": "Usa nacimientos y defunciones 2017-2023 (período de prueba). No es una predicción: separa el error de la natalidad del resto."
+  },
+  "flujos_anuales_rm_ajuste": {
+    "natalidad": 99866,
+    "mortalidad": 38410,
+    "llegan_regiones": 44989,
+    "llegan_extranjero": 61821,
+    "salen_regiones": 58977
+  },
+  "mayores_errores_abierto": [
+    {
+      "codigo": "13101",
+      "comuna": "Santiago",
+      "predicho": 377323,
+      "real": 438856
+    },
+    {
+      "codigo": "13201",
+      "comuna": "Puente Alto",
+      "predicho": 622436,
+      "real": 568086
+    },
+    {
+      "codigo": "13119",
+      "comuna": "Maipú",
+      "predicho": 555241,
+      "real": 503635
+    },
+    {
+      "codigo": "13125",
+      "comuna": "Quilicura",
+      "predicho": 242880,
+      "real": 205624
+    },
+    {
+      "codigo": "13114",
+      "comuna": "Las Condes",
+      "predicho": 326085,
+      "real": 296134
+    }
+  ],
+  "supuestos": [
+    "Tasas fijas por comuna, estimadas solo con 2012-2017; denominador: población 2017.",
+    "Nacimientos y defunciones: media 2012-2016 de los anuarios del INE.",
+    "Flujos externos: conteos quinquenales del censo 2017 divididos por 5.",
+    "Las salidas al extranjero no se miden (el censo solo cuenta residentes en Chile).",
+    "residencia_ignorada no se asigna a ningún flujo."
+  ]
+}
