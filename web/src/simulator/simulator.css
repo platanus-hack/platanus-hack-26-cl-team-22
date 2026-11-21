@@ -194,5 +194,5 @@ body.saliendo .sim .intro, body.saliendo .sim .crumbs, body.saliendo .sim .brand
 .panel .abrir:hover{background:var(--accent); color:var(--accent-ink)}
 
 /* La landing ya no se queda en el simulador de ejemplo: del globo pasa directo al simulador real.
-   Sus controles y su panel no se muestran; quedan el globo, el titular y el crédito del mapa. */
-.sim .panel, .sim .crumbs, .sim .zoom, .sim .legend, .sim .brand, .sim .intro .cta, .sim .intro small{display:none}
+   Sus controles y su panel no se muestran; quedan el globo, la introducción con su botón y el crédito del mapa. */
+.sim .panel, .sim .crumbs, .sim .zoom, .sim .legend, .sim .brand{display:none}

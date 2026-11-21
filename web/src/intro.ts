@@ -140,9 +140,8 @@ export function startIntro({ spacer, layer, box, sim }: Elements): IntroHandle {
     sim!.api.setIntro(null);
     setHomeDisabled(false);
     scrollTo(0, 0);
-    // The landing no longer stops at the example simulator: the end of the scroll flies the globe
-    // to Santiago and opens the real one (the engine and src/simulador.ts both listen to this button).
-    document.getElementById("cta")?.click();
+    // The intro text stays on screen until the visitor decides to go in (src/simulador.ts).
+    document.dispatchEvent(new Event("intro-fin"));
   }
 
   async function reopen() {
