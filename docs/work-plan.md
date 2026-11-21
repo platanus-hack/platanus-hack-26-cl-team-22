@@ -4,6 +4,8 @@
 - **Idea:** se anuncia en unas horas. Este plan es independiente de la idea; se ajusta en el kickoff.
 - **Regla de oro:** el núcleo (`core/`) no tiene UI y pasa sus tests antes de empezar la visualización.
 
+Para elegir la idea en el kickoff, usar [`ideas.md`](./ideas.md) (compuerta del track, puntuación con los pesos de la rúbrica y desempate).
+
 ## Roles (propuesta, confirmar en el kickoff)
 
 | Rol | Responsabilidad | Quién |
