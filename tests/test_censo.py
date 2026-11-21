@@ -6,7 +6,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from datos.censo.censo import completar_rm, matriz_2024, pares_2017
+from datos.censo.censo import (
+    completar_rm,
+    externos_2017,
+    externos_2024,
+    matriz_2024,
+    pares_2017,
+    sumar_proyeccion,
+)
 
 DATA = Path(__file__).resolve().parent.parent / "data" / "censo"
 
@@ -164,3 +171,140 @@ def test_matrix_control_totals(nombre, mudanzas, permanecen):
     fuera = sum(int(f["personas"]) for f in filas if f["codigo_origen"] != f["codigo_destino"])
     dentro = sum(int(f["personas"]) for f in filas if f["codigo_origen"] == f["codigo_destino"])
     assert (fuera, dentro) == (mudanzas, permanecen)
+
+
+# --- external flows: people entering or leaving the RM, and births ---------------------
+
+EXT_COLS = ["llegan_otras_regiones", "salen_a_otras_regiones", "llegan_extranjero",
+            "menores_5", "residencia_ignorada"]
+
+
+def _ext(df, codigo):
+    fila = df[df["codigo"] == codigo]
+    return {c: int(fila[c].iloc[0]) for c in EXT_COLS} if len(fila) else None
+
+
+@pytest.mark.parametrize("fila, codigo, esperado", [
+    # usual resident of 13101 who lived in Valparaíso (5101) five years ago
+    ((13101, 1, 98, 3, 5101), 13101, "llegan_otras_regiones"),
+    # region known, comuna unknown, outside the RM still counts as another region
+    ((13101, 1, 98, 3, 5000), 13101, "llegan_otras_regiones"),
+    # lived in Perú (P11 = 4) five years ago
+    ((13101, 1, 98, 4, 98), 13101, "llegan_extranjero"),
+    ((13101, 2, 98, 9, 98), 13101, "llegan_extranjero"),
+    # not born yet
+    ((13101, 1, 98, 1, 98), 13101, "menores_5"),
+    # comuna not declared, RM comuna unknown, missing
+    ((13101, 1, 98, 3, 997), 13101, "residencia_ignorada"),
+    ((13101, 1, 98, 3, 13000), 13101, "residencia_ignorada"),
+    ((13101, 1, 98, 99, 99), 13101, "residencia_ignorada"),
+    # counted elsewhere and "this comuna" five years ago: ambiguous, unknown origin
+    ((13101, 3, 13110, 2, 98), 13110, "residencia_ignorada"),
+    # lives in Valparaíso now, lived in 13101 five years ago
+    ((5101, 1, 98, 3, 13101), 13101, "salen_a_otras_regiones"),
+    # counted in Santiago but usual resident of Valparaíso, lived in 13101 before
+    ((13101, 3, 5101, 3, 13101), 13101, "salen_a_otras_regiones"),
+])
+def test_2017_external_flow_categories(fila, codigo, esperado):
+    out = externos_2017(_p17(fila))
+    assert _ext(out, codigo) == {c: int(c == esperado) for c in EXT_COLS}
+
+
+@pytest.mark.parametrize("fila", [
+    (13101, 1, 98, 3, 13102),   # internal move: already in the move matrix
+    (13101, 1, 98, 2, 98),      # stayer
+    (5101, 1, 98, 3, 5102),     # nothing to do with the RM
+    (13101, 4, 98, 4, 98),      # usual residence abroad: not a resident
+])
+def test_2017_rows_outside_the_external_flows_count_nothing(fila):
+    out = externos_2017(_p17(fila))
+    assert out[EXT_COLS].to_numpy().sum() == 0
+
+
+def _hoja_d5_ext():
+    encabezado = ("Código región", "Región", "Código provincia", "Provincia", "Código comuna",
+                  "Comuna", "Población censada", "No migrante interno comunal",
+                  "Aún no nacían (menores de 5 años)", "Valparaíso", "Santiago",
+                  "Independencia", "Comuna ignorada, Región de Valparaíso",
+                  "Comuna ignorada, Región de Metropolitana de Santiago",
+                  "Residencia habitual hace cinco años con región ignorada",
+                  "Residencia habitual hace cinco años fuera del país",
+                  "Residencia habitual hace cinco años ignorada")
+    return [
+        encabezado,
+        (5, "Valparaíso", 51, "Valparaíso", 5101, "Valparaíso", 100, 80, 5, "-", 6, 1, 0, 2, 0, 3,
+         3),
+        (13, "RM", 131, "Santiago", 13101, "Santiago", 200, 120, 10, 9, "-", 7, 4, 5, 1, 30, 14),
+        (13, "RM", 131, "Santiago", 13108, "Independencia", 80, 50, 5, 2, 11, "-", 0, 1, 2, 8, 1),
+    ]
+
+
+def test_2024_external_flows_from_the_d5_sheet():
+    out = externos_2024(_hoja_d5_ext())
+    assert _ext(out, 13101) == {"llegan_otras_regiones": 9 + 4, "salen_a_otras_regiones": 6,
+                                "llegan_extranjero": 30, "menores_5": 10,
+                                "residencia_ignorada": 5 + 1 + 14}
+    assert _ext(out, 13108)["salen_a_otras_regiones"] == 1
+    assert _ext(out, 5101) is None
+
+
+# --- published external flows ----------------------------------------------------------
+
+@pytest.mark.parametrize("periodo, matriz, anio", [
+    ("2012-2017", "mudanzas_2012_2017.csv", "2017"),
+    ("2019-2024", "mudanzas_2019_2024.csv", "2024"),
+])
+def test_external_flows_close_the_population_accounting(periodo, matriz, anio):
+    """Population = internal row (stayers + moves in) + every arriving external category."""
+    externos = {f["codigo"]: f for f in _leer("flujos_externos.csv") if f["periodo"] == periodo}
+    pob = {f["codigo"]: int(f["poblacion"]) for f in _leer("poblacion_viviendas.csv")
+           if f["anio"] == anio}
+    interno = {}
+    for f in _leer(matriz):
+        interno[f["codigo_destino"]] = interno.get(f["codigo_destino"], 0) + int(f["personas"])
+    assert len(externos) == 52
+    for codigo, total in pob.items():
+        e = externos[codigo]
+        llegan = sum(int(e[c]) for c in EXT_COLS if c != "salen_a_otras_regiones")
+        assert interno[codigo] + llegan == total, codigo
+
+
+@pytest.mark.parametrize("periodo, totales", [
+    # 2019-2024: abroad and under-5 equal the INE table D5 RM totals.
+    ("2019-2024", {"llegan_otras_regiones": 179_275, "salen_a_otras_regiones": 396_965,
+                   "llegan_extranjero": 338_266, "menores_5": 348_546,
+                   "residencia_ignorada": 69_283}),
+    # 2012-2017: rebuilt from microdata (data/censo/README.md).
+    ("2012-2017", {"llegan_otras_regiones": 224_945, "salen_a_otras_regiones": 294_886,
+                   "llegan_extranjero": 309_103, "menores_5": 459_039,
+                   "residencia_ignorada": 149_443}),
+])
+def test_external_flow_totals(periodo, totales):
+    filas = [f for f in _leer("flujos_externos.csv") if f["periodo"] == periodo]
+    assert {c: sum(int(f[c]) for f in filas) for c in totales} == totales
+
+
+# --- INE official projections (base 2017) ----------------------------------------------
+
+
+
+
+def test_projection_sums_sexes_and_ages_per_rm_comuna_and_year():
+    filas = [
+        ("Region", "Nombre Region", "Provincia", "Nombre Provincia", "Comuna", "Nombre Comuna",
+         "Sexo", "Edad", "Poblacion 2017", "Poblacion 2024"),
+        (13, "RM", 131, "Santiago", 13101, "Santiago", 1, 0, 10.4, 12.0),
+        (13, "RM", 131, "Santiago", 13101, "Santiago", 2, 80, 5.0, 6.0),
+        (5, "Valparaíso", 51, "Valparaíso", 5101, "Valparaíso", 1, 0, 99.0, 99.0),
+    ]
+    assert sumar_proyeccion(filas, [2017, 2024]) == {(13101, 2017): 15, (13101, 2024): 18}
+
+
+def test_published_projection_covers_every_rm_comuna_2017_to_2035():
+    filas = _leer("proyeccion_ine.csv")
+    assert {int(f["anio"]) for f in filas} == set(range(2017, 2036))
+    assert len(filas) == 52 * 19
+    rm = {a: sum(int(f["poblacion"]) for f in filas if f["anio"] == a) for a in ("2017", "2024")}
+    # INE estimaciones y proyecciones base 2017, RM totals (they correct census omission,
+    # so 2017 is above the census count of 7.028.421).
+    assert rm == {"2017": 7_508_690, "2024": 8_420_729}
