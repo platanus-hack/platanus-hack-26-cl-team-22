@@ -12,7 +12,7 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 ## Cómo decide
 
 1. La persona escribe su caso («mi hijo tiene asma») al final de la entrada guiada.
-2. Claude (`claude-opus-5-5`, esfuerzo bajo, salida estructurada estricta) solo puede devolver valores de un
+2. Claude (`claude-sonnet-5-5`, esfuerzo bajo, salida estructurada estricta) solo puede devolver valores de un
    **catálogo cerrado** (`viz/src/lib/caso.ts`): una de las tres variables, uno de los cinco grados, indicadores
    y temas no medidos de una lista fija. Cada ajuste trae la frase del caso que lo justifica.
 3. El servidor y la página descartan todo lo que no está en el catálogo y todo ajuste cuya frase **no aparece en

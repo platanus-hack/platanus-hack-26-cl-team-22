@@ -32,7 +32,7 @@ test('interpretarCaso asks Claude for strict JSON with the closed schema, low ef
   await interpretarCaso(cliente, pedido)
   const p = pedidos[0] as Record<string, any>
   assert.equal(p.model, MODELO)
-  assert.equal(MODELO, 'claude-opus-5-5')
+  assert.equal(MODELO, 'claude-sonnet-5-5')
   assert.equal(p.output_config.effort, 'low')
   assert.equal(p.output_config.format.type, 'json_schema')
   assert.deepEqual(p.output_config.format.schema.required, ['ajustes', 'indicadores', 'no_medido'])
