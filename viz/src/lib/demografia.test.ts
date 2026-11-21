@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { MULTIPLICADORES_BASE, leerDemografia, mayoresFlujos, proyectarDemografia } from './demografia'
+import { MULTIPLICADORES_BASE, cambiosPorComuna, leerDemografia, mayoresFlujos, proyectarDemografia } from './demografia'
 
 const ruta = fileURLToPath(new URL('../../public/datos/demografia.json', import.meta.url))
 const datos = leerDemografia(JSON.parse(readFileSync(ruta, 'utf-8')))
@@ -65,5 +65,14 @@ describe('leerDemografia', () => {
   it('rejects a file whose destination matrix does not match the comunas', () => {
     const malo = { ...JSON.parse(readFileSync(ruta, 'utf-8')), destinos: [[1]] }
     expect(() => leerDemografia(malo)).toThrow(/destinos/)
+  })
+})
+
+describe('cambiosPorComuna', () => {
+  it('sorts comunas by change from the first year, largest growth first', () => {
+    const comunas = [{ codigo: 'a', nombre: 'A' }, { codigo: 'b', nombre: 'B' }, { codigo: 'c', nombre: 'C' }]
+    const out = cambiosPorComuna(comunas, [[100, 200, 50], [110, 180, 60]], 1)
+    expect(out.map((x) => x.codigo)).toEqual(['c', 'a', 'b'])
+    expect(out[0]).toEqual({ codigo: 'c', nombre: 'C', personas: 10, pct: 20 })
   })
 })

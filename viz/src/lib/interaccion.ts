@@ -2,7 +2,7 @@ import type { Diferencia } from './diferencia'
 import { pasoDiferencia } from './niveles'
 import type { Mejor } from './types'
 
-export type VistaId = 'riesgo' | 'plan' | 'lena' | 'prueba'
+export type VistaId = 'riesgo' | 'plan' | 'lena' | 'prueba' | 'mudanzas'
 
 export interface DefVista {
   id: VistaId
@@ -14,11 +14,15 @@ const TODAS: DefVista[] = [
   { id: 'plan', nombre: 'El plan' },
   { id: 'lena', nombre: 'La leña' },
   { id: 'prueba', nombre: 'La prueba' },
+  { id: 'mudanzas', nombre: 'Las mudanzas' },
 ]
 
-/** Vistas en orden; la última ("La prueba") solo existe si el archivo trae validación. La tecla es su posición. */
-export function vistasDisponibles(hayValidacion: boolean): DefVista[] {
-  return TODAS.filter((v) => v.id !== 'prueba' || hayValidacion)
+/**
+ * Vistas en orden; la tecla es su posición. "La prueba" solo existe si el archivo trae validación y
+ * "Las mudanzas" (simulación de mudanzas) solo si existe datos/demografia.json.
+ */
+export function vistasDisponibles(hayValidacion: boolean, hayDemografia = false): DefVista[] {
+  return TODAS.filter((v) => (v.id !== 'prueba' || hayValidacion) && (v.id !== 'mudanzas' || hayDemografia))
 }
 
 /** Teclas de las tiras de política, en orden: la tecla que se muestra en cada tira. */

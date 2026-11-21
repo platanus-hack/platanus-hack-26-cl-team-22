@@ -31,6 +31,15 @@ export async function cargarLena(): Promise<unknown> {
   }
 }
 
+/** Parámetros del laboratorio de mudanzas (datos/demografia.json); null si el archivo no está. */
+export async function cargarDemografia(): Promise<unknown> {
+  try {
+    return await leerJson('datos/demografia.json')
+  } catch {
+    return null
+  }
+}
+
 /** Polígonos de las comunas; null si no existen todavía. */
 export async function cargarGeo(): Promise<unknown> {
   try {

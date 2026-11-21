@@ -11,6 +11,8 @@ import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, vistasDisponibles } from './lib/interaccion'
 import { leerLena, type Zona } from './lib/lena'
+import { leerDemografia } from './lib/demografia'
+import { VistaMudanzas } from './components/VistaMudanzas'
 import { estadoAire, TEXTO_ESTADO, veredictoComuna } from './lib/estado'
 import { claseFondo } from './lib/fondo'
 import { nivel, papelNivel, tablaPara } from './lib/niveles'
@@ -43,6 +45,7 @@ interface Props {
   data: Simulacion
   geoRaw: unknown
   lenaRaw: unknown
+  demografiaRaw?: unknown
 }
 
 const ESPERA_DEMO_MS = 45_000
@@ -60,7 +63,7 @@ function useMovimientoReducido(): boolean {
   return r
 }
 
-export function Simulador({ data, geoRaw, lenaRaw }: Props) {
+export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const anios = data.meta.anios
   const conDato = useMemo(() => variablesConDato(data), [data])
   // El aire es la variable con norma, planes y validación; las demás hojas (plan, leña, prueba) hablan de ella.
@@ -68,7 +71,16 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   const tabla = useMemo(() => tablaPara(varAire, data.impacto?.norma), [varAire, data.impacto?.norma])
   const cortas = useMemo(() => data.variables.filter((v) => conDato.has(v.id)).map(variableCorta), [data.variables, conDato])
   const cortes = tabla.cortes
-  const vistas = useMemo(() => vistasDisponibles(!!data.validacion), [data.validacion])
+  const demografia = useMemo(() => {
+    if (!demografiaRaw) return null
+    try {
+      return leerDemografia(demografiaRaw)
+    } catch (e) {
+      console.warn('demografia.json no se usa:', e)
+      return null
+    }
+  }, [demografiaRaw])
+  const vistas = useMemo(() => vistasDisponibles(!!data.validacion, !!demografia), [data.validacion, demografia])
   const reducido = useMovimientoReducido()
 
   const inicial = useMemo(() => escenarioInicial(data.escenarios), [data.escenarios])
@@ -557,6 +569,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     )
   else if (vista === 'lena') hoja = <VistaLena lena={lena} />
   else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
+  else if (vista === 'mudanzas' && demografia) hoja = <VistaMudanzas datos={demografia} anio={anio} />
 
   const elegirAnio = (i: number) => {
     setJugando(false)

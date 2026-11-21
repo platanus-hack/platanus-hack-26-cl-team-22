@@ -114,3 +114,21 @@ export function mayoresFlujos(
   )
   return todos.sort((a, b) => b.personas - a.personas).slice(0, k)
 }
+
+/** Change of each comuna from the first row of `poblacion` to row `t`, largest growth first. */
+export function cambiosPorComuna(
+  comunas: { codigo: string; nombre: string }[],
+  poblacion: number[][],
+  t: number,
+): { codigo: string; nombre: string; personas: number; pct: number }[] {
+  const inicio = poblacion[0]!
+  const fin = poblacion[t] ?? inicio
+  return comunas
+    .map((c, i) => ({
+      codigo: c.codigo,
+      nombre: c.nombre,
+      personas: fin[i]! - inicio[i]!,
+      pct: inicio[i]! > 0 ? ((fin[i]! - inicio[i]!) / inicio[i]!) * 100 : 0,
+    }))
+    .sort((a, b) => b.pct - a.pct)
+}

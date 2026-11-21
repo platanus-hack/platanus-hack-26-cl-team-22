@@ -18,6 +18,8 @@ describe('teclas', () => {
   it('la última vista solo existe con validación', () => {
     expect(vistasDisponibles(false).map((v) => v.id)).toEqual(['riesgo', 'plan', 'lena'])
     expect(vistasDisponibles(true)).toHaveLength(4)
+    expect(vistasDisponibles(true, true).map((v) => v.id).at(-1)).toBe('mudanzas')
+    expect(vistasDisponibles(false, true).map((v) => v.id)).toEqual(['riesgo', 'plan', 'lena', 'mudanzas'])
   })
 })
 
