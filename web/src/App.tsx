@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Logo } from "./Logo";
+import { ScrollHint } from "./ScrollHint";
 import { startIntro } from "./intro";
 import type { IntroHandle } from "./intro";
 import { Simulator } from "./simulator/Simulator";
@@ -32,6 +33,7 @@ export function App() {
         <Logo ref={boxRef} />
       </div>
       <Simulator onReady={onReady} onHome={onHome} />
+      <ScrollHint />
     </>
   );
 }

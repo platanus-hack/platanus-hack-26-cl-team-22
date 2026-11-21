@@ -79,3 +79,55 @@ html.intro-on::-webkit-scrollbar {
 .logo-dot {
   fill: var(--dot);
 }
+
+/* "Scroll down" cue: shown after a few idle seconds (ScrollHint.tsx). */
+.scroll-hint {
+  position: fixed;
+  right: 5vw;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg);
+  font-family: "Instrument Sans Variable", "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(calc(-50% + 8px));
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.scroll-hint.is-visible {
+  opacity: 0.7;
+  transform: translateY(-50%);
+}
+/* Narrow screens: the logo spans the width, so the cue goes back to the bottom. */
+@media (max-width: 860px) {
+  .scroll-hint {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 28px;
+    transform: translateY(8px);
+  }
+  .scroll-hint.is-visible {
+    transform: none;
+  }
+}
+.scroll-hint-text {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.scroll-hint-wheel {
+  animation: scroll-hint-wheel 1.8s ease-in-out infinite;
+}
+@keyframes scroll-hint-wheel {
+  0% { opacity: 0; transform: translateY(-2px); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint-wheel { animation: none; }
+}
