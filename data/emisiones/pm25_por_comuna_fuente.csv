@@ -1,0 +1,487 @@
+anio,comuna,codigo_comuna,fuente,toneladas_anio,origen_dato
+2017,Santiago,13101,industria,3.5413,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Santiago,13101,lena,4.8361,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Cerrillos,13102,industria,0.8506,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Cerrillos,13102,lena,19.0891,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Cerrillos,13102,otras,0.1044,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Cerro Navia,13103,industria,0.0276,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Cerro Navia,13103,lena,133.8171,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Conchalí,13104,industria,0.6174,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Conchalí,13104,lena,12.817,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,El Bosque,13105,industria,0.0324,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,El Bosque,13105,lena,33.1723,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Estación Central,13106,industria,1.1055,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Estación Central,13106,lena,9.0348,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Huechuraba,13107,industria,0.6199,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Huechuraba,13107,lena,3.078,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Huechuraba,13107,otras,14.3866,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Independencia,13108,industria,0.4989,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Independencia,13108,lena,15.3441,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,La Cisterna,13109,industria,0.1561,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,La Cisterna,13109,lena,73.5986,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,La Florida,13110,industria,0.6071,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,La Florida,13110,lena,19.5223,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,La Florida,13110,otras,0.9395,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,La Granja,13111,industria,0.0321,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,La Granja,13111,lena,0.2834,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,La Pintana,13112,industria,0.2511,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,La Pintana,13112,lena,40.1972,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,La Reina,13113,industria,0.2561,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,La Reina,13113,lena,93.6231,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,La Reina,13113,otras,0.0,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Las Condes,13114,industria,5.1707,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Las Condes,13114,lena,29.7659,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Las Condes,13114,otras,0.0,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Lo Barnechea,13115,industria,0.6898,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Lo Barnechea,13115,lena,19.5109,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Lo Barnechea,13115,otras,0.0767,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Lo Espejo,13116,industria,0.1959,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Lo Espejo,13116,lena,7.9535,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Lo Prado,13117,industria,0.0132,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Lo Prado,13117,lena,0.2589,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Macul,13118,industria,1.0186,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Macul,13118,lena,4.1399,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Maipú,13119,industria,3.3593,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Maipú,13119,lena,24.9527,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Maipú,13119,otras,5.5359,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Ñuñoa,13120,industria,1.2178,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Ñuñoa,13120,lena,14.2444,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Pedro Aguirre Cerda,13121,industria,0.0236,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Pedro Aguirre Cerda,13121,lena,8.7995,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Peñalolén,13122,industria,0.2098,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Peñalolén,13122,lena,12.0432,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Peñalolén,13122,otras,4.8324,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Providencia,13123,industria,3.5708,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Providencia,13123,lena,5.4269,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Providencia,13123,otras,0.1216,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Pudahuel,13124,industria,3.0815,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Pudahuel,13124,lena,0.2438,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Pudahuel,13124,otras,35.8321,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Quilicura,13125,industria,5.9506,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Quilicura,13125,lena,14.319,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Quilicura,13125,otras,0.567,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Quinta Normal,13126,industria,1.3066,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Quinta Normal,13126,lena,5.3903,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Recoleta,13127,industria,0.3142,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Recoleta,13127,lena,8.5765,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Recoleta,13127,otras,0.1557,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Renca,13128,industria,37.6728,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Renca,13128,lena,24.9223,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Renca,13128,otras,7.2277,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San Joaquín,13129,industria,0.303,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,San Joaquín,13129,lena,9.5396,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San Miguel,13130,industria,0.053,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,San Miguel,13130,lena,8.2704,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San Ramón,13131,industria,0.1139,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,San Ramón,13131,lena,23.1453,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Vitacura,13132,industria,0.9362,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Vitacura,13132,lena,0.3348,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Puente Alto,13201,industria,17.4051,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Puente Alto,13201,lena,25.628,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Puente Alto,13201,otras,4.4106,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Pirque,13202,industria,0.2184,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Pirque,13202,lena,242.9555,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Pirque,13202,otras,2671.2925,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San José de Maipo,13203,industria,0.0748,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,San José de Maipo,13203,lena,127.1597,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San José de Maipo,13203,otras,520.3453,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Colina,13301,industria,0.359,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Colina,13301,lena,483.1215,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Colina,13301,otras,40.067,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Lampa,13302,industria,1.9587,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Lampa,13302,lena,456.3277,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Lampa,13302,otras,173.4045,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Tiltil,13303,industria,3.8871,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Tiltil,13303,lena,62.4303,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Tiltil,13303,otras,70.59,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San Bernardo,13401,industria,5.5461,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,San Bernardo,13401,lena,49.4338,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San Bernardo,13401,otras,3.3709,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Buin,13402,industria,1.4472,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Buin,13402,lena,272.5067,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Buin,13402,otras,35.5428,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Calera de Tango,13403,industria,0.4046,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Calera de Tango,13403,lena,57.1359,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Calera de Tango,13403,otras,9.6919,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Paine,13404,industria,0.6205,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Paine,13404,lena,483.9358,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Paine,13404,otras,109.9916,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Melipilla,13501,industria,1.1317,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Melipilla,13501,lena,158.393,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Melipilla,13501,otras,129.5363,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Alhué,13502,industria,0.0136,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Alhué,13502,lena,72.0364,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Alhué,13502,otras,8099.5826,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Curacaví,13503,industria,0.1556,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Curacaví,13503,lena,82.4981,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Curacaví,13503,otras,10603.2269,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,María Pinto,13504,lena,20.3023,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,María Pinto,13504,otras,10.9814,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San Pedro,13505,industria,0.83,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,San Pedro,13505,lena,112.7154,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,San Pedro,13505,otras,8061.6932,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Talagante,13601,industria,0.3694,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Talagante,13601,lena,124.8988,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Talagante,13601,otras,89.1432,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,El Monte,13602,industria,0.8277,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,El Monte,13602,lena,225.2652,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,El Monte,13602,otras,4.3285,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Isla de Maipo,13603,industria,0.2299,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Isla de Maipo,13603,lena,294.9516,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Isla de Maipo,13603,otras,5.3236,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Padre Hurtado,13604,industria,0.1573,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Padre Hurtado,13604,lena,30.3644,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Padre Hurtado,13604,otras,127.4524,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Peñaflor,13605,industria,0.232,RETC fuentes puntuales 2017 (puntuales_2017.csv); PM2.5 primario; columna cantidad_toneladas; todos los establecimientos declarados
+2017,Peñaflor,13605,lena,154.0574,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2017,Peñaflor,13605,otras,2.3852,"RETC fuentes difusas 2017 (difusas_2017.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Santiago,13101,industria,21.8914,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Santiago,13101,lena,5.7822,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Santiago,13101,otras,44.7807,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Santiago,13101,transporte,105.4876,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Cerrillos,13102,industria,13.6706,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Cerrillos,13102,otras,18.5641,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Cerrillos,13102,transporte,44.6061,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Cerro Navia,13103,industria,0.0716,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Cerro Navia,13103,lena,31.1907,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Cerro Navia,13103,otras,9.7815,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Cerro Navia,13103,transporte,10.2123,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Conchalí,13104,industria,0.3131,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Conchalí,13104,lena,2.3192,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Conchalí,13104,otras,16.6015,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Conchalí,13104,transporte,32.7885,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,El Bosque,13105,industria,0.2264,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,El Bosque,13105,lena,37.1398,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,El Bosque,13105,otras,11.2195,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,El Bosque,13105,transporte,15.6951,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Estación Central,13106,industria,1.9341,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Estación Central,13106,lena,5.9759,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Estación Central,13106,otras,22.368,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Estación Central,13106,transporte,57.0279,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Huechuraba,13107,industria,7.1844,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Huechuraba,13107,lena,8.2631,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Huechuraba,13107,otras,15.4965,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Huechuraba,13107,transporte,37.5722,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Independencia,13108,industria,1.6547,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Independencia,13108,lena,6.3922,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Independencia,13108,otras,12.8779,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Independencia,13108,transporte,33.6246,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Cisterna,13109,industria,2.5614,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,La Cisterna,13109,lena,22.3568,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,La Cisterna,13109,otras,14.0737,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Cisterna,13109,transporte,28.8972,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Florida,13110,industria,2.2832,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,La Florida,13110,lena,44.4335,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,La Florida,13110,otras,36.8255,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Florida,13110,transporte,93.4401,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Granja,13111,industria,1.5159,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,La Granja,13111,lena,4.4335,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,La Granja,13111,otras,13.9711,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Granja,13111,transporte,37.2612,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Pintana,13112,industria,1.6052,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,La Pintana,13112,lena,43.0972,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,La Pintana,13112,otras,19.4068,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Pintana,13112,transporte,33.7692,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Reina,13113,industria,2.4927,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,La Reina,13113,otras,12.6471,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,La Reina,13113,transporte,29.4349,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Las Condes,13114,industria,25.3251,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Las Condes,13114,lena,21.621,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Las Condes,13114,otras,28.5821,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Las Condes,13114,transporte,98.5446,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lo Barnechea,13115,industria,5.3914,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Lo Barnechea,13115,lena,49.0164,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Lo Barnechea,13115,otras,8.5765,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lo Barnechea,13115,transporte,25.46,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lo Espejo,13116,industria,0.4078,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Lo Espejo,13116,lena,8.6573,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Lo Espejo,13116,otras,15.7706,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lo Espejo,13116,transporte,20.9922,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lo Prado,13117,industria,0.1616,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Lo Prado,13117,lena,2.2568,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Lo Prado,13117,otras,9.7949,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lo Prado,13117,transporte,14.552,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Macul,13118,industria,1.3624,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Macul,13118,lena,10.5841,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Macul,13118,otras,13.8509,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Macul,13118,transporte,38.7991,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Maipú,13119,industria,3.3287,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Maipú,13119,lena,46.1915,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Maipú,13119,otras,53.6494,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Maipú,13119,transporte,102.3239,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Ñuñoa,13120,industria,4.6644,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Ñuñoa,13120,lena,36.4419,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Ñuñoa,13120,otras,17.5023,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Ñuñoa,13120,transporte,54.5389,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Pedro Aguirre Cerda,13121,industria,0.3433,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Pedro Aguirre Cerda,13121,lena,19.4358,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Pedro Aguirre Cerda,13121,otras,8.6877,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Pedro Aguirre Cerda,13121,transporte,15.5766,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Peñalolén,13122,industria,0.7997,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Peñalolén,13122,lena,17.5341,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Peñalolén,13122,otras,16.9226,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Peñalolén,13122,transporte,38.2355,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Providencia,13123,industria,8.2195,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Providencia,13123,lena,5.9911,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Providencia,13123,otras,18.6773,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Providencia,13123,transporte,79.82,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Pudahuel,13124,industria,3.7979,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Pudahuel,13124,lena,28.8013,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Pudahuel,13124,otras,42.5006,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Pudahuel,13124,transporte,68.6718,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Quilicura,13125,industria,8.6595,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Quilicura,13125,lena,13.3298,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Quilicura,13125,otras,39.4206,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Quilicura,13125,transporte,84.9723,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Quinta Normal,13126,industria,1.3661,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Quinta Normal,13126,lena,8.9285,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Quinta Normal,13126,otras,14.5055,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Quinta Normal,13126,transporte,34.8765,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Recoleta,13127,industria,2.4842,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Recoleta,13127,lena,4.1755,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Recoleta,13127,otras,18.3398,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Recoleta,13127,transporte,32.8343,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Renca,13128,industria,41.6278,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Renca,13128,lena,13.4914,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Renca,13128,otras,20.2727,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Renca,13128,transporte,50.887,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Joaquín,13129,industria,1.3611,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,San Joaquín,13129,otras,11.739,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Joaquín,13129,transporte,23.0759,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Miguel,13130,industria,1.4682,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,San Miguel,13130,lena,3.3303,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,San Miguel,13130,otras,14.7909,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Miguel,13130,transporte,32.27,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Ramón,13131,industria,0.0495,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,San Ramón,13131,lena,15.8921,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,San Ramón,13131,otras,8.7393,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Ramón,13131,transporte,14.9257,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Vitacura,13132,industria,10.872,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Vitacura,13132,lena,2.0792,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Vitacura,13132,otras,18.4065,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Vitacura,13132,transporte,71.2958,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Puente Alto,13201,industria,5.9907,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Puente Alto,13201,lena,83.2483,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Puente Alto,13201,otras,44.4572,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Puente Alto,13201,transporte,104.3959,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Pirque,13202,industria,0.2612,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Pirque,13202,lena,157.5811,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Pirque,13202,otras,14.1413,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Pirque,13202,transporte,7.5418,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San José de Maipo,13203,industria,1.7483,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,San José de Maipo,13203,lena,80.9679,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,San José de Maipo,13203,otras,9.1745,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Colina,13301,industria,7.7337,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Colina,13301,lena,189.8392,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Colina,13301,otras,74.2776,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Colina,13301,transporte,81.4692,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lampa,13302,industria,3.7319,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Lampa,13302,lena,301.2751,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Lampa,13302,otras,36.3518,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Lampa,13302,transporte,52.8677,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Tiltil,13303,industria,2.6099,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Tiltil,13303,lena,55.505,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Tiltil,13303,otras,43.6781,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Tiltil,13303,transporte,24.1933,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Bernardo,13401,industria,5.9975,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,San Bernardo,13401,lena,128.0439,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,San Bernardo,13401,otras,49.3243,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,San Bernardo,13401,transporte,79.4165,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Buin,13402,industria,2.1326,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Buin,13402,lena,281.2955,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Buin,13402,otras,26.0347,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Buin,13402,transporte,26.2135,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Calera de Tango,13403,industria,1.4348,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Calera de Tango,13403,lena,112.7392,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Calera de Tango,13403,otras,9.2852,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Calera de Tango,13403,transporte,11.7228,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Paine,13404,industria,2.0459,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Paine,13404,lena,343.3303,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Paine,13404,otras,52.777,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Paine,13404,transporte,17.5381,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Melipilla,13501,industria,2.0216,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Melipilla,13501,lena,269.13,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Melipilla,13501,otras,181.036,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Alhué,13502,industria,3.064,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Alhué,13502,lena,41.8135,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Alhué,13502,otras,10.81,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Curacaví,13503,industria,0.7197,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Curacaví,13503,lena,105.9849,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Curacaví,13503,otras,221.7155,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,María Pinto,13504,industria,0.0,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,María Pinto,13504,lena,23.0132,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,María Pinto,13504,otras,95.8257,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,San Pedro,13505,industria,1.4146,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,San Pedro,13505,lena,78.1448,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,San Pedro,13505,otras,241.3988,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Talagante,13601,industria,8.4209,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Talagante,13601,lena,53.5623,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Talagante,13601,otras,40.4022,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Talagante,13601,transporte,39.3388,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,El Monte,13602,industria,0.6192,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,El Monte,13602,lena,99.7992,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,El Monte,13602,otras,3.3737,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Isla de Maipo,13603,industria,0.5219,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Isla de Maipo,13603,lena,132.1575,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Isla de Maipo,13603,otras,33.2917,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Isla de Maipo,13603,transporte,1.3832,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Padre Hurtado,13604,industria,2.6151,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Padre Hurtado,13604,lena,46.3687,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Padre Hurtado,13604,otras,8.8407,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Padre Hurtado,13604,transporte,11.52,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Peñaflor,13605,industria,1.0725,RETC fuentes puntuales 2023 (puntuales_2023.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2023,Peñaflor,13605,lena,114.806,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2023,Peñaflor,13605,otras,29.3174,"RETC fuentes difusas 2023 (difusas_2023.xlsx); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas | RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2023,Peñaflor,13605,transporte,9.4346,"RETC transporte en ruta 2023 (transporte_2023.csv); MP2,5; transporte=escape+desgaste neumáticos; otras=resuspensión 'polvo natural' de calles; solo comunas del Gran Santiago"
+2024,Santiago,13101,industria,25.7648,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Santiago,13101,lena,5.3212,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Santiago,13101,otras,17.8337,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Cerrillos,13102,industria,17.977,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Cerrillos,13102,otras,3.179,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Cerro Navia,13103,industria,0.5523,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Cerro Navia,13103,lena,30.5816,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Cerro Navia,13103,otras,4.3234,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Conchalí,13104,industria,0.3233,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Conchalí,13104,lena,2.2192,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Conchalí,13104,otras,4.7461,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,El Bosque,13105,industria,0.2751,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,El Bosque,13105,lena,35.9284,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,El Bosque,13105,otras,3.8831,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Estación Central,13106,industria,0.8818,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Estación Central,13106,lena,4.6182,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Estación Central,13106,otras,6.4719,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Huechuraba,13107,industria,6.8972,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Huechuraba,13107,lena,7.0027,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Huechuraba,13107,otras,2.7339,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Independencia,13108,industria,1.6332,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Independencia,13108,lena,5.8144,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Independencia,13108,otras,3.8831,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Cisterna,13109,industria,8.1534,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,La Cisterna,13109,lena,18.8918,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Cisterna,13109,otras,2.3011,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Florida,13110,industria,1.5443,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,La Florida,13110,lena,41.8969,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Florida,13110,otras,8.6903,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Granja,13111,industria,2.029,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,La Granja,13111,lena,4.4324,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Granja,13111,otras,4.4584,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Pintana,13112,industria,1.2612,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,La Pintana,13112,lena,41.7876,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Pintana,13112,otras,8.379,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,La Reina,13113,industria,1.9188,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,La Reina,13113,otras,3.8879,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Las Condes,13114,industria,361.941,"RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados; AVISO: incluye una fuente individual >100 t/año de PM2.5 (valor del dato publicado, probable error de unidad o de declaración; no corregido)"
+2024,Las Condes,13114,lena,18.7226,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Las Condes,13114,otras,5.7623,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lo Barnechea,13115,industria,6.1045,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Lo Barnechea,13115,lena,43.6607,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lo Barnechea,13115,otras,1.8575,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lo Espejo,13116,industria,0.4008,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Lo Espejo,13116,lena,8.2355,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lo Espejo,13116,otras,3.4517,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lo Prado,13117,industria,0.1278,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Lo Prado,13117,lena,2.2109,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lo Prado,13117,otras,2.8764,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Macul,13118,industria,2.8239,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Macul,13118,lena,9.022,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Macul,13118,otras,3.0202,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Maipú,13119,industria,6.4751,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Maipú,13119,lena,41.0367,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Maipú,13119,otras,9.0663,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Ñuñoa,13120,industria,4.4247,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Ñuñoa,13120,lena,29.9044,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Ñuñoa,13120,otras,3.8831,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Pedro Aguirre Cerda,13121,industria,0.2711,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Pedro Aguirre Cerda,13121,lena,19.4168,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Pedro Aguirre Cerda,13121,otras,4.1708,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Peñalolén,13122,industria,1.3177,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Peñalolén,13122,lena,16.1643,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Peñalolén,13122,otras,4.9108,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Providencia,13123,industria,5.8774,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Providencia,13123,lena,5.0421,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Providencia,13123,otras,3.1709,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Pudahuel,13124,industria,6.8444,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Pudahuel,13124,lena,41.9082,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Pudahuel,13124,otras,9.9734,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Quilicura,13125,industria,9.9736,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Quilicura,13125,lena,10.7005,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Quilicura,13125,otras,14.0874,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Quinta Normal,13126,industria,2.1493,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Quinta Normal,13126,lena,8.1655,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Quinta Normal,13126,otras,5.3213,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Recoleta,13127,industria,2.258,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Recoleta,13127,lena,4.0199,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Recoleta,13127,otras,6.8879,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Renca,13128,industria,32.745,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Renca,13128,lena,12.1203,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Renca,13128,otras,8.2568,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Joaquín,13129,industria,1.0327,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,San Joaquín,13129,otras,3.7393,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Miguel,13130,industria,1.231,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,San Miguel,13130,lena,2.632,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Miguel,13130,otras,2.7326,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Ramón,13131,industria,0.0359,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,San Ramón,13131,lena,14.7539,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Ramón,13131,otras,3.0202,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Vitacura,13132,industria,8.3954,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Vitacura,13132,lena,1.847,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Vitacura,13132,otras,1.9356,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Puente Alto,13201,industria,4.5313,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Puente Alto,13201,lena,79.7879,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Puente Alto,13201,otras,18.4489,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Pirque,13202,industria,0.5643,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Pirque,13202,lena,158.105,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Pirque,13202,otras,5.3402,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San José de Maipo,13203,industria,1.6381,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,San José de Maipo,13203,lena,81.8868,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San José de Maipo,13203,otras,3.6009,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Colina,13301,industria,9.7834,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Colina,13301,lena,175.8595,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Colina,13301,otras,211.9438,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lampa,13302,industria,6.3523,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Lampa,13302,lena,334.9185,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Lampa,13302,otras,61.3802,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Tiltil,13303,industria,7.405,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Tiltil,13303,lena,51.3821,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Tiltil,13303,otras,30.8607,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Bernardo,13401,industria,6.5393,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,San Bernardo,13401,lena,121.5723,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Bernardo,13401,otras,12.3258,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Buin,13402,industria,3.2078,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Buin,13402,lena,304.342,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Buin,13402,otras,14.2144,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Calera de Tango,13403,industria,1.5534,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Calera de Tango,13403,lena,112.7865,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Calera de Tango,13403,otras,4.252,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Paine,13404,industria,6.3744,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Paine,13404,lena,347.7073,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Paine,13404,otras,28.0794,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Melipilla,13501,industria,2.8644,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Melipilla,13501,lena,276.0745,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Melipilla,13501,otras,73.6538,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Alhué,13502,industria,4.5542,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Alhué,13502,lena,41.7294,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Alhué,13502,otras,22.5036,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Curacaví,13503,industria,0.5075,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Curacaví,13503,lena,116.2331,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Curacaví,13503,otras,38.7759,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,María Pinto,13504,lena,25.5842,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,María Pinto,13504,otras,24.0166,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Pedro,13505,industria,1.6263,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,San Pedro,13505,lena,79.9253,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,San Pedro,13505,otras,279.0903,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Talagante,13601,industria,28.9937,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Talagante,13601,lena,55.1456,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Talagante,13601,otras,11.5581,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,El Monte,13602,industria,0.6221,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,El Monte,13602,lena,99.193,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,El Monte,13602,otras,4.6506,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Isla de Maipo,13603,industria,0.5552,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Isla de Maipo,13603,lena,135.7123,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Isla de Maipo,13603,otras,9.4979,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Padre Hurtado,13604,industria,3.692,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Padre Hurtado,13604,lena,44.4988,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Padre Hurtado,13604,otras,5.2633,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Peñaflor,13605,industria,0.9735,RETC fuentes puntuales 2024 (puntuales_2024.xlsx); PM2.5 primario; columna emision_retc (validada MMA); todos los establecimientos declarados
+2024,Peñaflor,13605,lena,111.9769,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
+2024,Peñaflor,13605,otras,9.231,"RETC fuentes difusas 2024 (difusas_2024.csv); MP2,5; leña=urbana+rural; otras=incendios forestales/urbanos+quemas agrícolas"
