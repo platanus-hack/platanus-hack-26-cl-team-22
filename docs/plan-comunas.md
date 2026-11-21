@@ -38,6 +38,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `trayectorias` | Por escenario, comuna y variable: tres listas (p10, p50, p90), una posición por año |
 | `aportes` | Por escenario, comuna y variable: cuánto mueve cada política el valor final |
 | `flujos` | Por escenario: hogares que se mudan entre dos comunas en un año |
+| `origen_aire` | Opcional. Por escenario y comuna: lista de `{origen, fraccion}` con la parte (0 a 1) del PM2,5 de la comuna que aportan las emisiones de cada comuna de origen; puede sumar menos de 1 (el resto es fondo regional) |
 
 Reglas del contrato:
 

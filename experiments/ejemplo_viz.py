@@ -2,7 +2,7 @@
 
 No es un resultado del modelo. La línea base (PM2,5 de invierno 2024 por
 estación) es real y viene de data/aire/; las trayectorias, bandas, políticas,
-credibilidades y flujos son inventados con una semilla fija, solo para que la
+credibilidades, flujos y origen del aire son inventados con una semilla fija, solo para que la
 interfaz tenga algo con la forma del contrato (docs/plan-comunas.md).
 
 Uso:  python -m experiments.ejemplo_viz
@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -24,6 +25,13 @@ F_SALIDA = RAIZ / "viz" / "ejemplo" / "simulacion.json"
 ANIO_BASE = 2024
 ANIOS = list(range(2026, 2037))
 SEMILLA = 22
+
+# Origen del aire (inventado): parte del PM2,5 de cada comuna que viene de las emisiones
+# de cada comuna, con peso que cae con la distancia. El resto es fondo regional.
+FRACCION_LOCAL_TOTAL = 0.7
+PESO_PROPIO = 1.6
+ESCALA_DISTANCIA_KM = 8.0
+MAX_ORIGENES = 8
 
 POLITICAS = [
     {"id": "ppda-lena", "nombre": "Restricción de calefacción a leña", "nivel": "regional",
@@ -54,6 +62,32 @@ def _base_real() -> list[dict]:
                 "base": float(fila["pm25_media_invierno"]),
             }
     return sorted(comunas.values(), key=lambda c: c["nombre"])
+
+
+def _km(a: dict, b: dict) -> float:
+    """Distancia aproximada en km entre dos comunas (haversine)."""
+    la1, lo1, la2, lo2 = map(math.radians, (a["lat"], a["lon"], b["lat"], b["lon"]))
+    h = (math.sin((la2 - la1) / 2) ** 2
+         + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2)
+    return 12742 * math.asin(math.sqrt(h))
+
+
+def _origen_aire(rng: np.random.Generator, comunas: list[dict], escenarios: list[dict]) -> dict:
+    """Por escenario y comuna: partes (0 a 1) que aporta cada comuna de origen, de mayor a menor."""
+    salida: dict = {}
+    for esc in escenarios:
+        salida[esc["id"]] = {}
+        for c in comunas:
+            pesos = {}
+            for o in comunas:
+                base = PESO_PROPIO if o is c else math.exp(-_km(c, o) / ESCALA_DISTANCIA_KM)
+                pesos[o["codigo"]] = base * rng.uniform(0.9, 1.1)
+            total = sum(pesos.values())
+            partes = sorted(((cod, w / total * FRACCION_LOCAL_TOTAL) for cod, w in pesos.items()),
+                            key=lambda x: -x[1])[:MAX_ORIGENES]
+            salida[esc["id"]][c["codigo"]] = [
+                {"origen": cod, "fraccion": round(f - 0.0005, 3)} for cod, f in partes]
+    return salida
 
 
 def main() -> None:
@@ -109,6 +143,8 @@ def main() -> None:
         for anio in ANIOS for i, j in ((0, 3), (1, 4), (2, 5), (4, 0))
         if max(i, j) < len(comunas)] for esc in escenarios}
 
+    origen_aire = _origen_aire(rng, comunas, escenarios)
+
     salida = {
         "meta": {
             "version": "0.1", "es_ejemplo": True, "semilla": SEMILLA,
@@ -132,6 +168,7 @@ def main() -> None:
         "trayectorias": trayectorias,
         "aportes": aportes,
         "flujos": flujos,
+        "origen_aire": origen_aire,
     }
     F_SALIDA.parent.mkdir(parents=True, exist_ok=True)
     F_SALIDA.write_text(json.dumps(salida, ensure_ascii=False, indent=1), encoding="utf-8")

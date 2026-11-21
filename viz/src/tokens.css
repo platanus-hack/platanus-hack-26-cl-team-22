@@ -1,0 +1,79 @@
+/* Todos los colores, tamaños de letra y espacios de la interfaz viven aquí.
+   Para cambiar el aspecto basta con editar este archivo. */
+:root {
+  /* Papel y tinta */
+  --papel: #f3efe6;
+  --papel-2: #ebe5d6;
+  --tinta: #1b1b19;
+  --tinta-2: #4a4944;
+  --tinta-3: #77746b;
+  --regla: #c9c2b0; /* líneas finas */
+  --regla-fuerte: #1b1b19;
+
+  /* Un solo acento, solo para comuna seleccionada y controles activos */
+  --acento: #1f5c63;
+  --acento-suave: #cfdcd8;
+
+  /* Rampa secuencial de PM2,5: arena pálida a marrón rojizo profundo */
+  --rampa-1: #f1e7d0;
+  --rampa-2: #e8cfa0;
+  --rampa-3: #ddb075;
+  --rampa-4: #cc8a55;
+  --rampa-5: #b5623f;
+  --rampa-6: #8f3e2d;
+  --rampa-7: #5e2220;
+
+  /* Paleta divergente para "diferencia frente a todos los planes": verde azulado apagado
+     (mejora) contra ladrillo apagado (empeora), con el tono papel en el cero.
+     El orden va de la mayor mejora (1) al mayor empeoramiento (5). */
+  --div-1: #2f6f6e;
+  --div-2: #9dc2ba;
+  --div-3: #ebe5d6;
+  --div-4: #dfae98;
+  --div-5: #9b3f35;
+
+  /* Sin dato */
+  --sin-dato: #bdb9ae;
+  --sin-dato-trama: #d3cfc4;
+
+  /* Banda de incertidumbre en gráficos */
+  --banda: #d9c9a8;
+  --banda-borde: #a89870;
+
+  /* Tipografía */
+  --f-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --f-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --f-mono: 'IBM Plex Mono', 'Consolas', monospace;
+
+  --t-xs: 11.5px;
+  --t-sm: 12.5px;
+  --t-md: 14px;
+  --t-lg: 17px;
+  --t-xl: 24px;
+  --t-2xl: 34px;
+
+  /* IBM Plex Sans es más ancha y de ojo más grande que Inter Tight: interlineado algo más
+     ajustado en texto corrido y 600 solo para énfasis; 500 para nombres y etiquetas. */
+  --w-normal: 400;
+  --w-medio: 500;
+  --w-fuerte: 600;
+  --interlineado: 1.42;
+  --lh-ajustado: 1.25;
+  --lh-titulo: 1.1;
+  --tracking-caps: 0.09em;
+
+  /* Espacios */
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-5: 24px;
+  --e-6: 32px;
+
+  /* Medidas de la maqueta */
+  --ancho-izq: 300px;
+  --ancho-der: 340px;
+  --alto-sup: 76px;
+  --alto-inf: 84px;
+  --hairline: 1px;
+}
