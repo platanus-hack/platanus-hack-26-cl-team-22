@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# Experiment output (regenerate with `make experiments`)
+results/*
+!results/.gitkeep
+
+# LLM record/replay logs: commit only the ones needed for the demo
+llm-logs/*.jsonl
+!llm-logs/demo.jsonl
+
+# Secrets and local config
+.env
+.claude/settings.local.json
