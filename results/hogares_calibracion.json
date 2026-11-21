@@ -1,0 +1,76 @@
+{
+ "comando": "python -m experiments.calibrar_hogares",
+ "modelo": "Tasa de salida anual (riesgo constante) + destinos con las proporciones observadas 2012-2017 (core/hogares.py)",
+ "ajuste": "2012-2017",
+ "prueba": "2019-2024",
+ "en_muestra_2012_2017": {
+  "rmse_personas": 755.1,
+  "mae_personas": 383.5,
+  "correlacion": 0.993
+ },
+ "fuera_de_muestra_2019_2024": {
+  "modelo": {
+   "rmse_personas": 4334.8,
+   "mae_personas": 3012.6,
+   "correlacion": 0.829
+  },
+  "nadie_se_muda": {
+   "rmse_personas": 7716.2,
+   "mae_personas": 5251.9,
+   "correlacion": null
+  },
+  "repetir_2012_2017": {
+   "rmse_personas": 5054.0,
+   "mae_personas": 3011.9,
+   "correlacion": 0.757
+  },
+  "mudanzas_observadas": 993528,
+  "tasa_salida_anual": {
+   "mediana_ajuste": 0.031,
+   "mediana_prueba": 0.0272,
+   "correlacion": 0.949
+  },
+  "mayores_errores": [
+   {
+    "comuna": "Ñuñoa",
+    "codigo": "13120",
+    "observado": 17301,
+    "modelo": 1480
+   },
+   {
+    "comuna": "Providencia",
+    "codigo": "13123",
+    "observado": 3450,
+    "modelo": -6731
+   },
+   {
+    "comuna": "Maipú",
+    "codigo": "13119",
+    "observado": -11027,
+    "modelo": -1561
+   },
+   {
+    "comuna": "Las Condes",
+    "codigo": "13114",
+    "observado": 1649,
+    "modelo": -7239
+   },
+   {
+    "comuna": "Puente Alto",
+    "codigo": "13201",
+    "observado": 449,
+    "modelo": 8845
+   }
+  ]
+ },
+ "supuestos": [
+  "Tasa de salida anual constante: r = 1 - (1 - R5)^(1/5).",
+  "Destinos con las proporciones observadas en 2012-2017; el aire no cambia los destinos (no identificable con el censo).",
+  "Sistema cerrado: sin nacimientos, muertes ni mudanzas desde o hacia fuera de la RM.",
+  "2019-2024 incluye el estallido y la pandemia: parte del error puede ser del período."
+ ],
+ "datos": [
+  "data/censo/mudanzas_2012_2017.csv",
+  "data/censo/mudanzas_2019_2024.csv"
+ ]
+}
