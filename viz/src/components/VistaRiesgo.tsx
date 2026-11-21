@@ -105,9 +105,16 @@ function General(p: Props) {
       <section className="tramo" aria-labelledby="h-prio">
         <div className="tramo-cabeza">
           <h3 id="h-prio">{p.guia ? p.guia.titulo : 'Qué priorizas'}</h3>
-          <button type="button" className="lectura ajustar" aria-expanded={ajustar} aria-controls="pesos" onClick={() => setAjustar((x) => !x)}>
-            {ajustar ? 'Listo' : 'Ajustar de 0 a 10'}
-          </button>
+          <div className="tramo-acciones">
+            {p.guia && !ajustar && (
+              <button type="button" className="lectura ajustar" onClick={p.guia.onCambiar}>
+                Cambiar búsqueda
+              </button>
+            )}
+            <button type="button" className="lectura ajustar" aria-expanded={ajustar} aria-controls="pesos" onClick={() => setAjustar((x) => !x)}>
+              {ajustar ? 'Listo' : 'Ajustar pesos'}
+            </button>
+          </div>
         </div>
         {ajustar ? (
           <div className="pesos" id="pesos">
@@ -124,12 +131,7 @@ function General(p: Props) {
             <p className={p.guia.cargando ? 'guia-texto guia-cargando' : 'guia-texto'} key={p.guia.texto}>
               {p.guia.texto}
             </p>
-            <p className="guia-pie">
-              {p.guia.porIA && <span className="guia-ia">Redactado por Claude con los números del modelo</span>}
-              <button type="button" className="guia-cambiar" onClick={p.guia.onCambiar}>
-                Cambiar búsqueda
-              </button>
-            </p>
+            {p.guia.porIA && <p className="guia-pie">Redactado por Claude con los números del modelo</p>}
           </div>
         ) : (
           <div className="perfiles" role="radiogroup" aria-label="Perfil de prioridades">
