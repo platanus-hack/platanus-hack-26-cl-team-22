@@ -120,7 +120,7 @@ function draw(){
 function drawFrame(){
   applyProj();
   const k=view.k, G=k<3||!G50?G110:G50, lv=level();
-  if(root.dataset.level!==lv){root.dataset.level=lv; syncCrumbs();}
+  if(root.dataset.level!==lv) root.dataset.level=lv;
   ctx.clearRect(0,0,Wd,Hd);
   ctx.beginPath(); path({type:"Sphere"}); ctx.fillStyle=C.ocean; ctx.fill();
   const ga=1-smooth(4,14,k);
@@ -492,15 +492,10 @@ function renderDetail(){
   $("vread").innerHTML=`El modelo parte en 2017 con los planes de entonces. Lo observado (puntos) cayó dentro de la banda en <b>${inside} de 7</b> años.`;
 }
 function select(i,fly){
-  S.sel=i; const cb=document.querySelector('.crumbs [data-go="comuna"]');
+  S.sel=i;
   $("viewRank").hidden=i!=null; $("viewDetail").hidden=i==null; $("viewSources").hidden=true;
-  if(i!=null){cb.hidden=false; cb.textContent=COMUNAS[i].name; renderDetail(); syncControls(); $("viewDetail").scrollTop=0; if(fly) flyComuna(i);}
-  else cb.hidden=true;
-  syncCrumbs(); requestDraw();
-}
-function syncCrumbs(){
-  const lv=root.dataset.level, cur=S.sel!=null&&lv==="region"?"comuna":lv;
-  document.querySelectorAll(".crumbs button").forEach(b=>b.setAttribute("aria-current",b.dataset.go===cur));
+  if(i!=null){renderDetail(); syncControls(); $("viewDetail").scrollTop=0; if(fly) flyComuna(i);}
+  requestDraw();
 }
 
 /* eventos del panel */
@@ -517,7 +512,6 @@ $("back").addEventListener("click",()=>{select(null,false); flyTo(REGION_C[0],RE
 $("cta").addEventListener("click",()=>go("region"));
 $("zin").addEventListener("click",()=>{stop(); zoomAt(centerX(view.k),centerY(view.k),1.6)});
 $("zout").addEventListener("click",()=>{stop(); zoomAt(centerX(view.k),centerY(view.k),1/1.6)});
-document.querySelector(".crumbs").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; if(b.dataset.go==="comuna"){ if(S.sel!=null) flyComuna(S.sel);} else go(b.dataset.go);});
 
 $("srcList").innerHTML=SOURCES.map(s=>`<div class="drv"><div class="top"><span class="nm">${ext(s.u,s.n)}</span></div><div class="ch"><span class="lv">${s.f}</span>${s.d}</div><div class="use"><b>En el modelo:</b> ${s.use}</div></div>`).join("");
 $("openSrc").addEventListener("click",()=>{$("viewRank").hidden=true; $("viewSources").hidden=false; $("viewSources").scrollTop=0;});
@@ -527,7 +521,7 @@ $("backSrc").addEventListener("click",()=>{$("viewSources").hidden=true; $("view
 readTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{readTheme(); update(false);});
 new MutationObserver(()=>{readTheme(); update(false);}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
-syncControls(); syncCrumbs();
+syncControls();
 const worker=new Worker(new URL("./simulation.worker.js", import.meta.url), {type:"module"});
 worker.onmessage=e=>{ ({SIM,VALID}=e.data); worker.terminate(); compute(); baseline=snapshot(); renderRank(); requestDraw(); };
 new ResizeObserver(resize).observe(stage); resize();

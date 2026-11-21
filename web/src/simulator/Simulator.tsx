@@ -7,7 +7,7 @@ import type { SimulatorApi } from "./engine";
 type Props = {
   /** Se llama una vez, cuando el motor (d3 + datos, carga diferida) está listo. */
   onReady: (api: SimulatorApi, root: HTMLDivElement) => void;
-  /** Botón "Volver al inicio": de vuelta al logo. */
+  /** Home button: back to the logo. */
   onHome: () => void;
 };
 
@@ -38,18 +38,20 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
           <canvas id="map" role="img" aria-label="Mapa interactivo: el mundo, con zoom hasta las comunas de Santiago"></canvas>
 
           <div className="brand">
-            <button type="button" className="home" onClick={onHome}>
-              ← Volver al inicio
+            <button type="button" className="home" onClick={onHome} aria-label="Volver al inicio" title="Volver al inicio">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+              </svg>
             </button>
-            <span>Platanus Hack 26, track Simulación</span>
           </div>
 
           <div className="intro">
             <h1>Mira hacia dónde va una comuna antes de comprar</h1>
             <p>Proyectamos el aire y la seguridad de cada comuna a 5, 10 y 30 años, según los planes públicos que la afectan y la probabilidad real de que se cumplan.</p>
             <button className="cta" id="cta">Acercar a Santiago</button>
-            <small>Arrastra para girar el mundo. Usa la rueda o pellizca para acercarte hasta ver las calles.</small>
           </div>
+
+          <p className="hint">Arrastra para girar el mundo. Usa la rueda o pellizca para acercarte hasta ver las calles.</p>
 
           <div className="zoom" aria-label="Zoom">
             <button id="zin" aria-label="Acercar">+</button>
@@ -62,13 +64,6 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
             <div className="ends"><span>Peor</span><span>Mejor</span></div>
             <div className="ctx"><i></i>Sin simular todavía</div>
           </div>
-
-          <nav className="crumbs" aria-label="Nivel de zoom">
-            <button data-go="world">Mundo</button>
-            <button data-go="country">Chile</button>
-            <button data-go="region">Región Metropolitana</button>
-            <button data-go="comuna" hidden></button>
-          </nav>
 
           <a className="attr" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">Calles y lugares © colaboradores de OpenStreetMap</a>
 
