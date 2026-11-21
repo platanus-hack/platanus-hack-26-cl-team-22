@@ -19,7 +19,19 @@ const valorTxt = (v: number | undefined, unidad: string) => (v === undefined ? '
 interface Props {
   variables: VariableCorta[]
   /** resultado de la entrada guiada: para quién es el orden y por qué */
-  guia?: { titulo: string; texto: string; cargando: boolean; porIA: boolean; onCambiar: () => void } | null
+  guia?: {
+    titulo: string
+    texto: string
+    cargando: boolean
+    porIA: boolean
+    onCambiar: () => void
+    /** Claude está leyendo el caso */
+    leyendo?: boolean
+    /** ajustes de prioridad que Claude propuso a partir del caso; la persona puede apagarlos */
+    ajustes?: { variable: string; texto: string; cita: string; activo: boolean }[]
+    notas?: string[]
+    onAlternarAjuste?: (variable: string) => void
+  } | null
   capa: string
   onCapa: (id: string) => void
 
@@ -119,6 +131,27 @@ function General(p: Props) {
             <p className={p.guia.cargando ? 'guia-texto guia-cargando' : 'guia-texto'} key={p.guia.texto}>
               {p.guia.texto}
             </p>
+            {p.guia.ajustes && p.guia.ajustes.length > 0 && (
+              <div className="guia-ajustes" aria-label="Ajustes por lo que contaste">
+                <p className="guia-pie">Por lo que contaste:</p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                  {p.guia.ajustes.map((a) => (
+                    <li key={a.variable}>
+                      <button
+                        type="button"
+                        className="pestana-mapa"
+                        aria-pressed={a.activo}
+                        title={`Porque escribiste: «${a.cita}». Apágalo si no aplica.`}
+                        onClick={() => p.guia?.onAlternarAjuste?.(a.variable)}
+                      >
+                        {a.texto}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {p.guia.notas && p.guia.notas.length > 0 && <p className="guia-pie">{p.guia.notas.join(' ')}</p>}
             <p className="guia-pie">
               {p.guia.porIA && <span className="guia-ia">Redactado por Claude con los números del modelo</span>}
               <button type="button" className="guia-cambiar" onClick={p.guia.onCambiar}>
