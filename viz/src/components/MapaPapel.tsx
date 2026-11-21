@@ -87,6 +87,8 @@ export interface PropsMapa {
   reducido: boolean
   transicion?: EstadoTransicionMapa
   onSeleccionar: (codigo: string) => void
+  /** el mapa ya tiene algo que mostrar: la pantalla de espera puede seguir */
+  onListo?: () => void
   etiqueta: (f: GeoFeature) => Etiqueta
   nombreAccesible: (f: GeoFeature) => string
   children?: ReactNode
@@ -158,6 +160,12 @@ export function MapaPapel(p: PropsMapa) {
     [p.modo, p.agua?.rios, proj],
   )
   const [sobreEstacion, setSobreEstacion] = useState<{ e: Estacion; x: number; y: number } | null>(null)
+
+  // El mapa plano no espera a nadie: está listo al montarse.
+  useEffect(() => {
+    p.onListo?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const porSim = useMemo(() => {
     const m = new Map<string, Prep>()

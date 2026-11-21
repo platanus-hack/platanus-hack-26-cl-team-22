@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Anios, ControlesMapa, Leyenda } from './components/Marco'
 import logoRoot from './assets/logo-root.png'
+import { Cargando } from './components/Cargando'
 import { Mapa } from './components/Mapa'
 import type { AguaMapa, Cinta, Encuadre } from './components/MapaPapel'
 import { VistaAgua } from './components/VistaAgua'
@@ -108,6 +109,10 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   /** qué caudal se mira: la megasequía (lo primero que se ve), el promedio (null) o un año (índice de agua.anios) */
   const [aguaAnio, setAguaAnio] = useState<AnioAgua>('sequia')
   const [aguaJugando, setAguaJugando] = useState(false)
+  /** pantalla de espera entre la entrada y el mapa */
+  const [cargando, setCargando] = useState(false)
+  const [mapaListo, setMapaListo] = useState(false)
+  const alListoMapa = useCallback(() => setMapaListo(true), [])
   const vistas = PESTANAS
   const reducido = useMovimientoReducido()
 
@@ -644,6 +649,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
     const guiada = b.contexto !== '' || b.caso !== 'general' || b.sinDatos.length > 0 || Object.keys(b.rangos).length > 0
     setBusqueda(guiada ? b : null)
     setOnb(false)
+    setCargando(true)
     setGuiaIA(null)
     setLecturaCaso(null)
     const n = ++pedido.current
@@ -940,6 +946,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
           reencuadre={reencuadre}
           reducido={reducido}
           onSeleccionar={setSeleccionada}
+          onListo={alListoMapa}
           etiqueta={textoComuna}
           nombreAccesible={nombreAccesible}
         >
@@ -981,8 +988,20 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
       </main>
 
       {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} />}
+      {cargando && !onb && (
+        <Cargando
+          onFin={() => setCargando(false)}
+          pasos={[
+            { texto: busqueda?.contexto ? 'Leyendo tu caso' : 'Preparando la región', listo: !lecturaCaso?.cargando },
+            { texto: `Ubicando las ${data.comunas.length} comunas en el mapa`, listo: mapaListo },
+            ...(agua ? [{ texto: `Midiendo los ríos: ${agua.estaciones.length} estaciones de la DGA`, listo: true }] : []),
+            { texto: `Revisando ${data.politicas.length} planes y normas`, listo: true },
+            { texto: 'Ordenando las comunas por riesgo', listo: true },
+          ]}
+        />
+      )}
 
-      <section className="columna" aria-label="Lectura de la simulación" inert={onb}>
+      <section className="columna" aria-label="Lectura de la simulación" inert={onb || cargando}>
         <header className="cabecera">
           <h1 className="marca">
             {inicio ? (

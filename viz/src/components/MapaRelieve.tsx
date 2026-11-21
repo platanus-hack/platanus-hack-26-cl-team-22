@@ -165,6 +165,8 @@ export default function MapaRelieve(p: Props) {
       }
       setListo(true)
     })
+    // Primera vez que el mapa queda quieto con lo que alcanzó a cargar: ya hay algo que mostrar.
+    m.once('idle', () => ultimo.current.onListo?.())
     m.on('resize', () => setTam((n) => n + 1))
     // Una tesela que falla no es un error de la pantalla: el mapa sigue con lo que tiene.
     m.on('error', () => {})

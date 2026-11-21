@@ -3215,3 +3215,79 @@ body:has(.estado) {
   border-radius: 50%;
   box-shadow: 0 0 0 0.3em color-mix(in srgb, var(--agua-critica) 35%, transparent);
 }
+
+/* ---------- Pantalla de espera: lo que se está preparando, paso a paso ---------- */
+.carga {
+  background: color-mix(in srgb, var(--papel) 88%, transparent);
+  animation: none;
+}
+.carga-marco {
+  width: min(calc(var(--u) * 46), 92vw);
+}
+.carga-titulo {
+  margin-top: calc(var(--u) * 2);
+  color: var(--marca);
+  font-weight: 800;
+  font-size: calc(var(--u) * 3.4);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.carga-barra {
+  margin: calc(var(--u) * 1.2) 0 calc(var(--u) * 1.4);
+  height: calc(var(--u) * 0.45);
+  background: var(--corte);
+  overflow: hidden;
+}
+.carga-barra i {
+  display: block;
+  height: 100%;
+  background: var(--marca);
+  transform-origin: left;
+  transition: transform 520ms var(--ease);
+}
+.carga-pasos {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: calc(var(--u) * 0.55);
+}
+.carga-pasos li {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.7);
+  font-size: var(--t-l);
+  font-weight: 600;
+  transition: opacity 320ms var(--ease), color 320ms var(--ease);
+}
+.carga-pasos svg {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.carga-pendiente {
+  opacity: 0.32;
+}
+.carga-hecho {
+  color: var(--tinta-2);
+}
+.carga-hecho svg {
+  stroke: var(--pol-3);
+}
+.carga-actual {
+  color: var(--tinta);
+  font-weight: 800;
+}
+.carga-actual svg {
+  stroke-dasharray: 8 6;
+  animation: carga-gira 900ms linear infinite;
+  transform-origin: center;
+}
+@keyframes carga-gira {
+  to { transform: rotate(360deg); }
+}
+.quieto .carga-actual svg { animation: none; }
