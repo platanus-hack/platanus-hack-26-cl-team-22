@@ -80,10 +80,14 @@ def verificar(ruta: Path, esperado: str) -> Path:
     return ruta
 
 
-def descargar(nombre: str) -> Path:
-    """Return the cached raw file, downloading it once with retries; checks its SHA-256."""
-    destino = RAW / nombre
-    url, sha = FUENTES[nombre]
+def descargar(nombre: str, fuentes: dict | None = None, raw: Path | None = None) -> Path:
+    """Return the cached raw file, downloading it once with retries; checks its SHA-256.
+
+    `fuentes` maps file name -> (url, sha256) and `raw` is the cache folder; both default to
+    the census ones so other datasets can reuse the same download rules.
+    """
+    destino = (raw or RAW) / nombre
+    url, sha = (fuentes or FUENTES)[nombre]
     if destino.exists() and destino.stat().st_size > 0:
         return verificar(destino, sha)
     destino.parent.mkdir(parents=True, exist_ok=True)
@@ -105,8 +109,9 @@ def descargar(nombre: str) -> Path:
     sys.exit(f"Could not download {url}: {ultimo}")
 
 
-def hoja(nombre: str, pestana: str) -> list[tuple]:
-    libro = openpyxl.load_workbook(descargar(nombre), read_only=True)
+def hoja(nombre: str, pestana: str, fuentes: dict | None = None,
+         raw: Path | None = None) -> list[tuple]:
+    libro = openpyxl.load_workbook(descargar(nombre, fuentes, raw), read_only=True)
     return list(libro[pestana].iter_rows(values_only=True))
 
 
