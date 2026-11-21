@@ -45,6 +45,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `comunas_destacadas` | Códigos de las pocas comunas con contraste medido que la interfaz destaca (regla fija en `docs/modelo-aire.md`) |
 | `migracion_neta` | Por comuna: personas que llegan menos las que salen, una posición por año |
 | `promesas` | Comparación aparte (no es un interruptor): muchas promesas con poca ejecución contra pocas con mucha ejecución. Por paquete: valor de planilla, bandas, probabilidad de cumplir la norma por año. Ver `docs/promesas.md` |
+| `origen_aire` | Opcional. Por escenario y comuna: lista de `{origen, fraccion}` con la parte (0 a 1) del PM2,5 de la comuna que aportan las emisiones de cada comuna de origen; puede sumar menos de 1 (el resto es fondo regional) |
 
 Reglas del contrato:
 

@@ -1,0 +1,393 @@
+{
+ "meta": {
+  "anio": 2023,
+  "fuente": "RETC 2023, fuentes difusas (MMA): MP2,5 de leña residencial urbana y rural",
+  "zonas": "D.S. 31/2016 (PPDA RM), art. 73",
+  "poblacion": "Población 2024 (data/comunas_rm.csv)",
+  "unidad": "t/año",
+  "generado_por": "datos/viz/build_lena.py",
+  "es_real": true
+ },
+ "zonas": {
+  "A": {
+   "comunas": 34,
+   "toneladas": 730.4,
+   "parte_emisiones": 0.227,
+   "poblacion": 6260194,
+   "parte_poblacion": 0.8459
+  },
+  "B": {
+   "comunas": 18,
+   "toneladas": 2487.3,
+   "parte_emisiones": 0.773,
+   "poblacion": 1140547,
+   "parte_poblacion": 0.1541
+  }
+ },
+ "comunas": [
+  {
+   "codigo": "13101",
+   "nombre": "Santiago",
+   "zona": "A",
+   "toneladas": 5.782,
+   "poblacion": 438856
+  },
+  {
+   "codigo": "13102",
+   "nombre": "Cerrillos",
+   "zona": "A",
+   "toneladas": null,
+   "poblacion": 85041
+  },
+  {
+   "codigo": "13103",
+   "nombre": "Cerro Navia",
+   "zona": "A",
+   "toneladas": 31.191,
+   "poblacion": 127250
+  },
+  {
+   "codigo": "13104",
+   "nombre": "Conchalí",
+   "zona": "A",
+   "toneladas": 2.319,
+   "poblacion": 121587
+  },
+  {
+   "codigo": "13105",
+   "nombre": "El Bosque",
+   "zona": "A",
+   "toneladas": 37.14,
+   "poblacion": 155257
+  },
+  {
+   "codigo": "13106",
+   "nombre": "Estación Central",
+   "zona": "A",
+   "toneladas": 5.976,
+   "poblacion": 181049
+  },
+  {
+   "codigo": "13107",
+   "nombre": "Huechuraba",
+   "zona": "A",
+   "toneladas": 8.263,
+   "poblacion": 101808
+  },
+  {
+   "codigo": "13108",
+   "nombre": "Independencia",
+   "zona": "A",
+   "toneladas": 6.392,
+   "poblacion": 116943
+  },
+  {
+   "codigo": "13109",
+   "nombre": "La Cisterna",
+   "zona": "A",
+   "toneladas": 22.357,
+   "poblacion": 103157
+  },
+  {
+   "codigo": "13110",
+   "nombre": "La Florida",
+   "zona": "A",
+   "toneladas": 44.434,
+   "poblacion": 374836
+  },
+  {
+   "codigo": "13111",
+   "nombre": "La Granja",
+   "zona": "A",
+   "toneladas": 4.434,
+   "poblacion": 112022
+  },
+  {
+   "codigo": "13112",
+   "nombre": "La Pintana",
+   "zona": "A",
+   "toneladas": 43.097,
+   "poblacion": 175421
+  },
+  {
+   "codigo": "13113",
+   "nombre": "La Reina",
+   "zona": "A",
+   "toneladas": null,
+   "poblacion": 89870
+  },
+  {
+   "codigo": "13114",
+   "nombre": "Las Condes",
+   "zona": "A",
+   "toneladas": 21.621,
+   "poblacion": 296134
+  },
+  {
+   "codigo": "13115",
+   "nombre": "Lo Barnechea",
+   "zona": "A",
+   "toneladas": 49.016,
+   "poblacion": 112620
+  },
+  {
+   "codigo": "13116",
+   "nombre": "Lo Espejo",
+   "zona": "A",
+   "toneladas": 8.657,
+   "poblacion": 87295
+  },
+  {
+   "codigo": "13117",
+   "nombre": "Lo Prado",
+   "zona": "A",
+   "toneladas": 2.257,
+   "poblacion": 91290
+  },
+  {
+   "codigo": "13118",
+   "nombre": "Macul",
+   "zona": "A",
+   "toneladas": 10.584,
+   "poblacion": 123800
+  },
+  {
+   "codigo": "13119",
+   "nombre": "Maipú",
+   "zona": "A",
+   "toneladas": 46.191,
+   "poblacion": 503635
+  },
+  {
+   "codigo": "13120",
+   "nombre": "Ñuñoa",
+   "zona": "A",
+   "toneladas": 36.442,
+   "poblacion": 241467
+  },
+  {
+   "codigo": "13121",
+   "nombre": "Pedro Aguirre Cerda",
+   "zona": "A",
+   "toneladas": 19.436,
+   "poblacion": 96062
+  },
+  {
+   "codigo": "13122",
+   "nombre": "Peñalolén",
+   "zona": "A",
+   "toneladas": 17.534,
+   "poblacion": 236478
+  },
+  {
+   "codigo": "13123",
+   "nombre": "Providencia",
+   "zona": "A",
+   "toneladas": 5.991,
+   "poblacion": 143974
+  },
+  {
+   "codigo": "13124",
+   "nombre": "Pudahuel",
+   "zona": "A",
+   "toneladas": 28.801,
+   "poblacion": 227820
+  },
+  {
+   "codigo": "13125",
+   "nombre": "Quilicura",
+   "zona": "A",
+   "toneladas": 13.33,
+   "poblacion": 205624
+  },
+  {
+   "codigo": "13126",
+   "nombre": "Quinta Normal",
+   "zona": "A",
+   "toneladas": 8.928,
+   "poblacion": 129351
+  },
+  {
+   "codigo": "13127",
+   "nombre": "Recoleta",
+   "zona": "A",
+   "toneladas": 4.176,
+   "poblacion": 154615
+  },
+  {
+   "codigo": "13128",
+   "nombre": "Renca",
+   "zona": "A",
+   "toneladas": 13.491,
+   "poblacion": 143622
+  },
+  {
+   "codigo": "13129",
+   "nombre": "San Joaquín",
+   "zona": "A",
+   "toneladas": null,
+   "poblacion": 95602
+  },
+  {
+   "codigo": "13130",
+   "nombre": "San Miguel",
+   "zona": "A",
+   "toneladas": 3.33,
+   "poblacion": 150829
+  },
+  {
+   "codigo": "13131",
+   "nombre": "San Ramón",
+   "zona": "A",
+   "toneladas": 15.892,
+   "poblacion": 76002
+  },
+  {
+   "codigo": "13132",
+   "nombre": "Vitacura",
+   "zona": "A",
+   "toneladas": 2.079,
+   "poblacion": 86420
+  },
+  {
+   "codigo": "13201",
+   "nombre": "Puente Alto",
+   "zona": "A",
+   "toneladas": 83.248,
+   "poblacion": 568086
+  },
+  {
+   "codigo": "13202",
+   "nombre": "Pirque",
+   "zona": "B",
+   "toneladas": 157.581,
+   "poblacion": 29060
+  },
+  {
+   "codigo": "13203",
+   "nombre": "San José de Maipo",
+   "zona": "B",
+   "toneladas": 80.968,
+   "poblacion": 17441
+  },
+  {
+   "codigo": "13301",
+   "nombre": "Colina",
+   "zona": "B",
+   "toneladas": 189.839,
+   "poblacion": 173293
+  },
+  {
+   "codigo": "13302",
+   "nombre": "Lampa",
+   "zona": "B",
+   "toneladas": 301.275,
+   "poblacion": 145160
+  },
+  {
+   "codigo": "13303",
+   "nombre": "Tiltil",
+   "zona": "B",
+   "toneladas": 55.505,
+   "poblacion": 19742
+  },
+  {
+   "codigo": "13401",
+   "nombre": "San Bernardo",
+   "zona": "A",
+   "toneladas": 128.044,
+   "poblacion": 306371
+  },
+  {
+   "codigo": "13402",
+   "nombre": "Buin",
+   "zona": "B",
+   "toneladas": 281.296,
+   "poblacion": 116969
+  },
+  {
+   "codigo": "13403",
+   "nombre": "Calera de Tango",
+   "zona": "B",
+   "toneladas": 112.739,
+   "poblacion": 25491
+  },
+  {
+   "codigo": "13404",
+   "nombre": "Paine",
+   "zona": "B",
+   "toneladas": 343.33,
+   "poblacion": 78828
+  },
+  {
+   "codigo": "13501",
+   "nombre": "Melipilla",
+   "zona": "B",
+   "toneladas": 269.13,
+   "poblacion": 136325
+  },
+  {
+   "codigo": "13502",
+   "nombre": "Alhué",
+   "zona": "B",
+   "toneladas": 41.813,
+   "poblacion": 7768
+  },
+  {
+   "codigo": "13503",
+   "nombre": "Curacaví",
+   "zona": "B",
+   "toneladas": 105.985,
+   "poblacion": 35165
+  },
+  {
+   "codigo": "13504",
+   "nombre": "María Pinto",
+   "zona": "B",
+   "toneladas": 23.013,
+   "poblacion": 15352
+  },
+  {
+   "codigo": "13505",
+   "nombre": "San Pedro",
+   "zona": "B",
+   "toneladas": 78.145,
+   "poblacion": 11108
+  },
+  {
+   "codigo": "13601",
+   "nombre": "Talagante",
+   "zona": "B",
+   "toneladas": 53.562,
+   "poblacion": 76429
+  },
+  {
+   "codigo": "13602",
+   "nombre": "El Monte",
+   "zona": "B",
+   "toneladas": 99.799,
+   "poblacion": 37497
+  },
+  {
+   "codigo": "13603",
+   "nombre": "Isla de Maipo",
+   "zona": "B",
+   "toneladas": 132.157,
+   "poblacion": 39274
+  },
+  {
+   "codigo": "13604",
+   "nombre": "Padre Hurtado",
+   "zona": "B",
+   "toneladas": 46.369,
+   "poblacion": 81243
+  },
+  {
+   "codigo": "13605",
+   "nombre": "Peñaflor",
+   "zona": "B",
+   "toneladas": 114.806,
+   "poblacion": 94402
+  }
+ ]
+}
