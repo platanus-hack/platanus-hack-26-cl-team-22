@@ -10,7 +10,7 @@ import { punto, serie, variablesConDato, type Punto } from './lib/data'
 import { diferenciasPorComuna, maxAbsDiferencia } from './lib/diferencia'
 import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
-import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, vistasDisponibles } from './lib/interaccion'
+import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, } from './lib/interaccion'
 import { leerLena, type Zona } from './lib/lena'
 import { bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
 import { useSimulacionAbm } from './lib/useSimulacionAbm'
@@ -34,9 +34,12 @@ import {
   type FilaValores,
 } from './lib/riesgo'
 import { variableCorta } from './lib/variables'
+import { Hoja, VistaFuentes } from './components/Hoja'
+import type { VistaId } from './lib/interaccion'
+import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, type SeccionId } from './lib/pestanas'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
-import { explicar, GRADOS, PERFILES } from './lib/onboarding'
+import { casoDe, explicar, fueraDeRango, GRADOS, resolverLimites } from './lib/onboarding'
 import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
@@ -93,7 +96,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       return null
     }
   }, [demografiaRaw])
-  const vistas = useMemo(() => vistasDisponibles(!!data.validacion, !!demografia), [data.validacion, demografia])
+  const vistas = PESTANAS
   const reducido = useMovimientoReducido()
 
   const inicial = useMemo(() => escenarioInicial(data.escenarios), [data.escenarios])
@@ -118,11 +121,14 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const [perfilId, setPerfilId] = useState(data.tipos_hogar[0]?.id ?? PERSONALIZADO)
   const aPrioridades = (w: Record<string, number>) => Object.fromEntries(Object.entries(w).map(([k, v]) => [k, aPrioridad(v)]))
   const [pesos, setPesos] = useState<Record<string, number>>(() => aPrioridades(data.tipos_hogar[0]?.pesos ?? {}))
-  const [capa, setCapa] = useState<string>(GENERAL)
+  /** sección abierta de cada pestaña que tiene varias */
+  const [secciones, setSecciones] = useState<Partial<Record<PestanaId, SeccionId>>>({})
   const [demo, setDemo] = useState(false)
   // Entrada guiada: se muestra al abrir, salvo con ?directo en la dirección (para ensayar o proyectar sin ella).
   const [onb, setOnb] = useState(() => !new URLSearchParams(window.location.search).has('directo'))
   const [busqueda, setBusqueda] = useState<Busqueda | null>(null)
+  /** rango aceptado por variable (id de la opción); vacío = sin límites */
+  const [rangos, setRangos] = useState<Record<string, string>>({})
   const [guiaIA, setGuiaIA] = useState<{ cargando: boolean; texto?: string } | null>(null)
   // Lectura del caso por Claude: ajustes propuestos que la persona puede apagar uno por uno.
   const [lecturaCaso, setLecturaCaso] = useState<{ cargando: boolean; r?: Interpretacion; apagados: Set<string>; base: Record<string, number> } | null>(null)
@@ -142,7 +148,33 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     return mejor
   })
 
-  const vista = vistas[vistaIdx]?.id ?? 'riesgo'
+  // Pestañas por tipo de riesgo; cada una, con su sección abierta, se resuelve a la vista que dibuja panel y mapa.
+  const pestana = vistas[vistaIdx] ?? vistas[0]!
+  const papelVar: Record<Papel, string | undefined> = {
+    aire: varAire.id,
+    seguridad: conDato.has('seguridad') ? 'seguridad' : undefined,
+    crecimiento: conDato.has('crecimiento_poblacion') ? 'crecimiento_poblacion' : undefined,
+  }
+  const disponibles = seccionesDe(pestana.id, {
+    aire: true,
+    seguridad: !!papelVar.seguridad,
+    crecimiento: !!papelVar.crecimiento,
+    lena: true,
+    urbano: !!demografia,
+    validacion: !!data.validacion,
+  })
+  const modo = modoDe(pestana.id, secciones[pestana.id], disponibles)
+  const vista = modo.vista
+  const capa = (modo.papel && papelVar[modo.papel]) || GENERAL
+  /** Del resumen al detalle de una variable: abre su pestaña y su sección. */
+  const irACapa = (id: string) => {
+    if (id === GENERAL) return setVistaIdx(0)
+    const papel = (Object.keys(papelVar) as Papel[]).find((k) => papelVar[k] === id)
+    if (!papel) return
+    const l = lugarDe(papel)
+    setSecciones((x) => ({ ...x, [l.pestana]: l.seccion }))
+    setVistaIdx(vistas.findIndex((v) => v.id === l.pestana))
+  }
   // Una dimensión (el índice general) o una variable en detalle; fuera de la hoja de riesgo siempre es el aire.
   const variable = (vista === 'riesgo' && capa !== GENERAL && data.variables.find((v) => v.id === capa && conDato.has(v.id))) || varAire
   const esAire = variable.id === varAire.id
@@ -285,19 +317,23 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
 
   // Al entrar a la leña se ve toda la región (la Zona B es la periferia); al salir vuelve el encuadre anterior.
   const encuadrePrevio = useRef<Encuadre>('gran-santiago')
+  const vistaPrevia = useRef(vista)
+  useEffect(() => {
+    if (vista === 'lena' && vistaPrevia.current !== 'lena') {
+      encuadrePrevio.current = encuadre
+      setEncuadre('region')
+    } else if (vista !== 'lena' && vistaPrevia.current === 'lena') {
+      setEncuadre(encuadrePrevio.current)
+    }
+    vistaPrevia.current = vista
+    // solo al cambiar de vista: el encuadre que se guarda es el del momento del cambio
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vista])
   const irAVista = useCallback(
     (i: number) => {
-      const destino = vistas[i]?.id
-      if (!destino) return
-      if (destino === 'lena' && vista !== 'lena') {
-        encuadrePrevio.current = encuadre
-        setEncuadre('region')
-      } else if (destino !== 'lena' && vista === 'lena') {
-        setEncuadre(encuadrePrevio.current)
-      }
-      setVistaIdx(i)
+      if (vistas[i]) setVistaIdx(i)
     },
-    [vistas, vista, encuadre],
+    [vistas],
   )
 
   useEffect(() => {
@@ -359,7 +395,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   useEffect(() => {
     if (!demo) return
     let n = 0
-    const ids = vistas.map((v) => v.id)
+    const ids = vistas.map((v): VistaId => (v.id === 'legal' ? 'plan' : 'riesgo'))
     const t = window.setInterval(() => {
       n++
       const paso = pasoDemo(n, ids, anios.length, politicaDemo)
@@ -500,19 +536,37 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const referenciaNorma =
     data.impacto?.norma !== undefined ? { valor: data.impacto.norma, texto: `norma ${fmt(data.impacto.norma, 0)} ${u}` } : undefined
 
+  // Rangos aceptados: qué comunas cumplen todos y, de la elegida, en qué variables queda fuera.
+  const valoresAnio = useMemo(() => filasDe(idx), [filasDe, idx])
+  const limites = useMemo(() => resolverLimites(rangos, data.variables, valoresAnio.map((f) => f.valores)), [rangos, data.variables, valoresAnio])
+  const hayLimites = Object.values(limites).some((v) => v !== null)
+  const dentro = useMemo(
+    () => (hayLimites ? new Set(valoresAnio.filter((f) => fueraDeRango(f.valores, limites, data.variables).length === 0).map((f) => f.codigo)) : null),
+    [hayLimites, valoresAnio, limites, data.variables],
+  )
+
+  /** Comunas que cumplen los rangos de una búsqueda (el estado aún no los tiene cuando se termina la entrada). */
+  const cumplenDe = (b: Busqueda) => {
+    const filasAnio = filasDe(idx)
+    const lim = resolverLimites(b.rangos, data.variables, filasAnio.map((f) => f.valores))
+    return new Set(filasAnio.filter((f) => fueraDeRango(f.valores, lim, data.variables).length === 0).map((f) => f.codigo))
+  }
+
   /** Pide a Claude que redacte la guía de las comunas que quedan primeras con estas prioridades. */
   const pedirGuiaPara = (b: Busqueda, prioridades: Record<string, number>, n: number) => {
     const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
-    const perfil = PERFILES.find((x) => x.id === b.perfil)
-    if (!url || !b.contexto || !perfil) return
-    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.filter((f) => f.indice !== null).slice(0, 3)
+    if (!url || !b.contexto) return
+    const cumple = cumplenDe(b)
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades)
+      .filas.filter((f) => f.indice !== null && cumple.has(f.codigo))
+      .slice(0, 3)
     setGuiaIA({ cargando: true })
     void pedirGuia(url, {
-      perfil: perfil.titulo,
+      perfil: casoDe(b.caso).titulo,
       contexto: b.contexto,
       prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, prioridades[v.id] ?? 0])),
       anio,
-      falta: perfil.falta,
+      falta: b.sinDatos.length > 0 ? `Sin datos en esta versión: ${b.sinDatos.join(', ')}.` : undefined,
       top: top.map((f) => ({
         comuna: nombre(f.codigo),
         riesgo: Math.round(f.indice!),
@@ -529,30 +583,31 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     })
   }
 
-  /** Aplica unas prioridades: ordena, elige la primera comuna y la deja seleccionada. */
-  const aplicarPrioridades = (prioridades: Record<string, number>) => {
-    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.find((f) => f.indice !== null)
+  /** Aplica unas prioridades: ordena, elige la primera comuna que cumple los rangos y la deja seleccionada. */
+  const aplicarPrioridades = (prioridades: Record<string, number>, cumple?: ReadonlySet<string> | null) => {
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.find((f) => f.indice !== null && (!cumple || cumple.has(f.codigo)))
     setPesos(prioridades)
     if (top) setSeleccionada(top.codigo)
   }
 
   const terminarEntrada = (b: Busqueda) => {
-    aplicarPrioridades(b.prioridades)
+    const cumple = cumplenDe(b)
+    aplicarPrioridades(b.prioridades, cumple)
+    setRangos(b.rangos)
     setPerfilId(PERSONALIZADO)
-    setCapa(GENERAL)
     setVistaIdx(0)
     setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
-    setBusqueda(b.perfil === 'explorar' ? null : b)
+    const guiada = b.contexto !== '' || b.caso !== 'general' || b.sinDatos.length > 0 || Object.keys(b.rangos).length > 0
+    setBusqueda(guiada ? b : null)
     setOnb(false)
     setGuiaIA(null)
     setLecturaCaso(null)
     const n = ++pedido.current
-    const perfil = PERFILES.find((x) => x.id === b.perfil)
     const urlCaso = urlGuia(import.meta.env.VITE_CASO_URL as string | undefined)
-    if (!urlCaso || !b.contexto || !perfil || b.perfil === 'explorar') return pedirGuiaPara(b, b.prioridades, n)
+    if (!urlCaso || !b.contexto) return pedirGuiaPara(b, b.prioridades, n)
     // Primero Claude lee el caso y propone ajustes; el índice ordena con ellos; después se redacta la guía.
     setLecturaCaso({ cargando: true, apagados: new Set(), base: b.prioridades })
-    void pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: perfil.titulo, prioridades: b.prioridades }).then((r) => {
+    void pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: casoDe(b.caso).titulo, prioridades: b.prioridades }).then((r) => {
       if (n !== pedido.current) return
       if (!r) {
         setLecturaCaso(null)
@@ -560,7 +615,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       }
       const nuevas = aplicarAjustes(b.prioridades, r)
       setLecturaCaso({ cargando: false, r, apagados: new Set(), base: b.prioridades })
-      aplicarPrioridades(nuevas)
+      aplicarPrioridades(nuevas, cumple)
       pedirGuiaPara(b, nuevas, n)
     })
   }
@@ -577,7 +632,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     if (encender) apagados.delete(variable)
     else apagados.add(variable)
     setLecturaCaso({ ...lecturaCaso, apagados })
-    aplicarPrioridades({ ...pesos, [variable]: encender ? ajuste.grado : (lecturaCaso.base[variable] ?? pesos[variable] ?? 5) })
+    aplicarPrioridades({ ...pesos, [variable]: encender ? ajuste.grado : (lecturaCaso.base[variable] ?? pesos[variable] ?? 5) }, dentro)
     pedido.current++
     setGuiaIA(null)
   }
@@ -595,21 +650,23 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         ...(lecturaCaso.r.no_medido.length > 0 ? [`El modelo no mide ${lecturaCaso.r.no_medido.map((k) => NO_MEDIDO[k]).join(', ')}.`] : []),
       ]
     : []
-  const perfilBusqueda = busqueda ? PERFILES.find((x) => x.id === busqueda.perfil) : undefined
-  const guia =
-    busqueda && perfilBusqueda
-      ? {
-          titulo: perfilBusqueda.titulo,
-          texto: guiaIA?.texto ?? (guiaIA?.cargando || lecturaCaso?.cargando ? 'Leyendo tu caso…' : explicar(riesgo, cortas, pesos, nombre, perfilBusqueda.falta)),
-          cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
-          porIA: !!guiaIA?.texto,
-          onCambiar: () => setOnb(true),
-          leyendo: !!lecturaCaso?.cargando,
-          ajustes: ajustesGuia,
-          notas: notasGuia,
-          onAlternarAjuste: alternarAjuste,
-        }
-      : null
+  const guia = busqueda
+    ? {
+        titulo: casoDe(busqueda.caso).titulo,
+        texto:
+          guiaIA?.texto ??
+          (guiaIA?.cargando || lecturaCaso?.cargando
+            ? 'Leyendo tu caso…'
+            : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: busqueda.sinDatos })),
+        cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
+        porIA: !!guiaIA?.texto,
+        onCambiar: () => setOnb(true),
+        leyendo: !!lecturaCaso?.cargando,
+        ajustes: ajustesGuia,
+        notas: notasGuia,
+        onAlternarAjuste: alternarAjuste,
+      }
+    : null
 
   let hoja: ReactNode = null
   if (vista === 'riesgo') {
@@ -633,7 +690,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       <VistaRiesgo
         variables={cortas}
         capa={general ? GENERAL : variable.id}
-        onCapa={setCapa}
+        onCapa={irACapa}
         tipos={data.tipos_hogar}
         perfilId={perfilId}
         pesos={pesos}
@@ -663,6 +720,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         onSeleccionar={setSeleccionada}
         valores={valores}
         sellos={sellos}
+        dentro={dentro}
+        fuera={cod ? fueraDeRango(valores, limites, data.variables) : []}
         detalle={
           s
             ? {
@@ -726,6 +785,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       />
     )
   else if (vista === 'lena') hoja = <VistaLena lena={lena} />
+  else if (vista === 'fuentes') hoja = <VistaFuentes politicas={data.politicas} />
   else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
   else if (vista === 'mudanzas' && demografia)
     hoja = (
@@ -841,8 +901,10 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
             </button>
           ))}
         </nav>
-        <div className="hoja" id="hoja" role="tabpanel" aria-labelledby={`tab-${vista}`} key={vista}>
-          {hoja}
+        <div className="hoja" id="hoja" role="tabpanel" aria-labelledby={`tab-${pestana.id}`} key={pestana.id}>
+          <Hoja pestana={pestana} secciones={disponibles} abierta={modo.seccion} onSeccion={(id) => setSecciones((x) => ({ ...x, [pestana.id]: id }))}>
+            {hoja}
+          </Hoja>
         </div>
       </section>
 

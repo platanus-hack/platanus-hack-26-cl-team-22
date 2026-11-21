@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { limpiarGuia, pedirGuia, urlGuia } from './guia'
-import { explicar, gradoDe, PERFILES, prioridadesDe } from './onboarding'
+import { casoDe, explicar, fueraDeRango, gradoDe, leerCaso, limpiarCriterio, prioridadesDe, resolverLimites } from './onboarding'
 import { calcularRiesgo } from './riesgo'
 import type { Variable } from './types'
 
@@ -15,21 +15,68 @@ const filas = [
 ]
 const nombre = (c: string) => ({ a: 'Lampa', b: 'Buin', c: 'Renca' })[c] ?? c
 
-describe('perfiles y grados', () => {
+describe('leer el caso', () => {
+  it('reconoce el caso por palabras clave, con o sin tildes', () => {
+    expect(leerCaso('Quiero instalar una central HIDROELÉCTRICA de pasada')).toBe('hidro')
+    expect(leerCaso('Busco depto para mi familia')).toBe('vivienda')
+    expect(leerCaso('abrir una bodega de logística')).toBe('industria')
+  })
+  it('lo que no reconoce o viene vacío es una evaluación general', () => {
+    expect(leerCaso('asdf qwer')).toBe('general')
+    expect(leerCaso('   ')).toBe('general')
+  })
+  it('cada caso trae entre cinco y siete criterios contando los tres simulados', () => {
+    for (const id of ['hidro', 'vivienda', 'industria', 'general'] as const) {
+      const n = casoDe(id).referencia.length + 3
+      expect(n).toBeGreaterThanOrEqual(5)
+      expect(n).toBeLessThanOrEqual(7)
+    }
+  })
+})
+
+describe('grados y prioridades', () => {
   it('lleva cualquier prioridad al grado más cercano', () => {
     expect([gradoDe(0), gradoDe(2), gradoDe(6), gradoDe(9), gradoDe(10)]).toEqual([0, 3, 5, 8, 10])
   })
   it('solo da prioridades para variables que existen; las desconocidas parten en medio', () => {
-    const empresa = PERFILES.find((p) => p.id === 'empresa')!
-    expect(prioridadesDe(empresa, ['crecimiento_poblacion', 'otra'])).toEqual({ crecimiento_poblacion: 8, otra: 5 })
+    expect(prioridadesDe(casoDe('industria'), ['crecimiento_poblacion', 'otra'])).toEqual({ crecimiento_poblacion: 8, otra: 5 })
+  })
+})
+
+describe('rangos', () => {
+  const valores = filas.map((f) => f.valores)
+  it('un rango fijo da su límite; uno relativo sale de los datos del año', () => {
+    expect(resolverLimites({ pm25_anual: 'norma' }, vars, valores)).toEqual({ pm25_anual: 20, crecimiento_poblacion: null })
+    const seg: Variable = { id: 'seguridad', nombre: 'Seguridad', unidad: '', mejor: 'menor' }
+    const v = [{ seguridad: 400 }, { seguridad: 100 }, { seguridad: 300 }, { seguridad: 200 }]
+    expect(resolverLimites({ seguridad: 'mitad' }, [seg], v).seguridad).toBe(200)
+    expect(resolverLimites({ seguridad: 'inventado' }, [seg], v).seguridad).toBeNull()
+  })
+  it('marca fuera de rango según el sentido de la variable; el borde y la falta de dato no cuentan', () => {
+    const lim = { pm25_anual: 20, crecimiento_poblacion: 5 }
+    expect(fueraDeRango({ pm25_anual: 20, crecimiento_poblacion: 5 }, lim, vars)).toEqual([])
+    expect(fueraDeRango({ pm25_anual: 20.1, crecimiento_poblacion: 4.9 }, lim, vars)).toEqual(['pm25_anual', 'crecimiento_poblacion'])
+    expect(fueraDeRango({}, lim, vars)).toEqual([])
+  })
+  it('un criterio propio se acota y no se repite', () => {
+    expect(limpiarCriterio('  Riesgo   sísmico ', [])).toBe('Riesgo sísmico')
+    expect(limpiarCriterio('riesgo sismico', ['Riesgo sísmico'])).toBeNull()
+    expect(limpiarCriterio('   ', [])).toBeNull()
+    expect(limpiarCriterio('x'.repeat(90), [])).toHaveLength(40)
   })
 })
 
 describe('explicar', () => {
+  const pesos = { pm25_anual: 3, crecimiento_poblacion: 8 }
+  const r = calcularRiesgo(filas, vars, pesos)
   it('nombra a la primera, en qué destaca según lo que más pesa, y a las que siguen', () => {
-    const pesos = { pm25_anual: 3, crecimiento_poblacion: 8 }
-    const t = explicar(calcularRiesgo(filas, vars, pesos), vars, pesos, nombre, 'El modelo no mide suelo.')
-    expect(t).toBe('Lampa es la de menor riesgo para ti: la mejor de la región en crecimiento. Le siguen Buin y Renca. El modelo no mide suelo.')
+    expect(explicar(r, vars, pesos, nombre, { sinDatos: ['Caudal medio del río'] })).toBe(
+      'Lampa es la de menor riesgo para ti: la mejor de la región en crecimiento. Le siguen Buin y Renca. Aún sin datos: caudal medio del río.',
+    )
+  })
+  it('con rangos solo recomienda comunas que los cumplen, y avisa si ninguna lo hace', () => {
+    expect(explicar(r, vars, pesos, nombre, { dentro: new Set(['b', 'c']) })).toMatch(/^Buin es la de menor riesgo dentro de tus rangos/)
+    expect(explicar(r, vars, pesos, nombre, { dentro: new Set() })).toMatch(/Ninguna comuna cumple/)
   })
   it('sin datos lo dice', () => {
     expect(explicar(calcularRiesgo([], vars, {}), vars, {}, nombre)).toMatch(/No hay datos/)

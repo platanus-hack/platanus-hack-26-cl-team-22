@@ -2401,3 +2401,358 @@ body:has(.estado) {
     opacity: 0;
   }
 }
+
+/* ---------- Entrada por caso: texto libre y criterios ---------- */
+.onb-ejemplos,
+.onb-lectura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  margin-top: calc(var(--u) * 1.1);
+  font-size: var(--t-m);
+  color: var(--tinta-2);
+}
+.onb-chip {
+  border: 0;
+  cursor: pointer;
+  background: var(--hoja);
+  box-shadow: inset 0 0 0 1.5px var(--corte);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.9);
+  font-size: var(--t-m);
+  font-weight: 600;
+  color: var(--tinta);
+  transition:
+    background-color 260ms var(--ease),
+    color 260ms var(--ease),
+    box-shadow 260ms var(--ease);
+}
+.onb-chip:hover {
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+}
+.onb-chip[aria-checked='true'] {
+  background: var(--tinta);
+  color: var(--papel);
+  box-shadow: none;
+}
+.onb-chip:focus-visible,
+.onb-agregar input:focus-visible,
+.onb-agregar button:focus-visible,
+.onb-propio button:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.onb-hoja:has(.onb-grupo) h2 {
+  font-size: calc(var(--u) * 3.8);
+}
+.onb-grupo {
+  margin-top: calc(var(--u) * 1.3);
+}
+.onb-grupo h3 {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 0.8);
+  font-weight: 800;
+  font-size: var(--t-l);
+  margin-bottom: calc(var(--u) * 0.5);
+}
+.onb-grupo h3 span {
+  font-weight: 400;
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.onb-criterio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto calc(var(--u) * 23);
+  align-items: center;
+  gap: calc(var(--u) * 1.4);
+  background: var(--hoja);
+  padding: calc(var(--u) * 0.55) calc(var(--u) * 1.1);
+}
+.onb-criterio + .onb-criterio {
+  margin-top: 2px;
+}
+.onb-criterio p,
+.onb-referencias li {
+  display: grid;
+  gap: 0.1em;
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.onb-criterio b,
+.onb-referencias b {
+  font-weight: 800;
+  font-size: var(--t-l);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--tinta);
+}
+.onb-criterio .onb-grados {
+  grid-auto-columns: calc(var(--u) * 5.2);
+}
+.onb-criterio .onb-grado {
+  padding: calc(var(--u) * 0.45) 0;
+  font-size: var(--t-s);
+}
+.onb-criterio .desplegable {
+  justify-content: flex-end;
+}
+.onb-criterio .desplegable-boton {
+  min-width: calc(var(--u) * 17);
+  justify-content: space-between;
+}
+.onb-referencias {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+}
+.onb-referencias li {
+  position: relative;
+  align-content: start;
+  background: color-mix(in srgb, var(--hoja) 55%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--corte);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9);
+}
+.onb-referencias b {
+  font-size: var(--t-m);
+  color: var(--tinta-2);
+}
+.onb-propio {
+  padding-right: calc(var(--u) * 2.4) !important;
+}
+.onb-propio button {
+  position: absolute;
+  top: calc(var(--u) * 0.3);
+  right: calc(var(--u) * 0.4);
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  font-size: var(--t-l);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--tinta-2);
+}
+.onb-propio button:hover {
+  color: var(--tinta);
+}
+.onb-referencias .onb-agregar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 0.4);
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+  background: var(--hoja);
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.4) calc(var(--u) * 0.3) calc(var(--u) * 0.8);
+}
+.onb-agregar input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  color: var(--tinta);
+}
+.onb-agregar button {
+  border: 0;
+  cursor: pointer;
+  background: var(--tinta);
+  color: var(--papel);
+  padding: calc(var(--u) * 0.35) calc(var(--u) * 0.7);
+  font-size: var(--t-xs);
+  font-weight: 800;
+}
+.onb-agregar button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.onb-hoja:has(.onb-grupo) .onb-pie {
+  margin-top: calc(var(--u) * 1.4);
+}
+.podio-fuera .podio-nombre {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: var(--tinta-2);
+}
+.podio-todas .podio-fila[aria-pressed='true'].podio-fuera .podio-nombre {
+  color: var(--papel-2);
+}
+/* El desplegable de rango abre sobre lo que sigue, y sus opciones no heredan el tamaño del nombre del criterio */
+.onb-grupo:has(.desplegable-lista) {
+  position: relative;
+  z-index: 6;
+}
+.onb-criterio:has(.desplegable-lista) {
+  position: relative;
+  z-index: 2;
+}
+.onb-criterio .desplegable-opcion b {
+  font-size: var(--t-s);
+  letter-spacing: 0;
+  color: inherit;
+}
+
+/* ---------- Nombres de variable completos: caben en dos líneas donde antes iba una palabra ---------- */
+.capa {
+  white-space: normal;
+  font-size: var(--t-s);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.dimension {
+  grid-template-columns: 8.6em minmax(2em, 1fr) 10.4em 8.2em 0.8em;
+}
+.dimension-nombre {
+  font-size: var(--t-s);
+  line-height: 1.1;
+}
+.v-riesgo .peso {
+  grid-template-columns: minmax(0, 12em) minmax(0, 1fr) 1.6em;
+}
+.tag-linea {
+  max-width: 34ch;
+}
+
+/* ---------- Acciones secundarias: botones con borde, no texto subrayado ---------- */
+.onb-volver,
+.guia-cambiar {
+  border: 0;
+  cursor: pointer;
+  background: var(--hoja);
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+  padding: calc(var(--u) * 0.75) calc(var(--u) * 1.6);
+  font-size: var(--t-m);
+  font-weight: 800;
+  color: var(--tinta);
+  text-decoration: none;
+  transition:
+    background-color 260ms var(--ease),
+    color 260ms var(--ease);
+}
+.onb-volver:hover,
+.guia-cambiar:hover {
+  background: var(--tinta);
+  color: var(--papel);
+  text-decoration: none;
+}
+.guia-cambiar {
+  padding: calc(var(--u) * 0.25) calc(var(--u) * 0.6);
+  font-size: var(--t-xs);
+  background: transparent;
+}
+.guia-pie {
+  align-items: center;
+}
+.tramo-acciones {
+  display: flex;
+  gap: calc(var(--u) * 0.4);
+  flex: none;
+}
+
+/* ---------- Pestañas por tipo de riesgo: más ancho para leer, cabecera y acordeón ---------- */
+.escena {
+  grid-template-columns: 56fr 44fr;
+}
+.pestana {
+  white-space: nowrap;
+}
+.hoja-cabeza {
+  margin-bottom: calc(var(--u) * 0.9);
+}
+.hoja-cabeza h2 {
+  font-weight: 800;
+  font-size: var(--t-xl);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.hoja-cabeza p {
+  margin-top: calc(var(--u) * 0.3);
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.acordeon {
+  display: grid;
+  gap: 2px;
+}
+.pliegue h3 button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 1);
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  background: var(--papel-2);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 0.9);
+  font-size: var(--t-m);
+  font-weight: 800;
+  color: var(--tinta);
+  transition:
+    background-color var(--t-capa) var(--ease),
+    color var(--t-capa) var(--ease);
+}
+.pliegue h3 button:hover {
+  background: var(--corte);
+}
+.pliegue h3 button:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 1px;
+}
+.pliegue h3 svg {
+  flex: none;
+  width: 0.8em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: transform var(--t-capa) var(--ease);
+}
+.pliegue-abierto h3 button {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.pliegue-abierto h3 button:hover {
+  background: var(--tinta);
+}
+.pliegue-abierto h3 svg {
+  transform: rotate(180deg);
+}
+.pliegue-cuerpo {
+  padding: calc(var(--u) * 1) 0 calc(var(--u) * 0.8);
+  animation: guia-entra 420ms var(--ease) both;
+}
+.pliegue-cuerpo .etiqueta-real {
+  margin-top: 0;
+}
+.pliegue-cuerpo .lena-titular {
+  font-size: var(--t-l);
+  max-width: none;
+  margin: calc(var(--u) * 0.6) 0;
+}
+.v-fuentes h4 {
+  font-weight: 800;
+  font-size: var(--t-m);
+  margin: calc(var(--u) * 1.1) 0 calc(var(--u) * 0.4);
+}
+.fuentes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.fuentes li {
+  display: grid;
+  grid-template-columns: minmax(0, 15em) minmax(0, 1fr);
+  gap: calc(var(--u) * 1);
+  background: var(--papel);
+  padding: calc(var(--u) * 0.45) calc(var(--u) * 0.8);
+  font-size: var(--t-s);
+}
+.fuentes b {
+  font-weight: 800;
+}
+.fuentes span,
+.fuentes a {
+  color: var(--tinta-2);
+}
