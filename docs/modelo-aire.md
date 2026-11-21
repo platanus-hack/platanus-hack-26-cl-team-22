@@ -84,39 +84,85 @@ Políticas con efecto citado:
 - extender la prohibición de leña a la Zona B (propuesta).
 
 PM2,5 en 2036, promedio ponderado por la población de 2036, con la leña fija (base 2023:
-23,4 µg/m³). Con la leña siguiendo a quienes se mudan, ver
-[`modelo-hogares.md`](./modelo-hogares.md):
+23,1 µg/m³, con las comunas con estación ancladas a su medición). Con la leña siguiendo a
+quienes se mudan, ver [`modelo-hogares.md`](./modelo-hogares.md):
 
 | Escenario | p10 | p50 | p90 |
 |---|---|---|---|
-| Ninguna política avanza | 23,2 | 23,2 | 23,2 |
-| Planes vigentes, con el historial real (lectura conservadora) | 20,5 | **21,7** | 22,7 |
-| Planes vigentes, lectura optimista | 19,1 | 19,6 | 20,7 |
-| Planes vigentes, cumplidos al 100 % | 19,1 | **19,1** | 19,1 |
-| Planes vigentes + leña prohibida en la Zona B (conservadora) | 15,8 | **18,8** | 21,4 |
+| Ninguna política avanza | 22,9 | 22,9 | 22,9 |
+| Planes vigentes, con el historial real (lectura conservadora) | 20,2 | **21,4** | 22,4 |
+| Planes vigentes, lectura optimista | 18,8 | 19,3 | 20,4 |
+| Planes vigentes, cumplidos al 100 % | 18,8 | **18,8** | 18,8 |
+| Planes vigentes + leña prohibida en la Zona B (conservadora) | 15,6 | **18,5** | 21,1 |
 
 Qué significa:
 
 - **El plan escrito y el historial real dan regiones distintas.** Cumplido al 100 %, el plan
   deja la región bajo la norma anual (20 µg/m³). Con la tasa de cumplimiento observada queda
-  en 21,7: el incumplimiento como cifra.
+  en 21,4: el incumplimiento como cifra.
 - **La Zona B es la palanca.** Extender la prohibición, aun con la misma credibilidad baja,
   logra en la mediana algo mejor que cumplir al 100 % los planes vigentes, pero con una banda
-  ancha (16,0 a 21,6). En Santiago centro, que no está en la Zona B, aporta −3,2 µg/m³: el
+  ancha (15,6 a 21,1). En Santiago centro, que no está en la Zona B, aporta −3,2 µg/m³: el
   acople entre comunas.
 - **La industria casi no mueve el resultado** (−0,2 µg/m³ en Santiago centro).
 - La comparación entre prometer mucho y cumplir poco, y prometer poco y cumplirlo, está en
   [`promesas.md`](./promesas.md).
-- La métrica de personas sobre la norma salta en bloque, porque en v0 todas las comunas se
-  mueven casi igual y cruzan la norma juntas. Es frágil hasta que el modelo distinga comunas.
+- La métrica de personas sobre la norma salta en bloque, porque el modelo mueve a todas las
+  comunas casi igual y cruzan la norma juntas.
 
-## Siguientes versiones (v1)
+### Comunas destacadas (contraste medido)
 
-Cada parámetro nuevo entra solo si mejora el error dejando una estación fuera frente a v0 y
-frente a las alternativas simples. Si no mejora, se queda v0 y se dice.
+La interfaz destaca pocas comunas con contraste (`comunas_destacadas`), con una regla fija:
+las dos de mayor y las dos de menor nivel medido, más las de la Zona B con estación. Su nivel
+de partida es el medido por su estación; el cambio hasta 2036 es modelado (planes vigentes,
+lectura conservadora, leña fija):
 
-1. **Fondo por estación del año**: usar la media de invierno de `pm25_anual.csv`, con la
-   leña activa solo en invierno. Debería separar `b` de `k`.
-2. **Relieve**: un parámetro de elevación, con un modelo digital de terreno de fuente citada.
-3. **Viento**: solo si SINCA entrega dirección y velocidad por los mismos endpoints de
-   `datos/aire/fetch_sinca.py`. No se fija una dirección dominante de memoria.
+| Comuna | Medido 2023 | 2036, p50 (p10–p90) |
+|---|---|---|
+| El Bosque | 28,1 | 26,3 (25,0–27,6) |
+| Cerro Navia | 26,5 | 24,8 (23,6–26,0) |
+| Puente Alto | 21,1 | 19,4 (18,2–20,6) |
+| Las Condes | 19,1 | 17,5 (16,3–18,6) |
+| Talagante | 21,6 | 20,5 (19,7–21,3) |
+
+## v1: qué probamos para distinguir comunas
+
+`python -m experiments.aire_v1_pruebas` (resultados en `results/aire_v1_pruebas.json`). Cada
+candidato se mide con el error dejando una estación fuera en 2023 (10 estaciones), eligiendo
+sus parámetros sin mirar la estación que se predice. Solo entra si le gana a v0.
+
+| Candidato | Error (µg/m³) | ¿Entra? |
+|---|---|---|
+| v0 (núcleo por distancia) | 2,05 | — |
+| Media de las otras estaciones | 2,83 | — |
+| Fondo distinto en invierno y resto del año, leña solo en invierno | 2,10 | No: peor |
+| Transporte a favor del viento (rosas de viento SINCA 2023, un parámetro) | 2,05 | No: el mejor peso del viento es 0 |
+| v0 + interpolación de los residuos de las otras estaciones | 2,04 | No: los residuos no tienen patrón espacial |
+
+| Niveles 2024 en las estaciones | Error (µg/m³) |
+|---|---|
+| v0 | 2,57 |
+| **v0 anclado al residuo 2023 de cada estación** | **1,91** |
+| Persistencia de 2023 | 1,91 |
+
+Qué significa:
+
+- **Con 10 estaciones, las emisiones primarias del RETC no explican dónde está el peor aire.**
+  Ni la estación del año ni la dirección del viento mejoran el patrón espacial. Lo más
+  probable es que pesen el aerosol secundario y la acumulación nocturna de aire frío en el
+  poniente, que el modelo no tiene.
+- **Lo que sí funciona es anclar el nivel a lo medido** donde hay estación: el error en 2024
+  baja de 2,57 a 1,91. Por eso v1 adopta «nivel medido + cambio modelado» (el método estándar
+  en proyecciones de calidad del aire): las 10 comunas con estación parten de su medición y el
+  modelo calcula cuánto cambian. Las otras 42 usan el modelo solo (`nivel_base: modelado`).
+- El ajuste por comuna mueve el nivel, nunca el efecto de una política (hay un test).
+
+Las rosas de viento se descargan con `python -m datos.aire.fetch_viento` (SINCA, macro
+`Met/WDIR/horario_010`); ver `data/aire/README.md`.
+
+## Siguientes versiones
+
+1. **Relieve**: un parámetro de elevación, con un modelo digital de terreno de fuente citada.
+2. **Viento por hora**: SINCA entrega `WSPD` por hora; un transporte que use dirección y
+   velocidad hora a hora en invierno, no solo la rosa anual.
+3. Más estaciones o años: con 10 receptores, cada parámetro nuevo es difícil de identificar.

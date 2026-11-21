@@ -67,9 +67,15 @@ def exponential_transfer(distance_km: np.ndarray, scale_km: float) -> np.ndarray
 
 @dataclass(frozen=True)
 class AirModel:
+    """Linear operator. `offset` (optional, per commune) anchors levels to measurements: where a
+    station exists, observed minus modelled at that station; elsewhere 0. It shifts levels but
+    never the change caused by emissions, so policy effects are the same with or without it.
+    """
+
     transfer: np.ndarray
     background: float
     coefficients: np.ndarray
+    offset: np.ndarray | None = None
 
     def __post_init__(self) -> None:
         t = self.transfer
@@ -81,6 +87,9 @@ class AirModel:
             raise ValueError(f"coefficients must have shape ({len(SOURCES)},)")
         if np.any(self.coefficients < 0) or not self.background >= 0:
             raise ValueError("background and coefficients must be non-negative")
+        if self.offset is not None and (self.offset.shape != (t.shape[0],)
+                                        or not np.all(np.isfinite(self.offset))):
+            raise ValueError(f"offset must be finite with shape ({t.shape[0]},)")
 
     @property
     def n_communes(self) -> int:
@@ -106,5 +115,6 @@ class AirModel:
         return self.transfer * (emissions @ self.coefficients)[None, :]
 
     def concentration(self, emissions: np.ndarray) -> np.ndarray:
-        """Annual mean PM2.5 per commune (ug/m3)."""
-        return self.background + self.by_source(emissions).sum(axis=1)
+        """Annual mean PM2.5 per commune (ug/m3): background + offset + all sources."""
+        level = self.background + self.by_source(emissions).sum(axis=1)
+        return level if self.offset is None else level + self.offset

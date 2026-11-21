@@ -149,6 +149,8 @@ export function startIntro({ spacer, layer, box, roots: rootsCanvas, sim }: Elem
     roots.clear();
     setHomeDisabled(false);
     scrollTo(0, 0);
+    // The intro text stays on screen until the visitor decides to go in (src/simulador.ts).
+    document.dispatchEvent(new Event("intro-fin"));
   }
 
   async function reopen() {

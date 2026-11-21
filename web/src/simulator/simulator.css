@@ -56,6 +56,7 @@ h1,h2,h3,p{margin:0}
 .intro p{margin-top:20px; color:var(--muted); font-size:18px; max-width:46ch}
 .intro .cta{margin-top:24px; border:0; background:var(--ink); color:var(--page); padding:14px 22px; border-radius:999px; font-weight:600; font-size:16px}
 .intro .cta:hover{background:var(--accent); color:var(--accent-ink)}
+.intro small{display:block; margin-top:14px; color:var(--muted); font-size:14px}
 .sim:not([data-level="world"]) .intro{opacity:0; transform:translateY(8px); pointer-events:none}
 /* Below the globe, which the engine centers at 62% of the width on wide screens. */
 .hint{position:absolute; left:62%; bottom:28px; transform:translateX(-50%); width:max-content; max-width:min(520px, 60%); text-align:center; color:var(--muted); font-size:13px; pointer-events:none; transition:opacity .35s}
@@ -184,3 +185,14 @@ input[type=range]{width:100%; accent-color:var(--accent); height:22px; margin:0}
 /* El globo aparece con un fundido sobre el punto del logo (intro.ts agrega .globe-in). */
 .sim #map{transition:opacity .6s ease-out}
 .sim:not(.globe-in) #map{opacity:0}
+
+/* Paso al simulador con datos reales (src/simulador.ts): mientras el globo vuela a Santiago el panel de
+   ejemplo no entra, y al llegar un velo del color del papel del simulador cubre la página. */
+body.saliendo .sim .panel{transform:translateX(calc(100% + 24px)); opacity:0; pointer-events:none}
+body.saliendo .sim .intro, body.saliendo .sim .crumbs, body.saliendo .sim .brand{opacity:0; pointer-events:none}
+.panel .abrir{display:block; margin-top:16px; background:var(--ink); color:var(--page); padding:13px 20px; border-radius:999px; font-weight:600; font-size:15px; text-align:center; text-decoration:none}
+.panel .abrir:hover{background:var(--accent); color:var(--accent-ink)}
+
+/* La landing ya no se queda en el simulador de ejemplo: del globo pasa directo al simulador real.
+   Sus controles y su panel no se muestran; quedan el globo, la introducción con su botón y el crédito del mapa. */
+.sim .panel, .sim .crumbs, .sim .zoom, .sim .legend, .sim .brand{display:none}

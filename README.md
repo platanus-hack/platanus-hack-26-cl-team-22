@@ -20,30 +20,40 @@ por escenario y muestra bandas, nunca un número solo.
 
 ## Hallazgos
 
-PM2,5 en 2036, ponderado por población. Nivel de 2023: 23,4 µg/m³. Norma anual: 20 µg/m³.
+PM2,5 en 2036, ponderado por población. Nivel de 2023: 23,1 µg/m³ (las 10 comunas con estación
+parten de su medición). Norma anual: 20 µg/m³.
 
 | Escenario | Mediana (p10–p90) |
 |---|---|
-| Ninguna política avanza | 23,2 |
-| Planes vigentes, con el historial real de cumplimiento | **21,7** (20,5–22,7) |
-| Planes vigentes, cumplidos al 100 % | **19,1** |
-| Planes vigentes + prohibición de leña en la Zona B | 18,8 (15,8–21,4) |
+| Ninguna política avanza | 22,9 |
+| Planes vigentes, con el historial real de cumplimiento | **21,4** (20,2–22,4) |
+| Planes vigentes, cumplidos al 100 % | **18,8** |
+| Planes vigentes + prohibición de leña en la Zona B | 18,5 (15,6–21,1) |
 
 1. **El incumplimiento como cifra.** El plan escrito deja la región bajo la norma. Con el
    cumplimiento observado no la alcanza.
 2. **La migración puede borrar la mejora.** La ciudad se muda hacia la Zona B (+18 % de
-   población en 2036). Si la leña sigue a la gente, con el plan vigente la región queda en 23,2,
+   población en 2036). Si la leña sigue a la gente, con el plan vigente la región queda en 22,9,
    prácticamente el nivel de hoy.
-3. **Importa más quién ejecuta que cuántas promesas hay.** Una planilla da 20,57 µg/m³ para
+3. **Importa más quién ejecuta que cuántas promesas hay.** Una planilla da 20,24 µg/m³ para
    todas las variantes de las 18 promesas de la Zona B. La simulación las separa:
 
    | Ejecución | Banda | Probabilidad de cumplir la norma |
    |---|---|---|
-   | Un solo ejecutor | 2,96 µg/m³ | 0,41 |
-   | 18 municipios | 1,32 µg/m³ | 0,29 |
+   | Un solo ejecutor | 2,96 µg/m³ | 0,51 |
+   | 18 municipios | 1,32 µg/m³ | 0,54 |
+
+   Lo robusto es la banda. La probabilidad de cumplir la norma depende de qué lado del umbral
+   quede la mediana y su orden se invierte con cambios chicos de nivel (`docs/promesas.md`).
+4. **Las políticas de seguridad casi no mueven la tasa comunal.** Con efectos citados de
+   metaanálisis (cámaras y alumbrado reducen delitos contra la propiedad, no violentos),
+   cobertura del 25 % y credibilidad municipal baja, las cámaras bajan los delitos de mayor
+   connotación social entre 0,6 % y 1,0 % en las comunas intervenidas: muy dentro de la
+   variación de un año a otro.
 
 Detalle y supuestos: [`docs/modelo-aire.md`](docs/modelo-aire.md),
-[`docs/modelo-hogares.md`](docs/modelo-hogares.md), [`docs/promesas.md`](docs/promesas.md).
+[`docs/modelo-hogares.md`](docs/modelo-hogares.md), [`docs/modelo-seguridad.md`](docs/modelo-seguridad.md),
+[`docs/promesas.md`](docs/promesas.md).
 
 ## Validación
 
@@ -54,9 +64,13 @@ simples. También publicamos dónde pierde.
 |---|---|---|
 | Aire: cambio medio 2017 → 2023 | −3,0 µg/m³ | Observado: −3,2 |
 | Aire: niveles 2024, RMSE | 4,29 | Persistencia de 2023: **1,91** (gana la alternativa) |
+| Aire v1: niveles 2024 anclados al nivel medido de cada estación | 1,91 | Persistencia: 1,91 (empate) |
 | Hogares: migración neta 2019→2024, RMSE | **4.335** | Repetir 2012→2017: 5.054 · Nadie se muda: 7.716 |
+| Seguridad: tasa DMCS 2024 a 2 años, error relativo (comunas fuera del ajuste) | **10,8 %** | Persistencia: 12,4 % · Tendencia: 13,1 % |
+| Seguridad: tasa DMCS 2024 a 1 año | 8,5 % | Persistencia: **7,4 %** (gana la alternativa) |
 
 El modelo de aire acierta cuánto mejora la región, pero todavía **no qué comunas ganan más**.
+Donde hay estación (10 comunas), el nivel parte de lo medido y el modelo calcula el cambio.
 Más detalle en [`docs/sim-spec.md`](docs/sim-spec.md#validación).
 
 ## Cómo ejecutar
@@ -66,6 +80,18 @@ make setup      # crea .venv e instala dependencias
 make test       # 112 pruebas del núcleo y de los datos
 make simulate   # calibra, simula y escribe viz/datos/simulacion.json (~15 s)
 ```
+
+El sitio publicado es la landing de `web/` con la interfaz de `viz/` dentro, en `simulador/`: `npm run build`
+en `web/` construye las dos. Para ver solo el resultado en el mapa en relieve (la interfaz de `viz/`):
+
+```bash
+cd viz
+npm install     # hace falta de nuevo si cambió package-lock.json
+npm run dev     # abre la dirección que imprime, normalmente http://localhost:5173
+```
+
+El mapa en relieve necesita internet y WebGL; si falta alguno, la interfaz pasa sola al mapa plano
+(detalle y respaldos sin conexión en [`viz/README.md`](viz/README.md)).
 
 Para volver a descargar los datos crudos: `pip install -e ".[datos]"` y correr el script de
 `datos/` de cada fuente (ver «Fuentes de datos»).

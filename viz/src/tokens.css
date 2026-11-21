@@ -1,0 +1,77 @@
+/* Todos los colores, tamaños y tiempos de la interfaz viven aquí.
+   Cada color es un papel plano: no hay degradados ni mezclas. */
+:root {
+  /* Papel base, hoja y tinta */
+  --papel: #fafaf7;
+  --papel-2: #e9e7df; /* papel de fondo de pestañas y pistas */
+  --hoja: #ffffff; /* la hoja pegada sobre la columna */
+  --tinta: #111111;
+  --tinta-2: #45443f; /* texto secundario: 9,4:1 sobre la hoja */
+  --corte: #d9d9d0; /* línea de corte de una comuna sin dato */
+
+  /* Nivel de contaminación: una familia cálida de seis papeles, de claro a oscuro.
+     El paso 3 (bermellón) va intercalado entre naranjo y rojo; la tabla de invierno, de cinco, lo salta.
+     Los cortes están en src/lib/niveles.ts. */
+  --nivel-0: #f6de8d;
+  --nivel-1: #f2b705;
+  --nivel-2: #ee7b22;
+  --nivel-3: #e0502b;
+  --nivel-4: #b8202e;
+  --nivel-5: #6e1726;
+  /* Texto sobre cada papel de nivel (≥ 4,5:1) */
+  --nivel-txt-0: #111111;
+  --nivel-txt-1: #111111;
+  --nivel-txt-2: #111111;
+  --nivel-txt-3: #111111;
+  --nivel-txt-4: #fafaf7;
+  --nivel-txt-5: #fafaf7;
+
+  /* Políticas: una familia fría, un papel por política en orden; se repiten.
+     Turquesa y verde están oscurecidos para que el texto claro pase 4,5:1. */
+  --pol-0: #1f6fb2;
+  --pol-1: #167878;
+  --pol-2: #1b2a52;
+  --pol-3: #187a4d;
+  --pol-4: #e88fa3;
+  --pol-txt-0: #fafaf7;
+  --pol-txt-1: #fafaf7;
+  --pol-txt-2: #fafaf7;
+  --pol-txt-3: #fafaf7;
+  --pol-txt-4: #111111;
+
+  /* Diferencia frente al escenario de referencia: tres capas frías (mejora) y tres cálidas (empeora) */
+  --mejora-1: #cfe0f0;
+  --mejora-2: #7fb0dc;
+  --mejora-3: #1f6fb2;
+  --empeora-1: #f8cfc6;
+  --empeora-2: #ef8a78;
+  --empeora-3: #e4322b;
+
+  /* La leña: dos zonas del plan y el disco de emisiones */
+  --zona-a: #1b2a52;
+  --zona-a-txt: #fafaf7;
+  --zona-b: #a9c8e4;
+  --zona-b-txt: #111111;
+  --disco: #ee7b22;
+
+  /* Un alzado mínimo entre dos papeles: 1 px de corrimiento, sin desenfoque */
+  --alzado: 1px 1px 0 rgba(17, 17, 17, 0.16);
+
+  /* Tipografía: una sola familia, empaquetada */
+  --f: 'Bricolage Grotesque', 'Segoe UI', sans-serif;
+
+  /* Unidad de escena: manda el ancho en 16:10 y el alto en 16:9, donde la columna tiene menos alto */
+  --u: min(1vw, 1.62vh);
+  --t-xs: max(10.5px, calc(var(--u) * 0.86));
+  --t-s: max(11.5px, calc(var(--u) * 0.96));
+  --t-m: max(12.5px, calc(var(--u) * 1.08));
+  --t-l: calc(var(--u) * 1.4);
+  --t-xl: calc(var(--u) * 2.1);
+  --t-titulo: calc(var(--u) * 2.9);
+  --t-numeral: calc(var(--u) * 4.6);
+  --t-marca: calc(var(--u) * 6.6);
+
+  /* Movimiento: salida exponencial, sin rebote */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-capa: 320ms;
+}

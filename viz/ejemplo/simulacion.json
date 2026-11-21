@@ -3545,5 +3545,1375 @@
     "hogares": 749
    }
   ]
+ },
+ "origen_aire": {
+  "base": {
+   "cerrillos": [
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.271
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.097
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.077
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.067
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.063
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.053
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.021
+    }
+   ],
+   "cerro-navia": [
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.266
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.148
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.077
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.07
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.055
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.014
+    }
+   ],
+   "el-bosque": [
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.335
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.093
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.063
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.061
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.058
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.032
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.011
+    }
+   ],
+   "la-florida": [
+    {
+     "origen": "la-florida",
+     "fraccion": 0.343
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.072
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.067
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.067
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.057
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.028
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.023
+    }
+   ],
+   "las-condes": [
+    {
+     "origen": "las-condes",
+     "fraccion": 0.503
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.04
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.039
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.026
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.022
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.022
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.017
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.014
+    }
+   ],
+   "pudahuel": [
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.288
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.142
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.073
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.065
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.051
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.023
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.011
+    }
+   ],
+   "puente-alto": [
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.375
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.095
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.092
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.047
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.036
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.018
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.014
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.01
+    }
+   ],
+   "quilicura": [
+    {
+     "origen": "quilicura",
+     "fraccion": 0.425
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.071
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.071
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.043
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.021
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.015
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.013
+    }
+   ],
+   "santiago": [
+    {
+     "origen": "santiago",
+     "fraccion": 0.287
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.089
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.072
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.059
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.057
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.053
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.032
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.025
+    }
+   ],
+   "talagante": [
+    {
+     "origen": "talagante",
+     "fraccion": 0.649
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.011
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.009
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.007
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.006
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.005
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.005
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.003
+    }
+   ]
+  },
+  "sin-ppda-lena": {
+   "cerrillos": [
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.271
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.097
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.074
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.064
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.064
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.054
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.024
+    }
+   ],
+   "cerro-navia": [
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.279
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.14
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.072
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.07
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.054
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.031
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.021
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.015
+    }
+   ],
+   "el-bosque": [
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.309
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.097
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.065
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.064
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.064
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.035
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.035
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.011
+    }
+   ],
+   "la-florida": [
+    {
+     "origen": "la-florida",
+     "fraccion": 0.318
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.083
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.073
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.073
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.057
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.025
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.024
+    }
+   ],
+   "las-condes": [
+    {
+     "origen": "las-condes",
+     "fraccion": 0.473
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.046
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.041
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.032
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.026
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.021
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.016
+    }
+   ],
+   "pudahuel": [
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.281
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.154
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.069
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.058
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.055
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.023
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.012
+    }
+   ],
+   "puente-alto": [
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.401
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.088
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.085
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.04
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.035
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.014
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.014
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.01
+    }
+   ],
+   "quilicura": [
+    {
+     "origen": "quilicura",
+     "fraccion": 0.397
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.085
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.074
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.048
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.031
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.015
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.014
+    }
+   ],
+   "santiago": [
+    {
+     "origen": "santiago",
+     "fraccion": 0.287
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.094
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.068
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.06
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.055
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.051
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.031
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.026
+    }
+   ],
+   "talagante": [
+    {
+     "origen": "talagante",
+     "fraccion": 0.652
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.009
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.007
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.006
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.006
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.005
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.004
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.003
+    }
+   ]
+  },
+  "sin-ppda-transporte": {
+   "cerrillos": [
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.271
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.094
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.078
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.069
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.063
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.052
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.031
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.021
+    }
+   ],
+   "cerro-navia": [
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.293
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.144
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.067
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.062
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.055
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.027
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.02
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.013
+    }
+   ],
+   "el-bosque": [
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.335
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.092
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.066
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.06
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.058
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.01
+    }
+   ],
+   "la-florida": [
+    {
+     "origen": "la-florida",
+     "fraccion": 0.321
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.08
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.072
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.072
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.057
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.025
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.023
+    }
+   ],
+   "las-condes": [
+    {
+     "origen": "las-condes",
+     "fraccion": 0.487
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.041
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.04
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.019
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.015
+    }
+   ],
+   "pudahuel": [
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.286
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.146
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.065
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.06
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.058
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.023
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.012
+    }
+   ],
+   "puente-alto": [
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.392
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.085
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.078
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.047
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.039
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.016
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.016
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.013
+    }
+   ],
+   "quilicura": [
+    {
+     "origen": "quilicura",
+     "fraccion": 0.41
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.073
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.069
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.048
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.032
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.026
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.016
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.015
+    }
+   ],
+   "santiago": [
+    {
+     "origen": "santiago",
+     "fraccion": 0.288
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.1
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.067
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.059
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.055
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.051
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.028
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.022
+    }
+   ],
+   "talagante": [
+    {
+     "origen": "talagante",
+     "fraccion": 0.648
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.01
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.009
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.007
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.006
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.005
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.004
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.004
+    }
+   ]
+  },
+  "sin-seia-planta": {
+   "cerrillos": [
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.272
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.104
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.074
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.071
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.061
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.044
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.028
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.024
+    }
+   ],
+   "cerro-navia": [
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.283
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.144
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.07
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.066
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.056
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.021
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.013
+    }
+   ],
+   "el-bosque": [
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.341
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.081
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.064
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.062
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.053
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.037
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.034
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.011
+    }
+   ],
+   "la-florida": [
+    {
+     "origen": "la-florida",
+     "fraccion": 0.339
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.074
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.07
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.07
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.054
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.026
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.026
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.025
+    }
+   ],
+   "las-condes": [
+    {
+     "origen": "las-condes",
+     "fraccion": 0.482
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.042
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.042
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.025
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.018
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.017
+    }
+   ],
+   "pudahuel": [
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.299
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.15
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.065
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.056
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.05
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.029
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.022
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.012
+    }
+   ],
+   "puente-alto": [
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.401
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.085
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.075
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.045
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.04
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.015
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.014
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.012
+    }
+   ],
+   "quilicura": [
+    {
+     "origen": "quilicura",
+     "fraccion": 0.412
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.076
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.069
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.047
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.031
+    },
+    {
+     "origen": "las-condes",
+     "fraccion": 0.024
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.015
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.013
+    }
+   ],
+   "santiago": [
+    {
+     "origen": "santiago",
+     "fraccion": 0.281
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.096
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.07
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.059
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.057
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.056
+    },
+    {
+     "origen": "quilicura",
+     "fraccion": 0.03
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.024
+    }
+   ],
+   "talagante": [
+    {
+     "origen": "talagante",
+     "fraccion": 0.653
+    },
+    {
+     "origen": "el-bosque",
+     "fraccion": 0.01
+    },
+    {
+     "origen": "cerrillos",
+     "fraccion": 0.007
+    },
+    {
+     "origen": "pudahuel",
+     "fraccion": 0.006
+    },
+    {
+     "origen": "cerro-navia",
+     "fraccion": 0.005
+    },
+    {
+     "origen": "puente-alto",
+     "fraccion": 0.004
+    },
+    {
+     "origen": "santiago",
+     "fraccion": 0.004
+    },
+    {
+     "origen": "la-florida",
+     "fraccion": 0.003
+    }
+   ]
+  }
  }
 }

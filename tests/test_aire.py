@@ -78,9 +78,23 @@ def test_decompositions_add_up_to_the_concentration():
     assert np.allclose(m.background + m.by_origin(e).sum(axis=1), c)
 
 
+def test_offset_shifts_levels_but_not_the_effect_of_a_policy():
+    plain = make_model()
+    offset = np.array([3.0, 0.0, -1.5])
+    anchored = AirModel(plain.transfer, plain.background, plain.coefficients, offset)
+    base = np.full((3, N_SOURCES), 50.0)
+    policy = base.copy()
+    policy[:, 0] = 0.0
+    assert np.allclose(anchored.concentration(base) - plain.concentration(base), offset)
+    assert np.allclose(anchored.concentration(policy) - anchored.concentration(base),
+                       plain.concentration(policy) - plain.concentration(base))
+
+
 @pytest.mark.parametrize(
     "call",
     [
+        lambda: AirModel(np.ones((2, 2)), 1.0, np.ones(N_SOURCES), np.ones(3)),
+        lambda: AirModel(np.ones((2, 2)), 1.0, np.ones(N_SOURCES), np.array([1.0, np.nan])),
         lambda: exponential_transfer(np.zeros((2, 2)), 0.0),
         lambda: AirModel(np.ones((2, 3)), 1.0, np.ones(N_SOURCES)),
         lambda: AirModel(np.ones((2, 2)), 1.0, np.ones(N_SOURCES - 1)),
