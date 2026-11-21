@@ -101409,7 +101409,7 @@
    "sin-ppda-lena-zona-a": {
     "referencia": "base",
     "variable": "pm25_anual",
-    "tipo": "reduccion_emisiones",
+    "tipo": "retiro_politicas",
     "max_abs_delta": 1.779,
     "epicentro": {
      "lat": -33.51621,
@@ -101440,7 +101440,7 @@
    "sin-ppda-industria-30": {
     "referencia": "base",
     "variable": "pm25_anual",
-    "tipo": "reduccion_emisiones",
+    "tipo": "retiro_politicas",
     "max_abs_delta": 0.165,
     "epicentro": {
      "lat": -33.51621,
@@ -102037,7 +102037,7 @@
    "sin-politicas": {
     "referencia": "base",
     "variable": "pm25_anual",
-    "tipo": "reduccion_emisiones",
+    "tipo": "retiro_politicas",
     "max_abs_delta": 1.816,
     "epicentro": {
      "lat": -33.51621,

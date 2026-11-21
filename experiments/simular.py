@@ -525,6 +525,8 @@ def main() -> None:
                 tipo = "acople_hogares"
             elif sc["lectura"] != DEFAULT_READING:
                 tipo = "comparacion_credibilidad"
+            elif set(sc["politicas_activas"]) < set(base_sc["politicas_activas"]):
+                tipo = "retiro_politicas"  # removing policies raises PM2.5
             else:
                 tipo = "reduccion_emisiones"
             act_arr = run(sc["politicas_activas"], sc["lectura"], sc["hogares"])
