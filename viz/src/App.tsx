@@ -59,7 +59,8 @@ const VARIABLE_OCUPACION = { id: 'ocupacion_vivienda', nombre: 'Ocupación de la
 
 const ESPERA_DEMO_MS = 45_000
 /** Dirección de la landing cuando el simulador se publica junto a ella (la fija web/scripts/incluir-simulador.mjs). */
-const inicio = (import.meta.env.VITE_INICIO_URL as string | undefined) === '../' ? '../' : null
+// Link back to the landing: '../' in the published site, the landing's dev server in development (.env.development).
+const inicio = (import.meta.env.VITE_INICIO_URL as string | undefined) || null
 const PASO_DEMO_MS = 3_200
 const PASO_JUGAR_MS = 900
 
@@ -732,7 +733,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         </Mapa>
       </main>
 
-      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} />}
+      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} />}
 
       <section className="columna" aria-label="Lectura de la simulación" inert={onb}>
         <header className="cabecera">
