@@ -33,6 +33,8 @@ Si falta algo que no es crítico, asume un valor y anótalo en la sección "Supu
 
 Los ejes están correlacionados (DES implica estado discreto; humanos en vivo implican tiempo real). No fuerces combinaciones incoherentes.
 
+Referencia completa de cada eje, con valores posibles y ejemplos: `docs/simulation-taxonomy.md`.
+
 ## Paso 3: elegir paradigma (aplica la primera regla que coincida)
 
 1. No hay dinámica temporal; solo hay que estimar una probabilidad, un valor esperado o un riesgo → **Monte Carlo**.
