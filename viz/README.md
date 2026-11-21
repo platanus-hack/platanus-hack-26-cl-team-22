@@ -23,9 +23,11 @@ pintadas encima con el color de su nivel. `src/components/Mapa.tsx` elige solo c
 | Mapa | De dónde sale | Cuándo se usa |
 |---|---|---|
 | Relieve en línea | Calles de OpenFreeMap y relieve de Mapterhorn (gratis, sin clave) | Siempre que haya internet |
-| Relieve local | Paquete predescargado en `viz/public/mapas/` (`npm run mapas`, unos 67 MB, fuera de git) | Si el estilo en línea no responde en 4 s |
+| Relieve local | Paquete predescargado en `viz/public/mapas/` (`npm run mapas`, unos 67 MB, fuera de git) | Si el estilo en línea no responde en dos intentos de 8 s |
 | Plano («Capas de papel») | SVG propio, sin teselas ni red (`MapaPapel.tsx`) | Si no hay red ni paquete, o si WebGL falla |
 
+- **Una red lenta no cambia de mapa:** el relieve se queda y pinta las teselas a medida que llegan. Solo se
+  pasa al respaldo si el estilo no carga (sin red) o si WebGL no arranca.
 - **Antes de presentar:** correr `npm run mapas` una vez con internet. Se puede repetir; salta lo ya bajado.
 - **Forzar un respaldo:** abrir con `?mapa=local` o `?mapa=plano`, o apretar `L` en plena presentación
   (en línea → local → plano).

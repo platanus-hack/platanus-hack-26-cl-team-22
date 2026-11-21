@@ -30,7 +30,7 @@ const CAMARA = {
   region: { pitch: 40, bearing: 24, dz: 0.4 },
 } as const
 const DURACION_COLOR = 320
-const ESPERA_CARGA_MS = 12_000
+const ESPERA_CARGA_MS = 20_000
 const RADIO_DISCO_M = 7000
 /** cada cuánto avanza el brillo de los ríos y cuánto dura un latido de las estaciones */
 const PASO_FLUJO_MS = 55
@@ -141,11 +141,14 @@ export default function MapaRelieve(p: Props) {
       return
     }
     mapa.current = m
+    // Solo se abandona el relieve si ni siquiera el estilo llega a cargar. Antes se esperaba el evento «load»,
+    // que exige todas las teselas de la primera vista: con una red lenta vencía el plazo y aparecía el mapa
+    // plano aunque el relieve estuviera funcionando. Las teselas que tardan se van pintando solas.
     const espera = window.setTimeout(() => {
-      console.warn('El mapa en relieve no cargó a tiempo.')
+      console.warn('El estilo del mapa en relieve no cargó a tiempo.')
       ultimo.current.onFalla()
     }, ESPERA_CARGA_MS)
-    m.on('load', () => {
+    m.once('style.load', () => {
       window.clearTimeout(espera)
       const img = trama()
       if (img) {
