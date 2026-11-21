@@ -1,0 +1,11 @@
+# Render Blueprint: builds the React landing page in web/ and serves it as a static site.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: root-landing
+    runtime: static
+    buildCommand: cd web && npm ci && npm run build
+    staticPublishPath: web/dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22

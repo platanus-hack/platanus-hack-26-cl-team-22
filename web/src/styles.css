@@ -1,0 +1,48 @@
+/* Figtree (SIL OFL 1.1), self-hosted. */
+@font-face {
+  font-family: "Figtree";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/figtree-latin-700.woff2") format("woff2");
+}
+
+:root {
+  --bg: #e6e6e6;
+  --fg: #212121;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+.page {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* The SVG viewBox hugs the glyph ink, so the letters themselves span
+   50% of the viewport height; width follows the aspect ratio (--ar, set
+   from the measured glyphs) and is capped at 80vw so it never overflows
+   narrower screens. The logo starts at 1/8 of the width. */
+.logo {
+  --ar: 2.35;
+  margin-left: 12.5vw;
+  width: min(80vw, calc(50vh * var(--ar)));
+  height: auto;
+  flex: none;
+}
+
+.logo text {
+  font-family: "Figtree", sans-serif;
+  font-weight: 700;
+  letter-spacing: -13px; /* user units: 13% of the 100-unit font size */
+  fill: var(--fg);
+}
