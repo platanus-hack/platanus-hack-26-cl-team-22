@@ -80,7 +80,7 @@ def test_loading_santiago_seed() -> None:
     assert city.default_usd_exchange_rate == Decimal(950)
 
     options = repo.list_options("scl")
-    assert len(options) == 11
+    assert len(options) == 13
 
     # Check category distribution
     connectivity = repo.list_options_by_city_and_category("scl", ServiceCategory.CONNECTIVITY)
@@ -193,10 +193,15 @@ def test_unverified_options_flagged_in_seed() -> None:
     repo = JsonOptionRepository(SANTIAGO_SEED_PATH)
 
     options = repo.list_options("scl")
-    assert len(options) == 11
+    assert len(options) == 13
 
     # Only options with a real source are verified; everything else must stay flagged unverified.
-    verified_ids = {"scl-conn-wom-plan-zero-esim", "scl-transfer-centropuerto-bus"}
+    verified_ids = {
+        "scl-conn-wom-plan-zero-esim",
+        "scl-transfer-centropuerto-bus",
+        "scl-dining-menu-del-dia",
+        "scl-dining-menu-ejecutivo",
+    }
     for opt in options:
         if opt.id in verified_ids:
             assert repo.is_verified(opt.id) is True
@@ -288,7 +293,7 @@ def test_adding_second_city_file_without_changing_code(tmp_path: Path) -> None:
     assert "bue" in city_ids
 
     scl_opts = repo.list_options("scl")
-    assert len(scl_opts) == 11
+    assert len(scl_opts) == 13
     assert all(o.city_id == "scl" for o in scl_opts)
 
     bue_opts = repo.list_options("bue")

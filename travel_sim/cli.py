@@ -10,12 +10,32 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from travel_sim.application.audit import run_audit
+from travel_sim.application.ports import AssistantPort
 from travel_sim.application.scenarios import TripScenario
 from travel_sim.application.simulate import SimulationResult, simulate
-from travel_sim.domain import DeviceProfile, FreshnessStatus, FrictionTolerance, ScenarioType
+from travel_sim.domain import (
+    DeviceProfile,
+    DiningPreference,
+    FreshnessStatus,
+    FrictionTolerance,
+    PaymentMethodPreference,
+    ScenarioType,
+    TravelerProfile,
+)
+from travel_sim.infrastructure.anthropic_assistant import (
+    AnthropicAssistant,
+    AnthropicAssistantError,
+)
 from travel_sim.infrastructure.json_repository import (
     JsonOptionRepository,
     RepositoryValidationError,
+)
+from travel_sim.infrastructure.replay_assistant import (
+    BudgetExceededError,
+    ReplayAssistant,
+    ReplayMissError,
+    ReplayMode,
 )
 
 DEFAULT_DATA_DIR = "data/cities"
@@ -55,6 +75,31 @@ def _parse_positive_int(raw: str) -> int:
     return value
 
 
+def _parse_non_negative_int(raw: str) -> int:
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"expected an integer, got {raw!r}") from exc
+    if value < 0:
+        raise argparse.ArgumentTypeError(f"must be >= 0, got {value}")
+    return value
+
+
+def _parse_assistant_spec(raw: str) -> tuple[str, str]:
+    if "=" not in raw:
+        raise argparse.ArgumentTypeError(
+            f"invalid --assistant specification {raw!r}; expected NAME=MODEL"
+        )
+    name, model = raw.split("=", 1)
+    name = name.strip()
+    model = model.strip()
+    if not name or not model:
+        raise argparse.ArgumentTypeError(
+            f"invalid --assistant specification {raw!r}; both NAME and MODEL must be non-empty"
+        )
+    return name, model
+
+
 def _parse_non_negative_decimal(raw: str) -> Decimal:
     try:
         value = Decimal(raw)
@@ -76,52 +121,41 @@ def _parse_tolerance(raw: str) -> FrictionTolerance:
         ) from exc
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Build the top-level argparse CLI parser."""
-    parser = argparse.ArgumentParser(
-        prog="travel-sim",
-        description="Deterministic travel cost-vs-friction simulator.",
-    )
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    sim_parser = subparsers.add_parser(
-        "simulate",
-        help="Run a travel simulation and display the three scenarios.",
-    )
-    sim_parser.add_argument(
+def _add_common_trip_args(subparser: argparse.ArgumentParser, *, city_help: str) -> None:
+    subparser.add_argument(
         "--city",
         required=True,
         metavar="ID",
-        help="City identifier to simulate (e.g., scl).",
+        help=city_help,
     )
-    sim_parser.add_argument(
+    subparser.add_argument(
         "--data-dir",
         default=DEFAULT_DATA_DIR,
         metavar="DIR",
         help=f"Directory containing city JSON files (default: {DEFAULT_DATA_DIR}).",
     )
-    sim_parser.add_argument(
+    subparser.add_argument(
         "--days",
         type=_parse_positive_int,
         default=7,
         metavar="INT",
         help="Trip duration in days (default: 7).",
     )
-    sim_parser.add_argument(
+    subparser.add_argument(
         "--data-gb",
         type=_parse_non_negative_decimal,
         default=Decimal(0),
         metavar="NUMBER",
         help="Target mobile data usage in GB (default: 0).",
     )
-    sim_parser.add_argument(
+    subparser.add_argument(
         "--device",
         choices=_DEVICE_CHOICES,
         default="dual",
         help="Traveler device SIM capability (default: dual).",
     )
 
-    local_id_group = sim_parser.add_mutually_exclusive_group()
+    local_id_group = subparser.add_mutually_exclusive_group()
     local_id_group.add_argument(
         "--has-local-id",
         dest="has_local_id",
@@ -134,27 +168,89 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="Traveler does not hold a local national ID (default).",
     )
-    sim_parser.set_defaults(has_local_id=False)
+    subparser.set_defaults(has_local_id=False)
 
     tolerance_choices = ",".join(member.value for member in FrictionTolerance)
-    sim_parser.add_argument(
+    subparser.add_argument(
         "--tolerance",
         type=_parse_tolerance,
         default=FrictionTolerance.MEDIUM,
         metavar=f"{{{tolerance_choices}}}",
         help=f"Friction tolerance level ({tolerance_choices}; default: MEDIUM).",
     )
-    sim_parser.add_argument(
+    subparser.add_argument(
         "--format",
         choices=("text", "json"),
         default="text",
         help="Output format (default: text).",
     )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build the top-level argparse CLI parser."""
+    parser = argparse.ArgumentParser(
+        prog="travel-sim",
+        description="Deterministic travel cost-vs-friction simulator.",
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    sim_parser = subparsers.add_parser(
+        "simulate",
+        help="Run a travel simulation and display the three scenarios.",
+    )
+    _add_common_trip_args(sim_parser, city_help="City identifier to simulate (e.g., scl).")
     sim_parser.add_argument(
         "--reference-time",
         default=None,
         metavar="ISO8601",
         help="Reference UTC timestamp for freshness checks (ISO 8601; defaults to clock).",
+    )
+
+    audit_parser = subparsers.add_parser(
+        "audit",
+        help="Audit AI assistant recommendations against deterministic baselines.",
+    )
+    _add_common_trip_args(audit_parser, city_help="City identifier to audit (e.g., scl).")
+    audit_parser.add_argument(
+        "--assistant",
+        dest="assistants",
+        action="append",
+        type=_parse_assistant_spec,
+        required=True,
+        metavar="NAME=MODEL",
+        help="Assistant specification NAME=MODEL (repeatable).",
+    )
+    audit_parser.add_argument(
+        "--replications",
+        type=_parse_positive_int,
+        default=5,
+        metavar="N",
+        help="Number of salted replications per assistant (default: 5).",
+    )
+    audit_parser.add_argument(
+        "--log",
+        required=True,
+        metavar="PATH",
+        help="JSONL record/replay log file path.",
+    )
+    audit_parser.add_argument(
+        "--mode",
+        choices=("replay", "record"),
+        default="replay",
+        help="Operating mode: replay from JSONL log or record live calls (default: replay).",
+    )
+    audit_parser.add_argument(
+        "--allow-network",
+        action="store_true",
+        default=False,
+        help="Permit live network calls (required for --mode record).",
+    )
+    audit_parser.add_argument(
+        "--max-calls",
+        type=_parse_non_negative_int,
+        default=50,
+        metavar="N",
+        help="Maximum live assistant API calls allowed in record mode (default: 50).",
     )
 
     cities_parser = subparsers.add_parser(
@@ -454,24 +550,32 @@ def _handle_cities(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_simulate(
-    args: argparse.Namespace,
-    *,
-    clock: Callable[[], datetime] | None = None,
-) -> int:
-    city_id = args.city.strip()
+def _load_validated_city(data_dir: str, raw_city: str) -> tuple[str, JsonOptionRepository] | None:
+    city_id = raw_city.strip()
     if not city_id:
         sys.stderr.write("Error: --city must be a non-empty city identifier.\n")
-        return 2
+        return None
 
-    repository = _load_repository(args.data_dir)
+    repository = _load_repository(data_dir)
     if repository.get_city(city_id) is None:
         available = sorted(city.id for city in repository.list_cities())
         avail_text = ", ".join(available) if available else "(none)"
         sys.stderr.write(
             f"Error: unknown city '{city_id}'. Available cities: {avail_text}\n"
         )
+        return None
+    return city_id, repository
+
+
+def _handle_simulate(
+    args: argparse.Namespace,
+    *,
+    clock: Callable[[], datetime] | None = None,
+) -> int:
+    loaded = _load_validated_city(args.data_dir, args.city)
+    if loaded is None:
         return 2
+    city_id, repository = loaded
 
     if args.reference_time is not None:
         ref_time = datetime.fromisoformat(args.reference_time)
@@ -499,10 +603,112 @@ def _handle_simulate(
     return 0
 
 
+class _SharedCallBudget:
+    """Tracks live assistant call budget across all assistants in one audit run."""
+
+    def __init__(self, max_calls: int) -> None:
+        self.max_calls = max_calls
+        self.calls_made = 0
+
+    def consume(self, salt: str) -> None:
+        if self.calls_made >= self.max_calls:
+            raise BudgetExceededError(
+                f"Call budget cap of {self.max_calls} reached; refusing call for salt={salt!r}"
+            )
+        self.calls_made += 1
+
+
+class _BudgetedAssistant(AssistantPort):
+    """AssistantPort wrapper enforcing a shared live call budget."""
+
+    def __init__(self, inner: AssistantPort, budget: _SharedCallBudget) -> None:
+        self._inner = inner
+        self._budget = budget
+
+    def ask(self, prompt: str, salt: str) -> str:
+        self._budget.consume(salt)
+        return self._inner.ask(prompt, salt)
+
+
+def _handle_audit(
+    args: argparse.Namespace,
+    *,
+    assistant_factory: Callable[[str], AssistantPort] | None = None,
+) -> int:
+    mode = ReplayMode(args.mode)
+    if mode == ReplayMode.RECORD and not args.allow_network:
+        sys.stderr.write(
+            "Error: record mode requires --allow-network to permit live assistant API calls.\n"
+        )
+        return 2
+
+    assistant_specs: list[tuple[str, str]] = list(args.assistants)
+    seen_names: set[str] = set()
+    for name, _model in assistant_specs:
+        if name in seen_names:
+            raise ValueError(f"Duplicate --assistant name: {name!r}")
+        seen_names.add(name)
+
+    loaded = _load_validated_city(args.data_dir, args.city)
+    if loaded is None:
+        return 2
+    city_id, repository = loaded
+
+    traveler = TravelerProfile(
+        id="traveler-default",
+        destination_city_id=city_id,
+        trip_duration_days=args.days,
+        has_local_id=args.has_local_id,
+        target_data_gb=args.data_gb,
+        friction_tolerance=args.tolerance,
+        device_profile=_device_profile_from_choice(args.device),
+        include_day_trips=True,
+        dining_preference=DiningPreference.CASUAL,
+        payment_method_preference=PaymentMethodPreference.INTERNATIONAL_CARD,
+    )
+
+    log_path = Path(args.log)
+    shared_budget = _SharedCallBudget(args.max_calls)
+    assistants: dict[str, AssistantPort] = {}
+    for name, model in assistant_specs:
+        if mode == ReplayMode.REPLAY:
+            assistants[name] = ReplayAssistant(
+                log_path,
+                mode=ReplayMode.REPLAY,
+                assistant=None,
+                max_calls=args.max_calls,
+            )
+        else:
+            live_assistant = (
+                assistant_factory(model)
+                if assistant_factory is not None
+                else AnthropicAssistant(model=model)
+            )
+            assistants[name] = ReplayAssistant(
+                log_path,
+                mode=ReplayMode.RECORD,
+                assistant=_BudgetedAssistant(live_assistant, shared_budget),
+                max_calls=args.max_calls,
+            )
+
+    report = run_audit(
+        repository,
+        traveler,
+        assistants,
+        replications=args.replications,
+    )
+    if args.format == "json":
+        sys.stdout.write(report.to_json() + "\n")
+    else:
+        sys.stdout.write(report.to_text() + "\n")
+    return 0
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
     clock: Callable[[], datetime] | None = None,
+    assistant_factory: Callable[[str], AssistantPort] | None = None,
 ) -> int:
     """CLI entrypoint returning process exit code (0 on success, 2 on invalid input)."""
     parser = build_parser()
@@ -516,9 +722,17 @@ def main(
             return _handle_cities(args)
         if args.command == "simulate":
             return _handle_simulate(args, clock=clock)
+        if args.command == "audit":
+            return _handle_audit(args, assistant_factory=assistant_factory)
         sys.stderr.write(f"Error: unknown command {args.command!r}\n")
         return 2
+    except ReplayMissError as exc:
+        detail = exc.args[0] if exc.args else str(exc)
+        sys.stderr.write(f"Error: {detail}\n")
+        return 2
     except (
+        AnthropicAssistantError,
+        BudgetExceededError,
         FileNotFoundError,
         NotADirectoryError,
         RepositoryValidationError,

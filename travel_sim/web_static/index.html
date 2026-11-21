@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Viaje Real — Simulador de Costos vs. Fricción</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <p class="eyebrow">Motor determinista sin sesgo de afiliados</p>
+      <h1>Viaje Real: Simulador de Costos vs. Fricción</h1>
+      <p class="subtitle">
+        Compara cuánto ahorras y cuánta fricción operativa asumes en cada categoría de tu viaje.
+      </p>
+    </div>
+  </header>
+
+  <main class="container main-layout">
+    <section class="panel form-panel" aria-labelledby="form-heading">
+      <h2 id="form-heading">Parámetros del viaje</h2>
+      <form id="simulation-form" novalidate>
+        <div class="field-grid">
+          <div class="field">
+            <label for="city-select">Ciudad de destino</label>
+            <select id="city-select" name="city" required>
+              <option value="scl">Santiago (CL)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="days-input">Duración del viaje (días)</label>
+            <input
+              id="days-input"
+              name="days"
+              type="number"
+              min="1"
+              max="365"
+              step="1"
+              value="7"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="data-gb-input">Datos móviles estimados (GB)</label>
+            <input
+              id="data-gb-input"
+              name="data_gb"
+              type="number"
+              min="0"
+              max="1000"
+              step="0.5"
+              value="10"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="device-select">Capacidad SIM del teléfono</label>
+            <select id="device-select" name="device" required>
+              <option value="esim-only">Solo eSIM (sin ranura física)</option>
+              <option value="physical-only">Solo chip físico (sin soporte eSIM)</option>
+              <option value="dual" selected>Dual (eSIM + chip físico)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="tolerance-select">Tolerancia a la fricción</label>
+            <select id="tolerance-select" name="tolerance" required>
+              <option value="LOW">Baja — Priorizar comodidad</option>
+              <option value="MEDIUM" selected>Media — Equilibrio costo y tiempo</option>
+              <option value="HIGH">Alta — Priorizar máximo ahorro</option>
+            </select>
+          </div>
+
+          <div class="field checkbox-field">
+            <input id="has-local-id-input" name="has_local_id" type="checkbox">
+            <label for="has-local-id-input">
+              Cuento con documento de identidad local (RUT / DNI local)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="simulate-button" class="primary-button">
+            Calcular escenarios
+          </button>
+          <span id="status-indicator" class="status-text" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <div id="error-banner" class="alert-box alert-error" role="alert" hidden></div>
+
+    <div id="warning-banner" class="alert-box alert-warning" role="status" aria-live="polite" hidden></div>
+
+    <section id="scenarios-section" aria-labelledby="scenarios-heading" hidden>
+      <div class="section-header">
+        <h2 id="scenarios-heading">Escenarios comparativos</h2>
+        <p id="profile-summary" class="profile-summary"></p>
+      </div>
+      <div id="scenarios-grid" class="scenarios-grid"></div>
+    </section>
+
+    <section id="missing-section" class="panel" aria-labelledby="missing-heading" hidden>
+      <h2 id="missing-heading">Categorías sin datos o sin opciones compatibles</h2>
+      <p class="section-note">
+        Estas categorías del catálogo aún no tienen opciones cargadas o compatibles para tu perfil:
+      </p>
+      <ul id="missing-list" class="tag-list"></ul>
+    </section>
+
+    <section id="rejected-section" class="panel" aria-labelledby="rejected-heading" hidden>
+      <h2 id="rejected-heading">Opciones descartadas por filtros duros</h2>
+      <p id="rejected-empty" class="section-note" hidden>
+        Ninguna opción del catálogo fue descartada para este perfil.
+      </p>
+      <div class="table-wrapper" id="rejected-table-wrapper">
+        <table class="data-table" aria-describedby="rejected-heading">
+          <thead>
+            <tr>
+              <th scope="col">Categoría</th>
+              <th scope="col">Opción</th>
+              <th scope="col">Proveedor</th>
+              <th scope="col">Tipo de SIM</th>
+              <th scope="col">Motivos de descarte</th>
+            </tr>
+          </thead>
+          <tbody id="rejected-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Viaje Real — Simulación determinista local sin dependencias externas.</p>
+    </div>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

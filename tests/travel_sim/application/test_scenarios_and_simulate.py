@@ -37,7 +37,12 @@ from travel_sim.infrastructure.json_repository import JsonOptionRepository
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SANTIAGO_SEED_PATH = REPO_ROOT / "data" / "cities" / "santiago.json"
 # Seed options that carry a real source and verification date.
-SOURCED_SEED_IDS = {"scl-conn-wom-plan-zero-esim", "scl-transfer-centropuerto-bus"}
+SOURCED_SEED_IDS = {
+    "scl-conn-wom-plan-zero-esim",
+    "scl-transfer-centropuerto-bus",
+    "scl-dining-menu-del-dia",
+    "scl-dining-menu-ejecutivo",
+}
 
 
 class InMemoryOptionRepository(OptionRepository):
@@ -521,7 +526,7 @@ def test_end_to_end_santiago_seed_with_unverified_flag_propagated() -> None:
         scenario = result.scenarios[scenario_type]
         assert scenario.unverified is True
         assert scenario.has_unverified_options is True
-        assert len(scenario.choices) == 4
+        assert len(scenario.choices) == 5
         for choice in scenario.choices:
             sourced = choice.option.id in SOURCED_SEED_IDS
             assert choice.unverified is (not sourced)
