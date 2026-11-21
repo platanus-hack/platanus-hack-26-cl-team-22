@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { MULTIPLICADORES_BASE, leerDemografia, proyectarDemografia } from './demografia'
-import { bandaOcupacion, frecuenciaSaturacion, simular, simularReplicas, type OpcionesAbm, type ParametrosAbm, type ResultadoAbm } from './mudanzasAbm'
+import { CORTES_OCUPACION, bandaOcupacion, estadoOcupacion, frecuenciaSaturacion, serieOcupacion, simular, simularReplicas, type OpcionesAbm, type ParametrosAbm, type ResultadoAbm } from './mudanzasAbm'
 
 const ruta = fileURLToPath(new URL('../../public/datos/demografia.json', import.meta.url))
 const datos = leerDemografia(JSON.parse(readFileSync(ruta, 'utf-8')))
@@ -242,5 +242,28 @@ describe('summaries of several runs', () => {
     expect(f.length).toBeGreaterThan(0)
     for (let k = 1; k < f.length; k++) expect(f[k - 1]!.corridas).toBeGreaterThanOrEqual(f[k]!.corridas)
     expect(f.every((x) => x.corridas >= 1 && x.corridas <= corridas.length)).toBe(true)
+  })
+
+  it("gives one comuna's occupancy band for every year", () => {
+    const serie = serieOcupacion(corridas, 0)
+    expect(serie.p50).toHaveLength(datos.anios.length)
+    for (let t = 0; t < datos.anios.length; t++) expect(serie.p50[t]).toBeCloseTo(bandaOcupacion(corridas, t)[0]!.p50, 9)
+  })
+})
+
+describe('estadoOcupacion', () => {
+  it('calls a comuna full when it saturates in at least half of the runs', () => {
+    expect(estadoOcupacion(80, 10, 20)).toMatchObject({ estado: 'riesgo', titulo: 'Llena' })
+  })
+  it('warns when it saturates in some run or is above 97 %', () => {
+    expect(estadoOcupacion(80, 1, 20)).toMatchObject({ estado: 'limite', titulo: 'Puede llenarse' })
+    expect(estadoOcupacion(97.5, 0, 20)).toMatchObject({ estado: 'limite', titulo: 'Puede llenarse' })
+  })
+  it('has room otherwise', () => {
+    expect(estadoOcupacion(97, 0, 20)).toMatchObject({ estado: 'cumple', titulo: 'Con espacio' })
+  })
+  it('puts the map cuts where the medians fall, so full and overfull share the top level', () => {
+    expect(CORTES_OCUPACION.at(-1)).toBeLessThan(100)
+    expect(CORTES_OCUPACION).toContain(97)
   })
 })
