@@ -1,0 +1,87 @@
+{
+ "fuente": "ChileCompra Datos Abiertos (https://datos-abiertos.chilecompra.cl)",
+ "url_plantilla": "https://transparenciachc.blob.core.windows.net/lic-da/{year}-{month}.zip",
+ "generado": "2026-11-21",
+ "diagnosticos": {
+  "total_filas": 2512286,
+  "filas_rm": 681828,
+  "filas_sin_comuna_rm": 1830458,
+  "outliers_monto_filtrados": 5,
+  "filas_resumen_comuna_anio": 52,
+  "filas_resumen_sector_comuna": 307
+ },
+ "archivos": {
+  "data/raw/licitaciones/2024-1.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-1.zip",
+   "descargado": "2026-11-21",
+   "sha256": "3a6965423d3991c4c6555b9d406d879c53286aefb1ea90e203caa34900e77bc7",
+   "bytes": 22852967
+  },
+  "data/raw/licitaciones/2024-2.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-2.zip",
+   "descargado": "2026-11-21",
+   "sha256": "b9fe45a4f84b89717ecd760dea864c5cb28a1e79d7558efcb46dc83159abcdca",
+   "bytes": 24115228
+  },
+  "data/raw/licitaciones/2024-3.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-3.zip",
+   "descargado": "2026-11-21",
+   "sha256": "9297e084d58bd188893577394c5c98330a9c74a9882abd3840b75003d9bcb807",
+   "bytes": 23851014
+  },
+  "data/raw/licitaciones/2024-4.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-4.zip",
+   "descargado": "2026-11-21",
+   "sha256": "e3af656647e320ba8681ae7667edee7ed1593e736b7280047dbaf06afb015c22",
+   "bytes": 28627115
+  },
+  "data/raw/licitaciones/2024-5.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-5.zip",
+   "descargado": "2026-11-21",
+   "sha256": "cf752e6f0d859844bce477145c4aba03cbea18c506c99fcfbde34b53450154e0",
+   "bytes": 25507874
+  },
+  "data/raw/licitaciones/2024-6.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-6.zip",
+   "descargado": "2026-11-21",
+   "sha256": "c4d4ae022434d94f23187e26d03a8e011d25cd7ce4ed5ee8cb259c595b2142ca",
+   "bytes": 23580092
+  },
+  "data/raw/licitaciones/2024-7.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-7.zip",
+   "descargado": "2026-11-21",
+   "sha256": "3a15c78e261a1e85062a7ff4c1fb907fd2b3eca1c226dc0e686e07bf5f36b27f",
+   "bytes": 25663861
+  },
+  "data/raw/licitaciones/2024-8.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-8.zip",
+   "descargado": "2026-11-21",
+   "sha256": "731fa36d2fd8803ee07bd07d016dcded5736306b0b82305de351f08e2538e5ba",
+   "bytes": 25149377
+  },
+  "data/raw/licitaciones/2024-9.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-9.zip",
+   "descargado": "2026-11-21",
+   "sha256": "574039383cb20325bab786aaacd826698eae3c76fa387fe4c763055645c6a628",
+   "bytes": 20322625
+  },
+  "data/raw/licitaciones/2024-10.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-10.zip",
+   "descargado": "2026-11-21",
+   "sha256": "6945012a1bd0a0fd6ca26e28a43d55683f2eb926de99c224d9aff5e72fba4121",
+   "bytes": 26064598
+  },
+  "data/raw/licitaciones/2024-11.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-11.zip",
+   "descargado": "2026-11-21",
+   "sha256": "700fe13adb6e99fb2b4b3a2daebb997882affcb7afe4b9445371ee43f62457cb",
+   "bytes": 23860050
+  },
+  "data/raw/licitaciones/2024-12.zip": {
+   "url": "https://transparenciachc.blob.core.windows.net/lic-da/2024-12.zip",
+   "descargado": "2026-11-21",
+   "sha256": "fc3ed8fe6e3400c2b1117fa1f2467a41d41f708fe4236aac547990406643e03d",
+   "bytes": 13055962
+  }
+ }
+}

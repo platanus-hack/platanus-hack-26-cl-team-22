@@ -1,6 +1,6 @@
 PY := .venv/bin/python
 
-.PHONY: setup test lint experiments simulate web web-build clean
+.PHONY: setup test lint experiments licitaciones simulate web web-build clean
 
 setup:            ## create .venv and install dev dependencies
 	python3 -m venv .venv
@@ -15,6 +15,9 @@ lint:             ## static checks
 
 experiments:      ## replicas for the reference model -> results/*.csv
 	$(PY) -m experiments.replicate
+
+licitaciones:     ## download and aggregate ChileCompra procurement data -> data/licitaciones/
+	$(PY) -m datos.licitaciones.fetch_licitaciones --desde 2024-01 --hasta 2024-12
 
 simulate:         ## calibrate air and households -> promises -> viz/datos/simulacion.json
 	$(PY) -m experiments.calibrar_aire
