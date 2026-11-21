@@ -44,6 +44,15 @@
     EXPIRED: "Dato vencido (>180 días)"
   };
 
+  const FIELD_INPUT_IDS = {
+    city: "city-select",
+    days: "days-input",
+    data_gb: "data-gb-input",
+    device: "device-select",
+    tolerance: "tolerance-select",
+    has_local_id: "has-local-id-input"
+  };
+
   function clearChildren(node) {
     while (node.firstChild) {
       node.removeChild(node.firstChild);
@@ -94,7 +103,66 @@
     return SIM_TYPE_LABELS[code] || code;
   }
 
-  function showError(message) {
+  function clearFieldErrors() {
+    Object.keys(FIELD_INPUT_IDS).forEach(function (fieldKey) {
+      const el = document.getElementById(FIELD_INPUT_IDS[fieldKey]);
+      if (el) {
+        el.removeAttribute("aria-invalid");
+      }
+    });
+  }
+
+  function clearPreviousResults() {
+    const warningBanner = document.getElementById("warning-banner");
+    if (warningBanner) {
+      clearChildren(warningBanner);
+      warningBanner.hidden = true;
+    }
+
+    const scenariosSection = document.getElementById("scenarios-section");
+    const scenariosGrid = document.getElementById("scenarios-grid");
+    const profileSummary = document.getElementById("profile-summary");
+    if (scenariosGrid) {
+      clearChildren(scenariosGrid);
+    }
+    if (profileSummary) {
+      profileSummary.textContent = "";
+    }
+    if (scenariosSection) {
+      scenariosSection.hidden = true;
+    }
+
+    const missingSection = document.getElementById("missing-section");
+    const missingList = document.getElementById("missing-list");
+    if (missingList) {
+      clearChildren(missingList);
+    }
+    if (missingSection) {
+      missingSection.hidden = true;
+    }
+
+    const rejectedSection = document.getElementById("rejected-section");
+    const rejectedTbody = document.getElementById("rejected-tbody");
+    const rejectedEmpty = document.getElementById("rejected-empty");
+    const rejectedTableWrapper = document.getElementById("rejected-table-wrapper");
+    if (rejectedTbody) {
+      clearChildren(rejectedTbody);
+    }
+    if (rejectedEmpty) {
+      rejectedEmpty.hidden = true;
+    }
+    if (rejectedTableWrapper) {
+      rejectedTableWrapper.hidden = true;
+    }
+    if (rejectedSection) {
+      rejectedSection.hidden = true;
+    }
+  }
+
+  function showError(message, fieldName) {
+    clearPreviousResults();
+    clearFieldErrors();
+
     const banner = document.getElementById("error-banner");
     clearChildren(banner);
     const title = createElement("h3", null, "No se pudo ejecutar la simulación");
@@ -102,12 +170,21 @@
     banner.appendChild(title);
     banner.appendChild(detail);
     banner.hidden = false;
+
+    if (fieldName && FIELD_INPUT_IDS[fieldName]) {
+      const target = document.getElementById(FIELD_INPUT_IDS[fieldName]);
+      if (target) {
+        target.setAttribute("aria-invalid", "true");
+        target.focus();
+      }
+    }
   }
 
   function hideError() {
     const banner = document.getElementById("error-banner");
     clearChildren(banner);
     banner.hidden = true;
+    clearFieldErrors();
   }
 
   function renderWarnings(data) {
@@ -146,24 +223,54 @@
       }
     }
 
-    if (cityInfo.freshness_status === "EXPIRED" || expiredIds.length > 0) {
-      messages.push(
-        "Advertencia de vigencia: " +
-          expiredIds.length +
-          " opción(es) superaron la ventana de 180 días y requieren reverificación (" +
-          expiredIds.join(", ") +
-          ")."
-      );
+    const cityExpired = cityInfo.freshness_status === "EXPIRED";
+    if (cityExpired || expiredIds.length > 0) {
+      if (cityExpired && expiredIds.length > 0) {
+        messages.push(
+          "Advertencia de vigencia: los metadatos de la ciudad y " +
+            expiredIds.length +
+            " opción(es) superaron la ventana de 180 días y requieren reverificación (" +
+            expiredIds.join(", ") +
+            ")."
+        );
+      } else if (cityExpired) {
+        messages.push(
+          "Advertencia de vigencia: los metadatos de la ciudad superaron la ventana de 180 días y requieren reverificación."
+        );
+      } else {
+        messages.push(
+          "Advertencia de vigencia: " +
+            expiredIds.length +
+            " opción(es) superaron la ventana de 180 días y requieren reverificación (" +
+            expiredIds.join(", ") +
+            ")."
+        );
+      }
     }
 
-    if (cityInfo.freshness_status === "STALE" || staleIds.length > 0) {
-      messages.push(
-        "Aviso de frescura: " +
-          staleIds.length +
-          " opción(es) se encuentran en la ventana de 61 a 180 días desde su última verificación (" +
-          staleIds.join(", ") +
-          ")."
-      );
+    const cityStale = cityInfo.freshness_status === "STALE";
+    if (cityStale || staleIds.length > 0) {
+      if (cityStale && staleIds.length > 0) {
+        messages.push(
+          "Aviso de frescura: los metadatos de la ciudad y " +
+            staleIds.length +
+            " opción(es) se encuentran en la ventana de 61 a 180 días desde su última verificación (" +
+            staleIds.join(", ") +
+            ")."
+        );
+      } else if (cityStale) {
+        messages.push(
+          "Aviso de frescura: los metadatos de la ciudad se encuentran en la ventana de 61 a 180 días desde su última verificación."
+        );
+      } else {
+        messages.push(
+          "Aviso de frescura: " +
+            staleIds.length +
+            " opción(es) se encuentran en la ventana de 61 a 180 días desde su última verificación (" +
+            staleIds.join(", ") +
+            ")."
+        );
+      }
     }
 
     if (messages.length === 0) {
@@ -486,6 +593,12 @@
     }
   }
 
+  function createValidationError(field, message) {
+    const err = new Error(message);
+    err.field = field;
+    return err;
+  }
+
   function readFormPayload() {
     const city = document.getElementById("city-select").value.trim();
     const daysRaw = document.getElementById("days-input").value.trim();
@@ -500,13 +613,28 @@
     const dataGb = Number(dataGbRaw);
 
     if (!city) {
-      throw new Error("Selecciona una ciudad válida.");
+      throw createValidationError("city", "Selecciona una ciudad válida.");
     }
-    if (! daysRaw || !Number.isInteger(days) || days < 1) {
-      throw new Error("La duración del viaje debe ser un número entero mayor o igual a 1.");
+    if (!daysRaw || !Number.isInteger(days) || days < 1 || days > 365) {
+      throw createValidationError(
+        "days",
+        "La duración del viaje debe ser un número entero entre 1 y 365 días."
+      );
     }
-    if (!dataGbRaw || !Number.isFinite(dataGb) || dataGb < 0) {
-      throw new Error("El consumo de datos debe ser un número mayor o igual a 0.");
+    if (!dataGbRaw || !Number.isFinite(dataGb) || dataGb < 0 || dataGb > 1000) {
+      throw createValidationError(
+        "data_gb",
+        "El consumo de datos debe ser un número finito entre 0 y 1000 GB."
+      );
+    }
+    if (!device) {
+      throw createValidationError("device", "Selecciona una capacidad SIM válida.");
+    }
+    if (!tolerance) {
+      throw createValidationError(
+        "tolerance",
+        "Selecciona un nivel de tolerancia a la fricción válido."
+      );
     }
 
     return {
@@ -525,12 +653,14 @@
     }
     const button = document.getElementById("simulate-button");
     const statusText = document.getElementById("status-indicator");
+    clearFieldErrors();
 
     let payload;
     try {
       payload = readFormPayload();
     } catch (validationErr) {
-      showError(validationErr.message);
+      showError(validationErr.message, validationErr.field || null);
+      statusText.textContent = "";
       return;
     }
 
@@ -538,28 +668,57 @@
     statusText.textContent = "Calculando escenarios...";
 
     try {
-      const response = await fetch("/api/simulate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        const msg =
-          (result && result.error) ||
-          "Error al procesar la solicitud (código " + response.status + ").";
-        showError(msg);
+      let response;
+      let rawText;
+      try {
+        response = await fetch("/api/simulate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        rawText = await response.text();
+      } catch (_networkErr) {
+        showError("No fue posible comunicarse con el servidor local.", null);
         statusText.textContent = "";
         return;
       }
+
+      let result = null;
+      if (rawText) {
+        try {
+          result = JSON.parse(rawText);
+        } catch (_parseErr) {
+          result = null;
+        }
+      }
+
+      if (!response.ok) {
+        if (result && typeof result.error === "string" && result.error) {
+          showError(result.error, result.field || null);
+        } else {
+          showError(
+            "El servidor devolvió una respuesta no válida (código " + response.status + ").",
+            null
+          );
+        }
+        statusText.textContent = "";
+        return;
+      }
+
+      if (!result || typeof result !== "object") {
+        showError(
+          "El servidor devolvió una respuesta en formato inesperado (se esperaba JSON).",
+          null
+        );
+        statusText.textContent = "";
+        return;
+      }
+
       renderSimulationResult(result);
       statusText.textContent = "Simulación actualizada.";
-    } catch (_err) {
-      showError("No fue posible comunicarse con el servidor local.");
-      statusText.textContent = "";
     } finally {
       button.disabled = false;
     }
@@ -569,6 +728,16 @@
     const form = document.getElementById("simulation-form");
     if (form) {
       form.addEventListener("submit", submitSimulation);
+      form.addEventListener("input", function (event) {
+        if (event.target && event.target.hasAttribute("aria-invalid")) {
+          event.target.removeAttribute("aria-invalid");
+        }
+      });
+      form.addEventListener("change", function (event) {
+        if (event.target && event.target.hasAttribute("aria-invalid")) {
+          event.target.removeAttribute("aria-invalid");
+        }
+      });
     }
     loadCities().then(function () {
       submitSimulation(null);

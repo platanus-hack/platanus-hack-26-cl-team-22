@@ -93,3 +93,31 @@ def physical_sim_only_traveler() -> TravelerProfile:
         has_local_id=False,
         device_profile=DeviceProfile.physical_sim_only(),
     )
+
+
+@pytest.fixture(autouse=True)
+def _hermetic_environment(monkeypatch: pytest.MonkeyPatch):
+    """Tests never read real credentials and never reach a non-loopback network address."""
+    import socket
+
+    for name in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL"):
+        monkeypatch.delenv(name, raising=False)
+
+    loopback = {"127.0.0.1", "::1", "localhost", ""}
+    real_connect = socket.socket.connect
+    real_getaddrinfo = socket.getaddrinfo
+
+    def guarded_connect(self, address):  # type: ignore[no-untyped-def]
+        host = address[0] if isinstance(address, tuple) else address
+        if host not in loopback and not str(host).startswith("/"):
+            raise AssertionError(f"network access to {host!r} is disabled in tests")
+        return real_connect(self, address)
+
+    def guarded_getaddrinfo(host, *args, **kwargs):  # type: ignore[no-untyped-def]
+        if host not in loopback:
+            raise AssertionError(f"DNS lookup of {host!r} is disabled in tests")
+        return real_getaddrinfo(host, *args, **kwargs)
+
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
+    monkeypatch.setattr(socket, "getaddrinfo", guarded_getaddrinfo)
+    yield

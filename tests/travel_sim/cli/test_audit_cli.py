@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import json
 import urllib.request
+from collections.abc import Mapping
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
+import travel_sim.cli as cli_module
 from travel_sim.application.audit import build_audit_prompt
 from travel_sim.application.ports import AssistantPort
 from travel_sim.cli import main
@@ -18,10 +20,19 @@ from travel_sim.domain import (
     PaymentMethodPreference,
     TravelerProfile,
 )
+from travel_sim.infrastructure.anthropic_assistant import (
+    API_KEY_ENV_VAR,
+    BASE_URL_ENV_VAR,
+    AnthropicAssistant,
+    TransportResponse,
+)
 from travel_sim.infrastructure.json_repository import JsonOptionRepository
 from travel_sim.infrastructure.replay_assistant import ReplayAssistant, ReplayMode
 
 DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "cities"
+FAKE_CLI_SECRET = "dummy-cli-secret-token-99999"
+FAKE_CLI_URL_TOKEN = "secret-cli-proxy-tok-77777"
+FAKE_CLI_BASE_URL = f"https://proxy.example.test/{FAKE_CLI_URL_TOKEN}"
 
 
 class _ScriptedAssistant(AssistantPort):
@@ -84,6 +95,15 @@ def _forbid_network(monkeypatch: pytest.MonkeyPatch) -> None:
         raise AssertionError("Real network calls are forbidden in tests")
 
     monkeypatch.setattr(urllib.request, "urlopen", _explode)
+    monkeypatch.setattr(urllib.request.OpenerDirector, "open", _explode)
+
+
+def _forbid_live_adapter(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _explode_init(*args: object, **kwargs: object) -> None:
+        raise AssertionError("AnthropicAssistant must never be constructed in replay mode")
+
+    monkeypatch.setattr(AnthropicAssistant, "__init__", _explode_init)
+    monkeypatch.setattr(cli_module, "AnthropicAssistant", _explode_init)
 
 
 def test_audit_replay_from_prerecorded_fixture_makes_zero_network_calls(
@@ -92,6 +112,7 @@ def test_audit_replay_from_prerecorded_fixture_makes_zero_network_calls(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     _forbid_network(monkeypatch)
+    _forbid_live_adapter(monkeypatch)
 
     expensive_reply = json.dumps(
         {
@@ -171,6 +192,7 @@ def test_audit_output_is_identical_across_two_runs(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     _forbid_network(monkeypatch)
+    _forbid_live_adapter(monkeypatch)
 
     reply = json.dumps(
         {
@@ -228,6 +250,7 @@ def test_record_mode_refused_without_allow_network(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     _forbid_network(monkeypatch)
+    _forbid_live_adapter(monkeypatch)
     log_path = tmp_path / "should_not_exist.jsonl"
 
     rc = main(
@@ -313,12 +336,124 @@ def test_record_mode_budget_cap_stops_execution(
     assert sum(len(bot.calls) for bot in created) == 3
 
 
+def test_record_mode_budget_counts_http_retries_and_redacts_secrets_in_cli_stderr(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _forbid_network(monkeypatch)
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_CLI_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_CLI_BASE_URL)
+
+    http_attempts = 0
+
+    def always_429_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        nonlocal http_attempts
+        del url, headers, body, timeout
+        http_attempts += 1
+        return TransportResponse(
+            status_code=429,
+            body=b'{"error":{"message":"rate limited"}}',
+        )
+
+    rc_budget = main(
+        [
+            "audit",
+            "--city",
+            "scl",
+            "--data-dir",
+            str(DATA_DIR),
+            "--assistant",
+            "alpha=claude-sonnet-4-20250514",
+            "--replications",
+            "2",
+            "--log",
+            str(tmp_path / "retry_budget.jsonl"),
+            "--mode",
+            "record",
+            "--allow-network",
+            "--max-calls",
+            "2",
+        ],
+        assistant_factory=lambda model: AnthropicAssistant(
+            model=model,
+            max_retries=3,
+            backoff_seconds=0.0,
+            sleep=lambda _: None,
+            transport=always_429_transport,
+        ),
+    )
+    cap_budget = capsys.readouterr()
+    assert rc_budget == 2
+    assert http_attempts == 2
+    assert "budget" in cap_budget.err.lower()
+
+    def leaking_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        del headers, body, timeout
+        return TransportResponse(
+            status_code=401,
+            body=json.dumps(
+                {
+                    "error": {
+                        "type": "authentication_error",
+                        "message": (
+                            f"Rejected key {FAKE_CLI_SECRET} at {url} "
+                            f"base={FAKE_CLI_BASE_URL} tok={FAKE_CLI_URL_TOKEN}"
+                        ),
+                    }
+                }
+            ).encode("utf-8"),
+        )
+
+    rc_leak = main(
+        [
+            "audit",
+            "--city",
+            "scl",
+            "--data-dir",
+            str(DATA_DIR),
+            "--assistant",
+            "alpha=claude-sonnet-4-20250514",
+            "--replications",
+            "1",
+            "--log",
+            str(tmp_path / "leak_check.jsonl"),
+            "--mode",
+            "record",
+            "--allow-network",
+            "--max-calls",
+            "5",
+        ],
+        assistant_factory=lambda model: AnthropicAssistant(
+            model=model,
+            transport=leaking_transport,
+        ),
+    )
+    cap_leak = capsys.readouterr()
+    assert rc_leak == 2
+    assert FAKE_CLI_SECRET not in cap_leak.err
+    assert FAKE_CLI_BASE_URL not in cap_leak.err
+    assert FAKE_CLI_URL_TOKEN not in cap_leak.err
+    assert f"/{FAKE_CLI_URL_TOKEN}" not in cap_leak.err
+
+
 def test_replay_miss_and_invalid_audit_args_return_exit_code_2(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     _forbid_network(monkeypatch)
+    _forbid_live_adapter(monkeypatch)
     empty_log = tmp_path / "missing.jsonl"
 
     cases = [

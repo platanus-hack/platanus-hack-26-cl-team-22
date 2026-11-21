@@ -175,6 +175,12 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"] {
+  border-color: var(--error-border);
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
 .form-actions {
   margin-top: 1.25rem;
   display: flex;

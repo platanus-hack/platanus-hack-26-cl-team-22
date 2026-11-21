@@ -1,8 +1,13 @@
 """Tests for the urllib-based AnthropicAssistant adapter."""
 from __future__ import annotations
 
+import email
+import http.client
+import io
 import json
 import urllib.error
+import urllib.request
+import urllib.response
 from collections.abc import Mapping
 
 import pytest
@@ -11,14 +16,19 @@ from travel_sim.application.ports import AssistantPort
 from travel_sim.infrastructure.anthropic_assistant import (
     API_KEY_ENV_VAR,
     BASE_URL_ENV_VAR,
+    MAX_RESPONSE_BYTES,
     AnthropicAPIError,
     AnthropicAssistant,
     AnthropicAssistantError,
     AnthropicTimeoutError,
     TransportResponse,
+    _urllib_transport,
 )
+from travel_sim.infrastructure.replay_assistant import BudgetExceededError
 
 FAKE_SECRET = "dummy-test-token-value-98765"
+FAKE_URL_TOKEN = "secret-proxy-tok-54321"
+FAKE_BASE_URL = f"https://proxy.example.test/{FAKE_URL_TOKEN}"
 
 
 def _ok_response(content_blocks: list[dict[str, object]]) -> TransportResponse:
@@ -33,6 +43,16 @@ def _ok_response(content_blocks: list[dict[str, object]]) -> TransportResponse:
         body=json.dumps(payload).encode("utf-8"),
         headers={"content-type": "application/json"},
     )
+
+
+def _assert_no_secrets_leaked(exc: BaseException) -> None:
+    for text in (str(exc), repr(exc)):
+        assert FAKE_SECRET not in text
+        assert FAKE_SECRET[:12] not in text
+        assert FAKE_BASE_URL not in text
+        assert f"/{FAKE_URL_TOKEN}" not in text
+        assert FAKE_URL_TOKEN not in text
+    assert exc.__cause__ is None
 
 
 def test_implements_assistant_port() -> None:
@@ -131,10 +151,11 @@ def test_base_url_and_api_key_read_at_call_time(
     ]
 
 
-def test_secret_never_appears_in_repr_vars_or_errors(
+def test_secret_and_base_url_token_never_appear_in_repr_vars_or_errors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
 
     def bad_transport(
         url: str,
@@ -142,7 +163,7 @@ def test_secret_never_appears_in_repr_vars_or_errors(
         body: bytes,
         timeout: float,
     ) -> TransportResponse:
-        del url, headers, body, timeout
+        del headers, body, timeout
         return TransportResponse(
             status_code=401,
             body=json.dumps(
@@ -150,7 +171,10 @@ def test_secret_never_appears_in_repr_vars_or_errors(
                     "type": "error",
                     "error": {
                         "type": "authentication_error",
-                        "message": f"Invalid key {FAKE_SECRET}",
+                        "message": (
+                            f"Invalid key {FAKE_SECRET} at {url} "
+                            f"base={FAKE_BASE_URL} path=/{FAKE_URL_TOKEN} tok={FAKE_URL_TOKEN}"
+                        ),
                     },
                 }
             ).encode("utf-8"),
@@ -163,16 +187,339 @@ def test_secret_never_appears_in_repr_vars_or_errors(
         transport=bad_transport,
     )
 
-    assert FAKE_SECRET not in repr(assistant)
-    assert FAKE_SECRET not in str(assistant)
-    assert FAKE_SECRET not in repr(vars(assistant))
+    for representation in (repr(assistant), str(assistant), repr(vars(assistant))):
+        assert FAKE_SECRET not in representation
+        assert FAKE_BASE_URL not in representation
+        assert FAKE_URL_TOKEN not in representation
 
     with pytest.raises(AnthropicAPIError) as exc_info:
         assistant.ask("hello", "rep-0")
 
     assert exc_info.value.status_code == 401
-    assert FAKE_SECRET not in str(exc_info.value)
-    assert FAKE_SECRET not in repr(exc_info.value)
+    _assert_no_secrets_leaked(exc_info.value)
+
+
+def test_redaction_happens_before_truncation_and_on_urlerror_and_malformed_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
+
+    # Place secrets across the 200-character truncation boundary in raw error text.
+    boundary_body = ("x" * 190 + f" key={FAKE_SECRET} url={FAKE_BASE_URL}").encode("utf-8")
+    assistant_raw_err = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=lambda url, headers, body, timeout: TransportResponse(
+            status_code=400,
+            body=boundary_body,
+        ),
+    )
+    with pytest.raises(AnthropicAPIError) as exc_raw:
+        assistant_raw_err.ask("hello", "rep-0")
+    _assert_no_secrets_leaked(exc_raw.value)
+
+    # URLError reason containing both the API key and base URL token.
+    def urlerror_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        del headers, body, timeout
+        raise urllib.error.URLError(
+            f"failed connecting to {url} (token={FAKE_URL_TOKEN}, key={FAKE_SECRET})"
+        )
+
+    assistant_urlerr = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=urlerror_transport,
+    )
+    with pytest.raises(AnthropicAssistantError) as exc_url:
+        assistant_urlerr.ask("hello", "rep-0")
+    _assert_no_secrets_leaked(exc_url.value)
+
+    # Malformed 200 JSON body containing the API key and base URL token.
+    malformed_body = f"not-json {FAKE_SECRET} {FAKE_BASE_URL} {FAKE_URL_TOKEN}".encode()
+    assistant_malformed = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=lambda url, headers, body, timeout: TransportResponse(
+            status_code=200,
+            body=malformed_body,
+        ),
+    )
+    with pytest.raises(AnthropicAssistantError) as exc_malformed:
+        assistant_malformed.ask("hello", "rep-0")
+    _assert_no_secrets_leaked(exc_malformed.value)
+
+
+@pytest.mark.parametrize(
+    ("exc_to_raise", "expected_type_name"),
+    [
+        (
+            ValueError(f"bad url {FAKE_BASE_URL} key={FAKE_SECRET}"),
+            "ValueError",
+        ),
+        (
+            http.client.InvalidURL(f"nonnumeric port in {FAKE_BASE_URL} key={FAKE_SECRET}"),
+            "InvalidURL",
+        ),
+        (
+            http.client.IncompleteRead(f"{FAKE_SECRET} {FAKE_URL_TOKEN}".encode(), 100),
+            "IncompleteRead",
+        ),
+        (
+            OSError(f"socket failure to {FAKE_BASE_URL} key={FAKE_SECRET}"),
+            "OSError",
+        ),
+    ],
+)
+def test_transport_low_level_exceptions_are_wrapped_with_type_name_only(
+    monkeypatch: pytest.MonkeyPatch,
+    exc_to_raise: Exception,
+    expected_type_name: str,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
+
+    def failing_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        del url, headers, body, timeout
+        raise exc_to_raise
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=failing_transport,
+    )
+
+    with pytest.raises(AnthropicAssistantError) as exc_info:
+        assistant.ask("hello", "rep-0")
+
+    assert expected_type_name in str(exc_info.value)
+    assert "nonnumeric port" not in str(exc_info.value)
+    assert "socket failure" not in str(exc_info.value)
+    assert "bad url" not in str(exc_info.value)
+    _assert_no_secrets_leaked(exc_info.value)
+
+
+@pytest.mark.parametrize("redirect_code", [301, 302, 303, 307, 308])
+def test_http_redirects_are_refused_without_forwarding_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+    redirect_code: int,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
+
+    requested_urls: list[str] = []
+    real_build_opener = urllib.request.build_opener
+
+    class _FakeHTTPSHandler(urllib.request.HTTPSHandler):
+        def https_open(self, req: urllib.request.Request) -> urllib.response.addinfourl:
+            requested_urls.append(req.full_url)
+            hdrs = email.message_from_string(
+                f"Location: http://evil.example.test/steal?tok={FAKE_URL_TOKEN}\r\n"
+            )
+            response = urllib.response.addinfourl(
+                io.BytesIO(b"redirecting"),
+                hdrs,
+                req.full_url,
+                code=redirect_code,
+            )
+            response.msg = "Redirect"  # real responses carry .msg; HTTPErrorProcessor reads it
+            return response
+
+        def http_open(self, req: urllib.request.Request) -> urllib.response.addinfourl:
+            requested_urls.append(req.full_url)
+            raise AssertionError("Redirect target must never be requested")
+
+    def patched_build_opener(*handlers: object) -> urllib.request.OpenerDirector:
+        return real_build_opener(*handlers, _FakeHTTPSHandler())
+
+    monkeypatch.setattr(urllib.request, "build_opener", patched_build_opener)
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=_urllib_transport,
+    )
+
+    with pytest.raises(AnthropicAssistantError, match="redirect") as exc_info:
+        assistant.ask("hello", "rep-0")
+
+    assert len(requested_urls) == 1
+    assert "evil.example.test" not in str(exc_info.value)
+    _assert_no_secrets_leaked(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "invalid_base_url",
+    [
+        f"http://remote.example.test/{FAKE_URL_TOKEN}",
+        f"file:///etc/passwd/{FAKE_URL_TOKEN}",
+        f"ftp://proxy.example.test/{FAKE_URL_TOKEN}",
+        f"proxy.example.test/{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test/{FAKE_URL_TOKEN} with space",
+        "   ",
+    ],
+)
+def test_base_url_scheme_and_format_validation_rejects_unsafe_urls(
+    monkeypatch: pytest.MonkeyPatch,
+    invalid_base_url: str,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, invalid_base_url)
+
+    transport_called = False
+
+    def spy_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        nonlocal transport_called
+        del url, headers, body, timeout
+        transport_called = True
+        return _ok_response([{"type": "text", "text": "ok"}])
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=spy_transport,
+    )
+
+    with pytest.raises(AnthropicAssistantError) as exc_info:
+        assistant.ask("hello", "rep-0")
+
+    assert not transport_called
+    assert "remote.example.test" not in str(exc_info.value)
+    assert "/etc/passwd" not in str(exc_info.value)
+    _assert_no_secrets_leaked(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "local_base_url",
+    [
+        "http://localhost:8080/api",
+        "http://127.0.0.1:9000",
+    ],
+)
+def test_base_url_allows_http_for_localhost_and_loopback(
+    monkeypatch: pytest.MonkeyPatch,
+    local_base_url: str,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, local_base_url)
+
+    seen_urls: list[str] = []
+
+    def fake_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        del headers, body, timeout
+        seen_urls.append(url)
+        return _ok_response([{"type": "text", "text": "local-ok"}])
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=fake_transport,
+    )
+    assert assistant.ask("hello", "rep-0") == "local-ok"
+    assert seen_urls == [f"{local_base_url.rstrip('/')}/v1/messages"]
+
+
+def test_call_budget_counts_every_http_attempt_including_retries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+
+    budget_calls = 0
+    max_calls = 2
+    transport_attempts = 0
+    sleeps: list[float] = []
+
+    def consume_budget(salt: str) -> None:
+        nonlocal budget_calls
+        if budget_calls >= max_calls:
+            raise BudgetExceededError(f"Call budget cap of {max_calls} reached for {salt!r}")
+        budget_calls += 1
+
+    def always_429(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        nonlocal transport_attempts
+        del url, headers, body, timeout
+        transport_attempts += 1
+        return TransportResponse(
+            status_code=429,
+            body=b'{"error":{"message":"rate limit"}}',
+        )
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        max_retries=3,
+        backoff_seconds=0.1,
+        sleep=sleeps.append,
+        transport=always_429,
+        call_budget=consume_budget,
+    )
+
+    with pytest.raises(BudgetExceededError):
+        assistant.ask("prompt", "rep-0")
+
+    assert budget_calls == 2
+    assert transport_attempts == 2
+    assert sleeps == [0.1, 0.2]
+
+
+def test_response_size_cap_enforced_at_one_mib(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+
+    oversized_body = b"a" * (MAX_RESPONSE_BYTES + 1)
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=lambda url, headers, body, timeout: TransportResponse(
+            status_code=200,
+            body=oversized_body,
+        ),
+    )
+    with pytest.raises(AnthropicAssistantError, match=str(MAX_RESPONSE_BYTES)):
+        assistant.ask("prompt", "rep-0")
+
+    real_build_opener = urllib.request.build_opener
+
+    class _OversizedStreamHandler(urllib.request.HTTPSHandler):
+        def https_open(self, req: urllib.request.Request) -> urllib.response.addinfourl:
+            response = urllib.response.addinfourl(
+                io.BytesIO(oversized_body),
+                email.message_from_string("Content-Type: application/json\r\n"),
+                req.full_url,
+                code=200,
+            )
+            response.msg = "OK"
+            return response
+
+    monkeypatch.setattr(
+        urllib.request,
+        "build_opener",
+        lambda *handlers: real_build_opener(*handlers, _OversizedStreamHandler()),
+    )
+
+    urllib_assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=_urllib_transport,
+    )
+    with pytest.raises(AnthropicAssistantError, match=str(MAX_RESPONSE_BYTES)):
+        urllib_assistant.ask("prompt", "rep-0")
 
 
 def test_retry_on_429_and_5xx_with_exponential_backoff_then_success(
@@ -219,6 +566,7 @@ def test_bounded_retries_exhausted_on_429_raises_error_without_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
     sleeps: list[float] = []
     attempts = 0
 
@@ -229,11 +577,13 @@ def test_bounded_retries_exhausted_on_429_raises_error_without_secret(
         timeout: float,
     ) -> TransportResponse:
         nonlocal attempts
-        del url, headers, body, timeout
+        del headers, body, timeout
         attempts += 1
         return TransportResponse(
             status_code=429,
-            body=json.dumps({"error": {"message": "too many requests"}}).encode("utf-8"),
+            body=json.dumps(
+                {"error": {"message": f"too many requests to {url} key={FAKE_SECRET}"}}
+            ).encode("utf-8"),
         )
 
     assistant = AnthropicAssistant(
@@ -250,7 +600,7 @@ def test_bounded_retries_exhausted_on_429_raises_error_without_secret(
     assert exc_info.value.status_code == 429
     assert attempts == 3
     assert sleeps == [0.25, 0.5]
-    assert FAKE_SECRET not in str(exc_info.value)
+    _assert_no_secrets_leaked(exc_info.value)
 
 
 def test_no_retry_on_400(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -307,6 +657,7 @@ def test_timeout_handling_does_not_retry_and_leaks_no_secret(
     raised: Exception,
 ) -> None:
     monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
     sleeps: list[float] = []
     attempts = 0
 
@@ -334,7 +685,7 @@ def test_timeout_handling_does_not_retry_and_leaks_no_secret(
 
     assert attempts == 1
     assert sleeps == []
-    assert FAKE_SECRET not in str(exc_info.value)
+    _assert_no_secrets_leaked(exc_info.value)
 
 
 def test_invalid_constructor_and_malformed_response_validation(
@@ -347,7 +698,25 @@ def test_invalid_constructor_and_malformed_response_validation(
     with pytest.raises(ValueError):
         AnthropicAssistant("claude-sonnet-4-20250514", timeout=-1.0)
     with pytest.raises(ValueError):
+        AnthropicAssistant("claude-sonnet-4-20250514", timeout=120.1)
+    with pytest.raises(ValueError):
         AnthropicAssistant("claude-sonnet-4-20250514", max_retries=-1)
+    with pytest.raises(ValueError):
+        AnthropicAssistant("claude-sonnet-4-20250514", max_retries=6)
+    with pytest.raises(ValueError):
+        AnthropicAssistant("claude-sonnet-4-20250514", backoff_seconds=-0.1)
+    with pytest.raises(ValueError):
+        AnthropicAssistant("claude-sonnet-4-20250514", backoff_seconds=30.1)
+
+    # Boundary upper limits succeed.
+    boundary_ok = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        timeout=120.0,
+        max_retries=5,
+        backoff_seconds=30.0,
+    )
+    assert boundary_ok.timeout == 120.0
+    assert boundary_ok.max_retries == 5
 
     monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
     empty_content = AnthropicAssistant(

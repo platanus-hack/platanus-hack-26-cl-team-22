@@ -604,13 +604,13 @@ def _handle_simulate(
 
 
 class _SharedCallBudget:
-    """Tracks live assistant call budget across all assistants in one audit run."""
+    """Tracks live assistant HTTP attempt budget across all assistants in one audit run."""
 
     def __init__(self, max_calls: int) -> None:
         self.max_calls = max_calls
         self.calls_made = 0
 
-    def consume(self, salt: str) -> None:
+    def consume(self, salt: str = "") -> None:
         if self.calls_made >= self.max_calls:
             raise BudgetExceededError(
                 f"Call budget cap of {self.max_calls} reached; refusing call for salt={salt!r}"
@@ -624,9 +624,16 @@ class _BudgetedAssistant(AssistantPort):
     def __init__(self, inner: AssistantPort, budget: _SharedCallBudget) -> None:
         self._inner = inner
         self._budget = budget
+        bind_fn = getattr(inner, "bind_call_budget", None)
+        if callable(bind_fn):
+            bind_fn(budget)
+            self._delegates_budget = True
+        else:
+            self._delegates_budget = False
 
     def ask(self, prompt: str, salt: str) -> str:
-        self._budget.consume(salt)
+        if not self._delegates_budget:
+            self._budget.consume(salt)
         return self._inner.ask(prompt, salt)
 
 
@@ -682,7 +689,7 @@ def _handle_audit(
             live_assistant = (
                 assistant_factory(model)
                 if assistant_factory is not None
-                else AnthropicAssistant(model=model)
+                else AnthropicAssistant(model=model, call_budget=shared_budget)
             )
             assistants[name] = ReplayAssistant(
                 log_path,
