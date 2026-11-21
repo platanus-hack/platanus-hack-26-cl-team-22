@@ -1,6 +1,23 @@
 """Application layer exports for the deterministic travel cost-vs-friction engine."""
 from __future__ import annotations
 
+from travel_sim.application.audit import (
+    AssistantAuditSummary,
+    AuditAIAssistantsUseCase,
+    AuditReport,
+    ConfidenceInterval,
+    ParsedRecommendation,
+    RecommendationScore,
+    ReplicationAuditResult,
+    audit_assistant,
+    build_audit_prompt,
+    compute_confidence_interval_95,
+    format_audit_report_json,
+    format_audit_report_text,
+    parse_and_validate_reply,
+    run_audit,
+    score_recommendation,
+)
 from travel_sim.application.filters import (
     DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD,
     DEFAULT_BALANCED_MAX_FRICTION,
@@ -23,7 +40,7 @@ from travel_sim.application.filters import (
     make_weighted_scorer,
     zero_friction_scorer,
 )
-from travel_sim.application.ports import OptionRepository
+from travel_sim.application.ports import AssistantPort, OptionRepository
 from travel_sim.application.scenarios import (
     CategoryChoice,
     CategoryScenarioBundle,
@@ -54,14 +71,22 @@ from travel_sim.application.simulate import (
 __all__ = [
     "DEFAULT_BALANCED_EFFICIENCY_THRESHOLD_USD",
     "DEFAULT_BALANCED_MAX_FRICTION",
+    "AssistantAuditSummary",
+    "AssistantPort",
+    "AuditAIAssistantsUseCase",
+    "AuditReport",
     "CategoryChoice",
     "CategoryScenarioBundle",
     "CategoryScenarios",
+    "ConfidenceInterval",
     "HardFilterResult",
     "OptionCriteria",
     "OptionRepository",
+    "ParsedRecommendation",
+    "RecommendationScore",
     "RejectedOption",
     "RejectionReason",
+    "ReplicationAuditResult",
     "RunSimulationUseCase",
     "ScenarioBuildResult",
     "ScenarioEngineResult",
@@ -81,18 +106,26 @@ __all__ = [
     "apply_hard_filters",
     "apply_soft_filters",
     "are_options_compatible",
+    "audit_assistant",
+    "build_audit_prompt",
     "build_category_scenarios",
     "build_scenarios",
     "build_trip_scenarios",
     "calculate_scenario_savings",
+    "compute_confidence_interval_95",
     "compute_option_criteria",
     "evaluate_hard_filters",
+    "format_audit_report_json",
+    "format_audit_report_text",
     "is_option_eligible",
     "local_optimized_scorer",
     "make_balanced_substitution_predicate",
     "make_max_friction_predicate",
     "make_weighted_scorer",
+    "parse_and_validate_reply",
+    "run_audit",
     "run_simulation",
+    "score_recommendation",
     "simulate",
     "zero_friction_scorer",
 ]

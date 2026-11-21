@@ -63,3 +63,13 @@ class OptionRepository(Protocol):
     ) -> Sequence[ServiceOption]:
         """Return options whose verification status is unverified (last_verified_at is None)."""
         ...
+
+
+@runtime_checkable
+class AssistantPort(Protocol):
+    """Port for querying an AI assistant with a deterministic prompt and replication salt."""
+
+    def ask(self, prompt: str, salt: str) -> str:
+        """Send prompt with replication salt and return the raw assistant reply string."""
+        ...
+
