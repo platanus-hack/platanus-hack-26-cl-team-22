@@ -46,7 +46,7 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
           </div>
 
           <div className="intro">
-            <h1>¿Quieres invertir a largo plazo?<br />Descubre qué comunas arriesgan tu inversión</h1>
+            <h1>¿Quieres invertir a largo plazo?<br />Descubre qué riesgos afectan tu inversión</h1>
             <p>Proyectamos el aire y la seguridad de cada comuna hasta 15 años, y te mostramos cuáles se deterioran aunque hoy parezcan buenas.</p>
             <button className="cta" id="cta">Acercar a Santiago</button>
           </div>
