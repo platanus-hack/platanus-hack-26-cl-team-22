@@ -4,7 +4,7 @@ Reads cleaned commune-level ChileCompra aggregates (`data/licitaciones/resumen_c
 when present, and updates an executor Beta prior via Beta-Binomial updating with an effective
 sample-size cap so high-volume municipalities keep realistic epistemic bands.
 
-Library only: no model output uses it yet (docs/plan-licitaciones.md).
+Used by experiments/simular.py for the municipal credibility of commune-level security policies.
 """
 from __future__ import annotations
 

@@ -28,6 +28,12 @@ from core.credibilidad import (
 )
 from core.estado import SOURCES, RegionState
 from core.hogares import MigrationModel
+from core.licitaciones import (
+    CommuneProcurementSummary,
+    ProcurementCredibilityEstimate,
+    estimate_commune_credibility,
+    load_procurement_summaries,
+)
 from core.seguridad import GROUPS, CrimeModel, EffectSize, SecurityIntervention, simulate_security
 from core.transformaciones import compute_scenario_transformation, serialize_transformations
 from experiments.datos_aire import ROOT, Communes, load_communes, load_emissions
@@ -77,7 +83,11 @@ DEFAULT_READING = "conservadora"
 SEC_VARIABLE = "seguridad"
 # Security (docs/modelo-seguridad.md). Every value below was fixed before looking at outputs.
 SECURITY_COVERAGE = 0.25  # scenario choice: share of a commune's property DMCS treated
-SECURITY_CREDIBILITY = BetaCredibility(0.35 * 4, 0.65 * 4)  # assumption: wide, no history
+SECURITY_CREDIBILITY = BetaCredibility(0.35 * 4, 0.65 * 4)  # assumption: wide prior
+# ChileCompra municipal procurement (data/licitaciones): each municipality updates the prior
+# with its 2024 awarded vs closed tenders (core/licitaciones.py). A proxy, see ASSUMPTIONS.
+PROCUREMENT = ROOT / "data" / "licitaciones" / "resumen_comuna_anio.csv"
+PROCUREMENT_YEAR = 2024
 SECURITY_YEARS_TO_FULL = 10
 NEIGHBOR_KM = 6.0  # assumption: centroid distance (no commune polygons in the repo)
 SPILLOVER = (-0.1, 0.2)  # assumption: open sign, diffusion more likely (Bowers et al. 2011)
@@ -106,9 +116,13 @@ ASSUMPTIONS = [
      "in 2025-2036."),
     ("Residential heating either stays fixed or follows population (two readings); transport, "
      "industry and other sources do not follow residents."),
-    (f"Security policies cover {SECURITY_COVERAGE:.0%} of a commune's property crime, have "
-     f"municipal credibility with mean 0.35 and a wide band, and reach communes within "
-     f"{NEIGHBOR_KM:.0f} km with a share drawn in [{SPILLOVER[0]}, {SPILLOVER[1]}] (open sign)."),
+    (f"Security policies cover {SECURITY_COVERAGE:.0%} of a commune's property crime and reach "
+     f"communes within {NEIGHBOR_KM:.0f} km with a share drawn in [{SPILLOVER[0]}, "
+     f"{SPILLOVER[1]}] (open sign)."),
+    (f"Municipal credibility starts from a wide prior with mean 0.35 and is updated with the "
+     f"municipality's {PROCUREMENT_YEAR} ChileCompra tenders (awarded vs closed, effective sample "
+     "capped at 40). Awarding a tender is a proxy for a municipality's capacity to execute, not "
+     "proof that a security plan is carried out; municipalities without data keep the prior."),
 ]
 
 
@@ -262,6 +276,23 @@ def load_setup() -> Setup:
     return Setup(communes, in_b, masks, air, state, calibration, measured)
 
 
+def municipal_credibility(
+    codes: list[str], summaries: dict[str, CommuneProcurementSummary]
+) -> dict[str, ProcurementCredibilityEstimate]:
+    """Credibility of each municipality: the security prior updated with its procurement."""
+    return {c: estimate_commune_credibility(summaries.get(c), prior=SECURITY_CREDIBILITY)
+            for c in codes}
+
+
+def mixture_summary(components: list[BetaCredibility], draws: int = 20_000) -> dict[str, float]:
+    """p10 / media / p90 of an equal-weight mixture of Betas (seeded, so reproducible)."""
+    rng = np.random.default_rng([SEED, len(components)])
+    x = np.concatenate([rng.beta(b.alpha, b.beta, draws) for b in components])
+    p10, p90 = np.quantile(x, [0.1, 0.9])
+    return {"p10": float(p10), "media": float(np.mean([b.mean for b in components])),
+            "p90": float(p90)}
+
+
 def featured_communes(setup: Setup) -> list[str]:
     """Few communes with contrast (team review): the two highest and two lowest measured
     levels, plus every Zona B commune with a station. Only measured communes qualify."""
@@ -374,6 +405,8 @@ def main() -> None:
     log_start = log_mean + phi * (np.log(rate_2024) - log_mean)
     targets = np.argsort(-rate_2024.sum(axis=1))[:SECURITY_TARGETS]
     target_codes = [communes.codes[i] for i in targets]
+    municipal = municipal_credibility(
+        target_codes, load_procurement_summaries(PROCUREMENT, min_year=PROCUREMENT_YEAR))
     sec_by_id = {sp.id: sp for sp in SECURITY_POLICIES}
 
     def security_interventions(policy: SecurityPolicy) -> list[SecurityIntervention]:
@@ -382,8 +415,9 @@ def main() -> None:
             mask = np.zeros(n, dtype=bool)
             mask[i] = True
             code = communes.codes[i]
-            measure = Measure(f"{policy.id}-{code}", f"municipio-{code}", SECURITY_CREDIBILITY,
-                              "supuesto")
+            est = municipal[code]
+            measure = Measure(f"{policy.id}-{code}", f"municipio-{code}", est.credibility,
+                              est.provenance)
             out.append(SecurityIntervention(measure, mask, SECURITY_COVERAGE, policy.effects,
                                             SECURITY_YEARS_TO_FULL))
         return out
@@ -595,9 +629,19 @@ def main() -> None:
         ] + [
             {"id": sp.id, "nombre": sp.name, "nivel": "comunal", "tipo": "ilustrativa",
              "fuente": "seguridad", "comunas": target_codes,
-             "credibilidad": {k: round(v, 3) for k, v in SECURITY_CREDIBILITY.summary().items()},
-             "procedencia": "supuesto", "cita": sp.citation, "efecto": sp.effect,
-             "variable": SEC_VARIABLE}
+             "credibilidad": {k: round(v, 3) for k, v in mixture_summary(
+                 [municipal[c].credibility for c in target_codes]).items()},
+             "credibilidad_por_comuna": {
+                 c: {**{k: round(v, 3) for k, v in municipal[c].credibility.summary().items()},
+                     "procedencia": municipal[c].provenance,
+                     "tasa_adjudicacion": municipal[c].award_rate,
+                     "licitaciones_cerradas": municipal[c].sample_size}
+                 for c in target_codes},
+             "procedencia": ("tasa_base" if all(municipal[c].provenance == "tasa_base"
+                                                for c in target_codes) else "supuesto"),
+             "cita": f"{sp.citation} Credibilidad municipal: ChileCompra {PROCUREMENT_YEAR}, "
+                     "licitaciones adjudicadas / cerradas (data/licitaciones).",
+             "efecto": sp.effect, "variable": SEC_VARIABLE}
             for sp in SECURITY_POLICIES
         ],
         "escenarios": scenarios,

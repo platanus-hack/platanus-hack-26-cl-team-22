@@ -36,6 +36,12 @@ export interface Politica {
   fuente: string
   comunas: 'todas' | string[]
   credibilidad: Credibilidad
+  /** Comunal policies: each municipality's credibility (ChileCompra-updated prior), by CUT. */
+  credibilidad_por_comuna?: Record<string, Credibilidad & {
+    procedencia: string
+    tasa_adjudicacion: number | null
+    licitaciones_cerradas: number
+  }>
   url?: string
   /** "vigente" o "propuesta" */
   tipo?: string
