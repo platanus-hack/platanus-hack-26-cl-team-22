@@ -326,3 +326,13 @@ def test_foreign_stock_counts_people_born_abroad_by_usual_residence():
         (5101, 1, 98, 3, 2000),       # outside the RM
     ))
     assert out == {13101: (2, 1), 13110: (1, 0)}
+
+
+def test_dwelling_occupancy_2024_adds_up_to_the_ine_totals():
+    filas = _leer("viviendas_ocupacion_2024.csv")
+    assert len(filas) == 52
+    tot = {k: sum(int(f[k]) for f in filas) for k in
+           ("viviendas", "particulares_ocupadas", "particulares_desocupadas", "colectivas")}
+    # INE V1 (Censo 2024), RM: 2.764.749 = 2.619.563 ocupadas + 143.824 desocupadas + 1.362.
+    assert tot == {"viviendas": 2_764_749, "particulares_ocupadas": 2_619_563,
+                   "particulares_desocupadas": 143_824, "colectivas": 1_362}

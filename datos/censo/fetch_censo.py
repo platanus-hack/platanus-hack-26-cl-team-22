@@ -8,6 +8,7 @@ Outputs in data/censo/:
   poblacion_viviendas.csv  population and dwellings per comuna, both censuses
   flujos_externos.csv      people entering or leaving each RM comuna, both periods
   proyeccion_ine.csv       INE official population projection per comuna, 2017-2035
+  viviendas_ocupacion_2024.csv  census 2024 dwellings per comuna by occupancy (INE table V1)
   stock_extranjero.csv     foreign-born residents per comuna in 2017, and those who arrived
                            before 2012 (network rule of the moves simulation)
 Needs pandas, openpyxl, requests and `bsdtar` (the 2017 files are nested RAR archives).
@@ -214,6 +215,13 @@ def main() -> None:
 
     ext24 = externos_2024(hoja("D5_Migracion-interna.xlsx", "2"))
     nombres = tabla.drop_duplicates("codigo").set_index("codigo")["comuna"]
+    # V1 sheet "2": col 6 censadas, 7 particulares ocupadas, 8 desocupadas, 9 colectivas.
+    with (OUT / "viviendas_ocupacion_2024.csv").open("w", encoding="utf-8", newline="") as fh:
+        fh.write("codigo,comuna,viviendas,particulares_ocupadas,particulares_desocupadas,"
+                 "colectivas\n")
+        for f in sorted(filas_comuna(hoja("V1_Viviendas-y-hogares-censados.xlsx", "2")),
+                        key=lambda f: f[4]):
+            fh.write(f"{f[4]},{nombres[f[4]]},{f[6]},{f[7]},{f[8]},{f[9]}\n")
     with (OUT / "stock_extranjero.csv").open("w", encoding="utf-8", newline="") as fh:
         fh.write("codigo,comuna,nacidos_extranjero_2017,llegaron_antes_2012\n")
         for c in codigos:

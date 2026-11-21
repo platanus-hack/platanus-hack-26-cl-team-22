@@ -13,6 +13,10 @@ Parameters (start: census 2024 population, horizon 2036):
   (data/censo/flujos_externos.csv);
 - INE official projection 2024-2035 per comuna, for comparison only (another scale: it corrects
   census omission; data/censo/README.md).
+- agent simulation (docs/modelo-mudanzas-abm.md): capacity = census 2024 dwellings × persons per
+  occupied dwelling; yearly housing permits = mean 2015-2024 (MINVU); foreign-born stock ≈
+  foreign-born of 2017 + arrivals from abroad 2019-2024; network exponent phi from
+  results/redes_validacion.json.
 
 Usage:  python -m experiments.exportar_demografia   -> viz/public/datos/demografia.json
 """
@@ -66,6 +70,36 @@ def tasas_recientes(codes: tuple[str, ...], pob: np.ndarray) -> TasasAbiertas:
     )
 
 
+PERMISOS = range(2015, 2025)
+
+
+def parametros_abm(codes: tuple[str, ...], pob: np.ndarray) -> dict:
+    """Capacity, permits, foreign stock and phi for the agent-based moves simulation."""
+    ocup = {r["codigo"]: r for r in _leer(ROOT / "data" / "censo" / "viviendas_ocupacion_2024.csv")}
+    viviendas = np.array([float(ocup[c]["viviendas"]) for c in codes])
+    ocupadas = np.array([float(ocup[c]["particulares_ocupadas"]) for c in codes])
+    densidad = pob / ocupadas
+    permisos: dict[str, float] = {c: 0.0 for c in codes}
+    for r in _leer(ROOT / "data" / "vivienda" / "permisos_vivienda.csv"):
+        if int(r["anio"]) in PERMISOS:
+            permisos[r["codigo"]] += float(r["viviendas"]) / len(PERMISOS)
+    stock = {r["codigo"]: float(r["nacidos_extranjero_2017"])
+             for r in _leer(ROOT / "data" / "censo" / "stock_extranjero.csv")}
+    llegadas = {r["codigo"]: float(r["llegan_extranjero"])
+                for r in _leer(ROOT / "data" / "censo" / "flujos_externos.csv")
+                if r["periodo"] == "2019-2024"}
+    redes = json.loads((ROOT / "results" / "redes_validacion.json").read_text(encoding="utf-8"))
+    return {
+        "capacidad_inicial": (viviendas * densidad).tolist(),
+        "permisos_anuales": [permisos[c] for c in codes],
+        "personas_por_vivienda": densidad.tolist(),
+        "stock_extranjero": [stock[c] + llegadas[c] for c in codes],
+        "phi": redes["phi"],
+        "fuentes": ["data/censo/viviendas_ocupacion_2024.csv", "data/vivienda/permisos_vivienda.csv",
+                    "data/censo/stock_extranjero.csv", "results/redes_validacion.json"],
+    }
+
+
 def main() -> None:
     com = load_communes()
     codes = com.codes
@@ -106,6 +140,7 @@ def main() -> None:
         "tasas": {k: getattr(tasas, k).tolist() for k in TasasAbiertas.__annotations__},
         "ine": {"anios": anios_ine,
                 "poblacion": [[round(proy[(c, a)]) for c in codes] for a in anios_ine]},
+        "abm": parametros_abm(codes, pob24),
         "referencia": {
             "por_defecto": {"poblacion": proyectar(modelo, pob24, tasas, n_anios).tolist()},
             "cerrado": {"poblacion": proyectar(modelo, pob24, cero, n_anios).tolist()},

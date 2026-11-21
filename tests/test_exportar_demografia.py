@@ -50,3 +50,15 @@ def test_reference_projections_start_from_the_census_and_closed_keeps_the_total(
         assert ref["poblacion"][0] == pytest.approx(d["poblacion_inicial"])
     cerrado = np.array(d["referencia"]["cerrado"]["poblacion"])
     assert cerrado.sum(axis=1) == pytest.approx(np.full(len(anios), cerrado[0].sum()))
+
+
+def test_export_carries_the_agent_simulation_parameters():
+    d = _export()
+    abm = d["abm"]
+    pob = np.array(d["poblacion_inicial"])
+    for k in ("capacidad_inicial", "permisos_anuales", "personas_por_vivienda", "stock_extranjero"):
+        assert len(abm[k]) == 52, k
+    # Capacity counts every census dwelling (vacant included) at the occupied density,
+    # so each comuna starts with some room.
+    assert np.all(np.array(abm["capacidad_inicial"]) >= pob)
+    assert 0 < abm["phi"] < 3
