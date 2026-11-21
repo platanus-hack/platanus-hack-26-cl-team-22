@@ -24,6 +24,14 @@ formulario enviado, fecha y SHA-256 de cada página.
   informan inversión.
 - 253 proyectos nombran varias comunas; un gasoducto interregional nombra además 28 comunas
   de otras regiones, que quedan en `comunas` sin CUT.
+- **No sumar `inversion_musd` por comuna.** Esos 253 proyectos multicomunales (26.605 millones
+  de USD, como las líneas 7, 8 y 9 del Metro) llevan la inversión completa en cada fila; sumar
+  por comuna los cuenta una vez por cada comuna que nombran.
+- **Montos de inversión tal como los declara el titular, sin depurar.** 270 proyectos dicen 0
+  y 75 dicen menos de 10.000 USD; en el otro extremo hay montos difíciles de creer, como
+  "REGULARIZACIÓN PLANTA CIC S.A." (Maipú, 4.200 millones de USD) o "Nuevo Edificio Clínico"
+  (Vitacura, 2.770). Para comparar comunas conviene usar conteos de proyectos o medianas, no
+  sumas.
 - **No trae fecha de calificación ni sector económico.** La tipología (D.S. 40, art. 3) sirve
   como aproximación del sector.
 - El sitio responde ráfagas con un desafío anti-bot. El script no lo evita: pide 100 filas
