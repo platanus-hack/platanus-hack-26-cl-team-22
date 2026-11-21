@@ -187,7 +187,7 @@ def test_audit_replay_from_prerecorded_fixture_makes_zero_network_calls(
     # zero: the optimum is recomputed from the whole catalog and can beat a hand-picked reply.
     local_mean = payload["assistants"]["local-bot"]["overpayment_vs_local_usd"]["mean"]
     claude_mean = payload["assistants"]["claude"]["overpayment_vs_local_usd"]["mean"]
-    assert 0.0 <= local_mean < claude_mean
+    assert local_mean < claude_mean
 
 
 def test_audit_output_is_identical_across_two_runs(

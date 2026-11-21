@@ -57,6 +57,7 @@ class SimulationRequest:
     penalty_handoff: NumericInput = Decimal(0)
     incompatible_pairs: tuple[tuple[str, str], ...] = ()
     reference_time: datetime | None = None
+    include_unverified: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +108,7 @@ class SimulationResult:
     expired_option_ids: tuple[str, ...] = ()
     stale_options: tuple[ServiceOption, ...] = ()
     expired_options: tuple[ServiceOption, ...] = ()
+    include_unverified: bool = False
 
     @property
     def device_profile(self) -> DeviceProfile:
@@ -500,8 +502,11 @@ def simulate(
     incompatible_pairs: Collection[tuple[str, str]] = (),
     reference_time: datetime | None = None,
     clock: Callable[[], datetime] | None = None,
+    include_unverified: bool = False,
 ) -> SimulationResult:
     """Execute the deterministic travel cost-vs-friction simulation use case."""
+    if isinstance(city_or_traveler, SimulationRequest) and city_or_traveler.include_unverified:
+        include_unverified = True
     (
         resolved_city_id,
         resolved_traveler,
@@ -569,6 +574,8 @@ def simulate(
         catalog_options,
         resolved_traveler,
         incompatible_pairs=eff_incompat_pairs,
+        # Default: only options with a verified source can be recommended.
+        excluded_unverified_ids=() if include_unverified else unverified_option_ids,
     )
 
     scenario_build = build_scenarios(
@@ -637,6 +644,7 @@ def simulate(
         expired_option_ids=expired_option_ids,
         stale_options=stale_options,
         expired_options=expired_options,
+        include_unverified=include_unverified,
     )
 
 

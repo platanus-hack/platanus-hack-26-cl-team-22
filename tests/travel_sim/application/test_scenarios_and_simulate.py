@@ -510,6 +510,7 @@ def test_end_to_end_santiago_seed_with_unverified_flag_propagated() -> None:
         trip_duration_days=7,
         has_local_id=False,
         target_data_gb=Decimal("10.0"),
+        include_unverified=True,
     )
     result = use_case.execute(request)
 
@@ -559,3 +560,52 @@ def test_end_to_end_santiago_seed_with_unverified_flag_propagated() -> None:
         < result.balanced.savings_clp
         < result.local_optimized.savings_clp
     )
+
+
+def test_unverified_options_are_excluded_by_default_on_the_santiago_seed() -> None:
+    repo = JsonOptionRepository(SANTIAGO_SEED_PATH)
+    request = SimulationRequest(
+        city_id="scl",
+        device_profile=DeviceProfile.dual_sim(),
+        trip_duration_days=7,
+        has_local_id=True,
+        target_data_gb=Decimal("10.0"),
+    )
+
+    result = simulate(repo, request)
+
+    assert result.include_unverified is False
+    for scenario_type in ScenarioType:
+        for choice in result.scenarios[scenario_type].choices:
+            assert choice.option.id not in UNVERIFIED_SEED_IDS
+            assert choice.is_verified is True
+    rejected_unverified = {
+        item.option.id
+        for item in result.rejected_options
+        if RejectionReason.UNVERIFIED_SOURCE in item.reasons
+    }
+    assert rejected_unverified == UNVERIFIED_SEED_IDS
+
+
+def test_including_unverified_options_changes_the_result_and_is_opt_in() -> None:
+    repo = JsonOptionRepository(SANTIAGO_SEED_PATH)
+    kwargs = {
+        "city_id": "scl",
+        "device_profile": DeviceProfile.dual_sim(),
+        "trip_duration_days": 7,
+        "has_local_id": True,
+        "target_data_gb": Decimal("10.0"),
+    }
+
+    strict = simulate(repo, SimulationRequest(**kwargs))
+    loose = simulate(repo, SimulationRequest(**kwargs, include_unverified=True))
+
+    assert loose.include_unverified is True
+    assert not any(
+        RejectionReason.UNVERIFIED_SOURCE in item.reasons for item in loose.rejected_options
+    )
+    # The cheapest scenario can only get cheaper (or stay equal) when more options are allowed.
+    assert (
+        loose.local_optimized.total_cost_usd <= strict.local_optimized.total_cost_usd
+    )
+    assert loose.local_optimized.total_cost_usd < strict.local_optimized.total_cost_usd

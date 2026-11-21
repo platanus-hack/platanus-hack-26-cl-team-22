@@ -955,6 +955,7 @@ def run_audit(
     categories: Sequence[ServiceCategory] | None = None,
     penalty_handoff: NumericInput = _ZERO,
     incompatible_pairs: Collection[tuple[str, str]] = (),
+    include_unverified: bool = False,
 ) -> AuditReport:
     """Run the full AI-assistant audit pipeline against the deterministic simulator."""
     catalog_options = tuple(repository.list_options(traveler.destination_city_id))
@@ -965,6 +966,7 @@ def run_audit(
         categories=audit_categories,
         penalty_handoff=penalty_handoff,
         incompatible_pairs=incompatible_pairs,
+        include_unverified=include_unverified,
     )
     prompt = build_audit_prompt(
         traveler,

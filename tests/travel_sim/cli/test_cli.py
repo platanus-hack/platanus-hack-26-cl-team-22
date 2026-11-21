@@ -228,9 +228,26 @@ def test_unverified_banner_appears_with_santiago_seed(
     captured = capsys.readouterr()
 
     assert rc == 0
-    first_line = captured.out.splitlines()[0]
-    assert "UNVERIFIED" in first_line
-    assert "last_verified_at" in first_line
+    lines = captured.out.splitlines()
+    # Unverified options are excluded by default and the CLI says so.
+    assert lines[0].startswith("NOTE [UNVERIFIED DATA EXCLUDED]")
+    assert "--include-unverified" in lines[0]
+    warning = next(line for line in lines if line.startswith("WARNING [UNVERIFIED DATA]"))
+    assert "last_verified_at" in warning
+
+
+def test_include_unverified_flag_opts_in_and_changes_the_totals(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    base = ["simulate", "--city", "scl", "--data-dir", str(DATA_DIR), "--days", "5",
+            "--data-gb", "20", "--format", "json"]
+    assert main(base) == 0
+    strict = json.loads(capsys.readouterr().out)
+    assert main([*base, "--include-unverified"]) == 0
+    loose = json.loads(capsys.readouterr().out)
+
+    assert strict["include_unverified"] is False
+    assert loose["include_unverified"] is True
 
 
 def test_output_is_identical_across_two_runs(capsys: pytest.CaptureFixture[str]) -> None:

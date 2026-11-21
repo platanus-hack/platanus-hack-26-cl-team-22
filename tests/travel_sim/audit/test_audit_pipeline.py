@@ -282,7 +282,9 @@ def test_validity_accounting_infeasible_flagging_and_exact_overpayment() -> None
     fake = SequenceFakeAssistant(replies)
     assert isinstance(fake, AssistantPort)
 
-    report = run_audit(repo, traveler, {"fake-llm": fake}, replications=5)
+    report = run_audit(
+        repo, traveler, {"fake-llm": fake}, replications=5, include_unverified=True
+    )
     summary = report.assistants["fake-llm"]
 
     # Validity accounting: 3 valid out of 5 replications

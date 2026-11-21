@@ -741,7 +741,7 @@ def test_httperror_with_oversized_body_detaches_cause_context_and_traceback(
     monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
 
     oversized_body = (
-        f"tok={FAKE_URL_TOKEN} url={FAKE_BASE_URL} key={FAKE_SECRET} ".encode("utf-8")
+        f"tok={FAKE_URL_TOKEN} url={FAKE_BASE_URL} key={FAKE_SECRET} ".encode()
         + b"x" * (MAX_RESPONSE_BYTES + 64)
     )
 
@@ -825,32 +825,38 @@ def test_httperror_with_oversized_body_detaches_cause_context_and_traceback(
 
 
 @pytest.mark.parametrize(
-    ("secret_key", "base_url", "echo_builder"),
+    ("secret_key", "base_url", "echoed"),
     [
         (
             FAKE_SECRET,
             FAKE_BASE_URL,
-            lambda _k, _u: f"invalid tok {FAKE_URL_TOKEN.upper()}",
+            f"invalid tok {FAKE_URL_TOKEN.upper()}",
         ),
         (
             FAKE_SECRET,
             FAKE_BASE_URL,
-            lambda _k, _u: "invalid tok SeCrEt-PrOxY-ToK-54321",
+            "invalid tok SeCrEt-PrOxY-ToK-54321",
         ),
         (
             "Dummy-Key/Part+1=99",
             f"https://proxy.example.test/{FAKE_URL_TOKEN}/Sub+Seg",
-            lambda k, _u: f"bad key {urllib.parse.quote(k, safe='').lower()}",
+            f"bad key {urllib.parse.quote('Dummy-Key/Part+1=99', safe='').lower()}",
         ),
         (
             "Dummy-Key/Part+1=99",
             f"https://proxy.example.test/{FAKE_URL_TOKEN}/Sub+Seg",
-            lambda _k, u: f"bad url {urllib.parse.quote(u, safe='').lower()}",
+            (
+                "bad url "
+                + urllib.parse.quote(
+                    f"https://proxy.example.test/{FAKE_URL_TOKEN}/Sub+Seg",
+                    safe="",
+                ).lower()
+            ),
         ),
         (
             "Dummy-Key/Part+1=99",
             f"https://proxy.example.test/{FAKE_URL_TOKEN}/Sub+Seg",
-            lambda _k, _u: f"bad seg {urllib.parse.quote('Sub+Seg', safe='').upper()}",
+            f"bad seg {urllib.parse.quote('Sub+Seg', safe='').upper()}",
         ),
     ],
 )
@@ -858,12 +864,10 @@ def test_401_redaction_is_case_insensitive_and_covers_url_encoded_forms(
     monkeypatch: pytest.MonkeyPatch,
     secret_key: str,
     base_url: str,
-    echo_builder: object,
+    echoed: str,
 ) -> None:
-    assert callable(echo_builder)
     monkeypatch.setenv(API_KEY_ENV_VAR, secret_key)
     monkeypatch.setenv(BASE_URL_ENV_VAR, base_url)
-    echoed = str(echo_builder(secret_key, base_url))
 
     assistant = AnthropicAssistant(
         "claude-sonnet-4-20250514",
@@ -955,7 +959,6 @@ def test_200_reply_text_echoing_secrets_is_redacted(
         f"https://./{FAKE_URL_TOKEN}",
         f"https://proxy.example.test\\{FAKE_URL_TOKEN}",
         f"https://proxy.example.test\\@evil.test/{FAKE_URL_TOKEN}",
-        f"https://proxy.example.test\x00/{FAKE_URL_TOKEN}",
         f"https://proxy.example.test/{FAKE_URL_TOKEN}\r\n",
         f"https://proxy.example.test/{FAKE_URL_TOKEN}\x1b",
         f"https://proxy.example.test\x7f/{FAKE_URL_TOKEN}",

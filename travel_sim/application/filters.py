@@ -80,6 +80,7 @@ class RejectionReason(str, Enum):
     PAYMENT_METHOD_INCOMPATIBLE = "PAYMENT_METHOD_INCOMPATIBLE"
     INSUFFICIENT_DATA_QUOTA = "INSUFFICIENT_DATA_QUOTA"
     INCOMPATIBLE_WITH_SELECTED = "INCOMPATIBLE_WITH_SELECTED"
+    UNVERIFIED_SOURCE = "UNVERIFIED_SOURCE"
 
 
 @dataclass(frozen=True, slots=True)
@@ -223,8 +224,14 @@ def apply_hard_filters(
     *,
     selected_options: Sequence[ServiceOption] = (),
     incompatible_pairs: Collection[tuple[str, str]] = (),
+    excluded_unverified_ids: Collection[str] = (),
 ) -> HardFilterResult:
-    """Deterministically partition options into eligible and rejected collections."""
+    """Deterministically partition options into eligible and rejected collections.
+
+    Options whose id is in ``excluded_unverified_ids`` (options without a verified source) are
+    rejected with ``UNVERIFIED_SOURCE`` in addition to any other violated rule.
+    """
+    excluded = frozenset(excluded_unverified_ids)
     eligible: list[ServiceOption] = []
     rejected: list[RejectedOption] = []
 
@@ -235,6 +242,8 @@ def apply_hard_filters(
             selected_options=selected_options,
             incompatible_pairs=incompatible_pairs,
         )
+        if option.id in excluded:
+            reasons = (*reasons, RejectionReason.UNVERIFIED_SOURCE)
         if reasons:
             rejected.append(RejectedOption(option=option, reasons=reasons))
         else:

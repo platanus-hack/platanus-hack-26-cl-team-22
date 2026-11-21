@@ -169,6 +169,15 @@ def _add_common_trip_args(subparser: argparse.ArgumentParser, *, city_help: str)
         help="Traveler does not hold a local national ID (default).",
     )
     subparser.set_defaults(has_local_id=False)
+    subparser.add_argument(
+        "--include-unverified",
+        action="store_true",
+        dest="include_unverified",
+        help=(
+            "let options without a verified source take part in the scenarios "
+            "(excluded by default)"
+        ),
+    )
 
     tolerance_choices = ",".join(member.value for member in FrictionTolerance)
     subparser.add_argument(
@@ -296,6 +305,12 @@ def format_simulation_text(result: SimulationResult, *, device_choice: str) -> s
     lines: list[str] = []
     warning_lines: list[str] = []
 
+    if result.unverified and result.unverified_option_ids and not result.include_unverified:
+        warning_lines.append(
+            "NOTE [UNVERIFIED DATA EXCLUDED]: "
+            f"{len(result.unverified_option_ids)} option(s) without a verified source were "
+            "excluded from the scenarios (use --include-unverified to include them)."
+        )
     if result.unverified:
         unverified_count = len(result.unverified_option_ids)
         if result.city_unverified and unverified_count == 0:
@@ -507,6 +522,7 @@ def simulation_to_dict(result: SimulationResult, *, device_choice: str) -> dict[
         },
         "unverified": result.unverified,
         "unverified_option_ids": list(result.unverified_option_ids),
+        "include_unverified": result.include_unverified,
         "stale_option_ids": list(result.stale_option_ids),
         "expired_option_ids": list(result.expired_option_ids),
         "option_freshness": {
@@ -594,6 +610,7 @@ def _handle_simulate(
         target_data_gb=args.data_gb,
         friction_tolerance=args.tolerance,
         reference_time=ref_time,
+        include_unverified=args.include_unverified,
     )
 
     if args.format == "json":
@@ -703,6 +720,7 @@ def _handle_audit(
         traveler,
         assistants,
         replications=args.replications,
+        include_unverified=args.include_unverified,
     )
     if args.format == "json":
         sys.stdout.write(report.to_json() + "\n")
