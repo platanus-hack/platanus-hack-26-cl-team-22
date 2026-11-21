@@ -30,6 +30,9 @@ import {
   type FilaValores,
 } from './lib/riesgo'
 import { variableCorta } from './lib/variables'
+import { Onboarding, type Busqueda } from './components/Onboarding'
+import { pedirGuia, urlGuia } from './lib/guia'
+import { explicar, PERFILES } from './lib/onboarding'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -95,6 +98,13 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   const [pesos, setPesos] = useState<Record<string, number>>(() => aPrioridades(data.tipos_hogar[0]?.pesos ?? {}))
   const [capa, setCapa] = useState<string>(GENERAL)
   const [demo, setDemo] = useState(false)
+  // Entrada guiada: se muestra al abrir, salvo con ?directo en la dirección (para ensayar o proyectar sin ella).
+  const [onb, setOnb] = useState(() => !new URLSearchParams(window.location.search).has('directo'))
+  const [busqueda, setBusqueda] = useState<Busqueda | null>(null)
+  const [guiaIA, setGuiaIA] = useState<{ cargando: boolean; texto?: string } | null>(null)
+  const pedido = useRef(0)
+  const onbRef = useRef(onb)
+  onbRef.current = onb
   const [seleccionada, setSeleccionada] = useState<string | null>(() => {
     let mejor: string | null = null
     let v = -Infinity
@@ -290,6 +300,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     }
     if (espera.current !== null) window.clearTimeout(espera.current)
     espera.current = window.setTimeout(() => {
+      if (onbRef.current) return // la demostración no corre detrás de la entrada guiada
       fotoDemo.current = estadoActual.current
       setJugando(false)
       setDemo(true)
@@ -329,6 +340,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
       const enDemo = demoRef.current
       actividad()
       if (enDemo) return // la primera tecla solo detiene la demostración
+      if (onbRef.current) return // las teclas son de la entrada guiada
       if (e.ctrlKey || e.metaKey || e.altKey) return
       const t = e.target as HTMLElement | null
       const tag = t?.tagName
@@ -449,6 +461,56 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   const referenciaNorma =
     data.impacto?.norma !== undefined ? { valor: data.impacto.norma, texto: `norma ${fmt(data.impacto.norma, 0)} ${u}` } : undefined
 
+  const terminarEntrada = (b: Busqueda) => {
+    const r = calcularRiesgo(filasDe(idx), data.variables, b.prioridades)
+    const top = r.filas.filter((f) => f.indice !== null).slice(0, 3)
+    setPesos(b.prioridades)
+    setPerfilId(PERSONALIZADO)
+    setCapa(GENERAL)
+    setVistaIdx(0)
+    if (top[0]) setSeleccionada(top[0].codigo)
+    setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
+    setBusqueda(b.perfil === 'explorar' ? null : b)
+    setOnb(false)
+    setGuiaIA(null)
+    const n = ++pedido.current
+    const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
+    const perfil = PERFILES.find((x) => x.id === b.perfil)
+    if (!url || !b.contexto || !perfil) return
+    setGuiaIA({ cargando: true })
+    void pedirGuia(url, {
+      perfil: perfil.titulo,
+      contexto: b.contexto,
+      prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, b.prioridades[v.id] ?? 0])),
+      anio,
+      falta: perfil.falta,
+      top: top.map((f) => ({
+        comuna: nombre(f.codigo),
+        riesgo: Math.round(f.indice!),
+        variables: cortas.map((v) => ({
+          nombre: v.nombre,
+          valor: punto(data, escenario.id, f.codigo, v.id, idx)?.p50 ?? null,
+          unidad: v.unidad,
+          riesgo: Math.round(f.partes[v.id] ?? 0),
+        })),
+      })),
+    }).then((g) => {
+      if (n !== pedido.current) return
+      setGuiaIA(g ? { cargando: false, texto: g.texto } : null)
+    })
+  }
+  const perfilBusqueda = busqueda ? PERFILES.find((x) => x.id === busqueda.perfil) : undefined
+  const guia =
+    busqueda && perfilBusqueda
+      ? {
+          titulo: perfilBusqueda.titulo,
+          texto: guiaIA?.texto ?? (guiaIA?.cargando ? 'Leyendo tu caso…' : explicar(riesgo, cortas, pesos, nombre, perfilBusqueda.falta)),
+          cargando: !!guiaIA?.cargando,
+          porIA: !!guiaIA?.texto,
+          onCambiar: () => setOnb(true),
+        }
+      : null
+
   let hoja: ReactNode = null
   if (vista === 'riesgo') {
     const cod = comunaSel?.codigo
@@ -483,7 +545,11 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
         onPeso={(k, v) => {
           setPesos((p) => ({ ...p, [k]: v }))
           setPerfilId(PERSONALIZADO)
+          // el texto de Claude hablaba de otro orden: vuelve la explicación propia
+          pedido.current++
+          setGuiaIA(null)
         }}
+        guia={guia}
         riesgo={riesgo}
         riesgoFin={riesgoFin}
         anio={anio}
@@ -619,7 +685,9 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
         </Mapa>
       </main>
 
-      <section className="columna" aria-label="Lectura de la simulación">
+      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} />}
+
+      <section className="columna" aria-label="Lectura de la simulación" inert={onb}>
         <header className="cabecera">
           <h1 className="marca">root</h1>
           <div className="cabecera-meta">

@@ -18,6 +18,8 @@ const valorTxt = (v: number | undefined, unidad: string) => (v === undefined ? '
 
 interface Props {
   variables: VariableCorta[]
+  /** resultado de la entrada guiada: para quién es el orden y por qué */
+  guia?: { titulo: string; texto: string; cargando: boolean; porIA: boolean; onCambiar: () => void } | null
   capa: string
   onCapa: (id: string) => void
 
@@ -97,7 +99,7 @@ function General(p: Props) {
     <>
       <section className="tramo" aria-labelledby="h-prio">
         <div className="tramo-cabeza">
-          <h3 id="h-prio">Qué priorizas</h3>
+          <h3 id="h-prio">{p.guia ? p.guia.titulo : 'Qué priorizas'}</h3>
           <button type="button" className="lectura ajustar" aria-expanded={ajustar} aria-controls="pesos" onClick={() => setAjustar((x) => !x)}>
             {ajustar ? 'Listo' : 'Ajustar de 0 a 10'}
           </button>
@@ -111,6 +113,18 @@ function General(p: Props) {
                 <span className="peso-num">{fmt(p.pesos[v.id] ?? 0, 0)}</span>
               </label>
             ))}
+          </div>
+        ) : p.guia ? (
+          <div className="guia" aria-live="polite">
+            <p className={p.guia.cargando ? 'guia-texto guia-cargando' : 'guia-texto'} key={p.guia.texto}>
+              {p.guia.texto}
+            </p>
+            <p className="guia-pie">
+              {p.guia.porIA && <span className="guia-ia">Redactado por Claude con los números del modelo</span>}
+              <button type="button" className="guia-cambiar" onClick={p.guia.onCambiar}>
+                Cambiar búsqueda
+              </button>
+            </p>
           </div>
         ) : (
           <div className="perfiles" role="radiogroup" aria-label="Perfil de prioridades">
