@@ -72,6 +72,39 @@ Qué significa:
   señal de que v0 está mal identificado.
 - Medias anuales: sin estacionalidad, viento ni relieve.
 
+## Simulación 2026–2036
+
+`python -m experiments.simular` (`core/ciclo.py`): 500 réplicas, semilla 22, emisiones de
+2023 como punto de partida. Supuestos en `meta.supuestos` de `viz/datos/simulacion.json`.
+
+Políticas con efecto citado:
+
+- prohibición de leña en la Zona A (art. 74, vigente);
+- −30 % de la industria (arts. 57-58, vigente, aplicado como cota superior);
+- extender la prohibición de leña a la Zona B (propuesta).
+
+PM2,5 en 2036, promedio ponderado por población (base 2023: 23,4 µg/m³):
+
+| Escenario | p10 | p50 | p90 |
+|---|---|---|---|
+| Ninguna política avanza | 23,4 | 23,4 | 23,4 |
+| Planes vigentes, con el historial real (lectura conservadora) | 20,7 | **21,8** | 22,9 |
+| Planes vigentes, lectura optimista | 19,2 | 19,6 | 21,1 |
+| Planes vigentes, cumplidos al 100 % | 19,2 | **19,2** | 19,2 |
+| Planes vigentes + leña prohibida en la Zona B (conservadora) | 16,0 | **19,2** | 21,3 |
+
+Qué significa:
+
+- **El plan escrito y el historial real dan regiones distintas.** Cumplido al 100 %, el plan
+  deja la región bajo la norma anual (20 µg/m³). Con la tasa de cumplimiento observada queda
+  en 21,8: el incumplimiento como cifra.
+- **La Zona B es la palanca.** Extender la prohibición, aun con la misma credibilidad baja,
+  logra lo mismo que cumplir al 100 % los planes vigentes. En Santiago centro, que no está
+  en la Zona B, aporta −3,2 µg/m³: el acople entre comunas.
+- **La industria casi no mueve el resultado** (−0,1 µg/m³ en Santiago centro).
+- La métrica de personas sobre la norma salta en bloque, porque en v0 todas las comunas se
+  mueven casi igual y cruzan la norma juntas. Es frágil hasta que el modelo distinga comunas.
+
 ## Siguientes versiones (v1)
 
 Cada parámetro nuevo entra solo si mejora el error dejando una estación fuera frente a v0 y
