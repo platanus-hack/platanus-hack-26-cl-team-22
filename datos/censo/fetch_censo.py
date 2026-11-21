@@ -6,6 +6,7 @@ Outputs in data/censo/:
   mudanzas_2012_2017.csv   Censo 2017, built from person microdata
   mudanzas_2019_2024.csv   Censo 2024, reshaped from the INE table D5 (sheet "2")
   poblacion_viviendas.csv  population and dwellings per comuna, both censuses
+  flujos_externos.csv      people entering or leaving each RM comuna, both periods
 Needs pandas, openpyxl, requests and `bsdtar` (the 2017 files are nested RAR archives).
 Never fills gaps: anything missing stays out and is reported in data/censo/README.md.
 """
@@ -22,7 +23,16 @@ import openpyxl
 import pandas as pd
 import requests
 
-from datos.censo.censo import COLUMNAS, completar_rm, es_comuna_rm, matriz_2024, pares_2017
+from datos.censo.censo import (
+    COLUMNAS,
+    EXTERNOS,
+    completar_rm,
+    es_comuna_rm,
+    externos_2017,
+    externos_2024,
+    matriz_2024,
+    pares_2017,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw" / "censo"
@@ -125,11 +135,13 @@ def csv_2017(archivo: str, interno: str, csv: str, columnas: list[str]):
         sys.exit(f"bsdtar failed while reading {csv} from {archivo}")
 
 
-def mudanzas_2017(codigos: list[int]) -> pd.DataFrame:
-    partes, residentes_rm, ambiguos = [], 0, 0
+def mudanzas_2017(codigos: list[int]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Internal move matrix and external flows 2012-2017, in one pass over the microdata."""
+    partes, externos, residentes_rm, ambiguos = [], [], 0, 0
     for bloque in csv_2017("csv-personas-censo-2017.zip", "microdato_censo2017-personas.rar",
                            "Microdato_Censo2017-Personas.csv", COLS_P17):
         partes.append(pares_2017(bloque))
+        externos.append(externos_2017(bloque))
         habitual = bloque["COMUNA"].where(bloque["P10"].isin((1, 2)), bloque["P10COMUNA"])
         en_rm = es_comuna_rm(habitual) & bloque["P10"].isin((1, 2, 3))
         residentes_rm += int(en_rm.sum())
@@ -138,7 +150,9 @@ def mudanzas_2017(codigos: list[int]) -> pd.DataFrame:
     print(f"2017: RM usual residents with a known comuna = {residentes_rm:,}; "
           f"in the matrix = {int(pares['personas'].sum()):,}; "
           f"dropped (counted elsewhere, 'this comuna' 5 years ago) = {ambiguos:,}")
-    return completar_rm(pares, codigos)
+    ext = (pd.concat(externos).groupby("codigo")[EXTERNOS].sum()
+           .reindex(codigos, fill_value=0).reset_index())
+    return completar_rm(pares, codigos), ext
 
 
 def viviendas_2017() -> pd.Series:
@@ -175,8 +189,16 @@ def main() -> None:
 
     m24 = completar_rm(matriz_2024(hoja("D5_Migracion-interna.xlsx", "2")), codigos)
     m24[COLUMNAS].to_csv(OUT / "mudanzas_2019_2024.csv", index=False)
-    m17 = mudanzas_2017(codigos)
+    m17, ext17 = mudanzas_2017(codigos)
     m17[COLUMNAS].to_csv(OUT / "mudanzas_2012_2017.csv", index=False)
+
+    ext24 = externos_2024(hoja("D5_Migracion-interna.xlsx", "2"))
+    nombres = tabla.drop_duplicates("codigo").set_index("codigo")["comuna"]
+    externos = pd.concat([ext17.assign(periodo="2012-2017"), ext24.assign(periodo="2019-2024")])
+    externos.insert(1, "comuna", externos["codigo"].map(nombres))
+    externos = externos[["codigo", "comuna", "periodo", *EXTERNOS]]
+    externos.sort_values(["periodo", "codigo"]).to_csv(OUT / "flujos_externos.csv", index=False)
+    print(externos.groupby("periodo")[EXTERNOS].sum().T)
 
     for anio, m in (("2012-2017", m17), ("2019-2024", m24)):
         fuera = m[m["codigo_origen"] != m["codigo_destino"]]["personas"].sum()
