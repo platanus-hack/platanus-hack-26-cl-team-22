@@ -1,0 +1,10 @@
+{
+ "fuente": "Superintendencia del Medio Ambiente, SNIFA datos abiertos (https://snifa.sma.gob.cl/DatosAbiertos)",
+ "archivos": {
+  "data/raw/sma/Sancionatorios.csv": {
+   "url": "https://drive.usercontent.google.com/download?id=1hPEwmUFZpmD7xFbJy-kjhhzjplnUB1mH&export=download&confirm=t",
+   "descargado": "2026-11-21",
+   "sha256": "41f76de097d2641c3e6c2bc5db88e4915cb8be1bb6fe8851643533f6656c4463"
+  }
+ }
+}
