@@ -20,4 +20,4 @@ El mismo perfil de viaje se entrega a distintos asistentes de IA y sus recomenda
 
 ## Estado
 
-MVP en desarrollo. El motor, el repositorio JSON y el seed de Santiago están implementados y con tests. **El dataset de Santiago es un borrador: los valores sin fuente verificada están marcados como no verificados** (`last_verified_at: null`). La verificación contra fuentes reales y la interfaz son los siguientes pasos.
+MVP en desarrollo. El motor, el repositorio JSON y el seed de Santiago están implementados y con tests. **El dataset de Santiago es un borrador: 2 de 11 opciones tienen fuente y fecha de verificación (pasaje del bus Centropuerto y plan prepago de WOM); el resto está marcado como no verificado** (`last_verified_at: null`). Verificar el resto contra fuentes reales y construir una interfaz gráfica son los siguientes pasos.

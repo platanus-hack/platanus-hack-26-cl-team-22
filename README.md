@@ -36,4 +36,4 @@ docs/travel-simulator/      context, data model, engine spec, seeding, roadmap
 
 ## Status and caveats
 
-The Santiago seed is a draft: values without a verified source are flagged unverified (`last_verified_at: null`). Verifying them against real sources and building the UI are the next steps.
+The Santiago seed is a draft: 2 of 11 options have a source and a verification date (Centropuerto airport bus fare, WOM prepaid plan); the rest are flagged unverified (`last_verified_at: null`). Verifying them against real sources and building a graphical UI are the next steps.

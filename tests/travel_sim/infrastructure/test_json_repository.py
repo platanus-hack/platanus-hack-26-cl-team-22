@@ -99,8 +99,8 @@ def test_loading_santiago_seed() -> None:
     assert wom_esim.provider == "WOM"
     assert wom_esim.sim_type == SimType.ESIM
     assert wom_esim.data_quota_gb == Decimal(100)
-    assert wom_esim.cost_local_currency == Decimal(10000)
-    assert wom_esim.cost_usd_reference == Decimal("10.50")
+    assert wom_esim.cost_local_currency == Decimal(9990)
+    assert wom_esim.cost_usd_reference == Decimal("10.52")
     assert not wom_esim.physical_presence_required
     assert not wom_esim.requires_local_id
 
@@ -195,15 +195,20 @@ def test_unverified_options_flagged_in_seed() -> None:
     options = repo.list_options("scl")
     assert len(options) == 11
 
-    # Every option in the initial Santiago seed must be flagged as unverified
+    # Only options with a real source are verified; everything else must stay flagged unverified.
+    verified_ids = {"scl-conn-wom-plan-zero-esim", "scl-transfer-centropuerto-bus"}
     for opt in options:
-        assert repo.is_verified(opt.id) is False
-        assert repo.get_freshness_status(opt.id) is None
-        assert opt.last_verified_at is None
+        if opt.id in verified_ids:
+            assert repo.is_verified(opt.id) is True
+            assert opt.verification_source_url.startswith("https://")
+        else:
+            assert repo.is_verified(opt.id) is False
+            assert repo.get_freshness_status(opt.id) is None
+            assert opt.last_verified_at is None
 
     unverified_options = repo.list_unverified_options("scl")
-    assert len(unverified_options) == 11
-    assert {opt.id for opt in unverified_options} == {opt.id for opt in options}
+    assert len(unverified_options) == 9
+    assert {opt.id for opt in unverified_options} == {opt.id for opt in options} - verified_ids
 
 
 def test_verified_option_returns_freshness_status() -> None:

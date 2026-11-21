@@ -36,6 +36,8 @@ from travel_sim.infrastructure.json_repository import JsonOptionRepository
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SANTIAGO_SEED_PATH = REPO_ROOT / "data" / "cities" / "santiago.json"
+# Seed options that carry a real source and verification date.
+SOURCED_SEED_IDS = {"scl-conn-wom-plan-zero-esim", "scl-transfer-centropuerto-bus"}
 
 
 class InMemoryOptionRepository(OptionRepository):
@@ -512,8 +514,8 @@ def test_end_to_end_santiago_seed_with_unverified_flag_propagated() -> None:
     assert result.unverified is True
     assert result.city_unverified is True
     assert result.has_unverified_options is True
-    assert len(result.unverified_options) == 11
-    assert len(result.unverified_option_ids) == 11
+    assert len(result.unverified_options) == 9
+    assert len(result.unverified_option_ids) == 9
 
     for scenario_type in ScenarioType:
         scenario = result.scenarios[scenario_type]
@@ -521,8 +523,9 @@ def test_end_to_end_santiago_seed_with_unverified_flag_propagated() -> None:
         assert scenario.has_unverified_options is True
         assert len(scenario.choices) == 4
         for choice in scenario.choices:
-            assert choice.unverified is True
-            assert choice.is_verified is False
+            sourced = choice.option.id in SOURCED_SEED_IDS
+            assert choice.unverified is (not sourced)
+            assert choice.is_verified is sourced
             assert choice.option.sim_type != SimType.PHYSICAL_SIM
 
     # Physical SIMs in Santiago seed (WOM chip fisico & Entel chip fisico) are rejected
