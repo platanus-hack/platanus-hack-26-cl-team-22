@@ -32,6 +32,43 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
     };
   }, [onReady]);
 
+  // Zooming into the globe by hand (wheel or pinch) does exactly what the button does: the globe
+  // flies towards Santiago and the veil closes before the example simulator's cities show, then the
+  // real simulator opens. The gesture itself is caught before the engine sees it, so it cannot zoom
+  // on its own into the cities. Dragging to rotate still works. Only after the intro (body.sim-on).
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const active = () => document.body.classList.contains("sim-on");
+    // While leaving, every gesture is swallowed so it can't stop the flight; the button fires once.
+    const leaving = () => document.body.classList.contains("saliendo");
+    const block = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!leaving()) document.getElementById("cta")?.click();
+    };
+    const pointers = new Set<number>();
+    const onWheel = (e: WheelEvent) => {
+      if (active() && (e.deltaY < 0 || leaving())) block(e);
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      pointers.add(e.pointerId);
+      if (active() && (pointers.size >= 2 || leaving())) block(e); // second finger: a pinch
+    };
+    const onPointerUp = (e: PointerEvent) => pointers.delete(e.pointerId);
+    // Capture phase on the ancestor, so it runs before the engine's own listeners on the canvas.
+    root.addEventListener("wheel", onWheel, { capture: true, passive: false });
+    root.addEventListener("pointerdown", onPointerDown, { capture: true });
+    root.addEventListener("pointerup", onPointerUp, { capture: true });
+    root.addEventListener("pointercancel", onPointerUp, { capture: true });
+    return () => {
+      root.removeEventListener("wheel", onWheel, { capture: true });
+      root.removeEventListener("pointerdown", onPointerDown, { capture: true });
+      root.removeEventListener("pointerup", onPointerUp, { capture: true });
+      root.removeEventListener("pointercancel", onPointerUp, { capture: true });
+    };
+  }, []);
+
   return (
     <div className="sim is-intro" data-level="world" ref={rootRef}>
       <main className="app">
