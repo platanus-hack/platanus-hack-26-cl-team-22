@@ -49,7 +49,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 Reglas del contrato:
 
 - Solo se agregan claves; no se renombran ni se quitan sin avisar a quien hace la interfaz.
-- Falta la variable `seguridad`, que se sumará cuando exista.
+- La variable `seguridad` ya existe (DMCS por 100.000 habitantes, `docs/modelo-seguridad.md`).
 
 ### Archivo real (v1, 21 nov: aire + hogares)
 
@@ -65,6 +65,11 @@ misma corrida da el mismo archivo). Diferencias con el ejemplo que la interfaz d
   solo es real en las medidas. `comunas_destacadas` trae 5 de ellas con contraste.
 - Claves nuevas: `comunas[].zona_ppda` (A o B), `politicas[].tipo` (vigente o propuesta),
   `politicas[].procedencia`, `cita` y `efecto`, y `escenarios[].lectura`.
+- **Tercera variable: `seguridad`** (DMCS por 100.000 habitantes, menor es mejor), con banda.
+  Vuelve el perfil `prioriza-seguridad` en `tipos_hogar`, que ahora pesa las tres variables.
+  Dos escenarios nuevos son interruptores: `con-ilustrativa-camaras` y
+  `con-ilustrativa-iluminacion` (políticas `tipo: "ilustrativa"`, `variable: "seguridad"`).
+  Cada política trae `variable` para saber qué mueve.
 - **Segunda variable: `crecimiento_poblacion`** (% desde 2024, mayor es mejor). Sale del
   mecanismo de hogares y no tiene banda (p10 = p50 = p90). `tipos_hogar` ahora pesa
   `pm25_anual` y `crecimiento_poblacion`; el perfil «prioriza seguridad» se reemplazó por

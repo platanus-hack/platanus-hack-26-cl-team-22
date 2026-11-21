@@ -19,6 +19,7 @@ experiments:      ## replicas for the reference model -> results/*.csv
 simulate:         ## calibrate air and households -> promises -> viz/datos/simulacion.json
 	$(PY) -m experiments.calibrar_aire
 	$(PY) -m experiments.calibrar_hogares
+	$(PY) -m experiments.calibrar_seguridad
 	$(PY) -m experiments.promesas
 	$(PY) -m experiments.simular
 

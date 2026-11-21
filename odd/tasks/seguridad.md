@@ -22,9 +22,9 @@ Delivery: work-unit commits. Runner: `make test`.
 
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
-| T1 | S2, S3, S5, S6 | inline | pending: `core/seguridad.py` + tests | |
-| T2 | S4 | inline | pending: leave-commune-out validation, `docs/modelo-seguridad.md` | |
-| T3 | S1 | inline | pending: `seguridad` variable and illustrative policies in `simulacion.json` | |
+| T1 | S2, S3, S5, S6 | inline | done: `core/seguridad.py`, 14 tests | 1bd6517 |
+| T2 | S4 | inline | done: 2-year error 10.8 % vs 12.4 % persistence; 1-year loses (8.5 % vs 7.4 %); bands 70 %/66 % | ae90952 |
+| T3 | S1 | inline | done: variable `seguridad`, 2 illustrative toggles, aportes, validation block | this unit |
 
 ## Log
 
@@ -40,6 +40,10 @@ Delivery: work-unit commits. Runner: `make test`.
 - L3: Decisions fixed before looking at outputs: coverage 25 % of a commune's property DMCS
   (scenario choice); municipal credibility mean 0.35, concentration 4 (assumption: no
   municipal execution history); neighbor effect share U(-0.1, 0.2) of the treated commune's
-  reduction for communes within 6 km (assumption), sensitivity at 0; ramp 10 years (same
+  reduction for communes within 6 km (assumption); with s = 0 neighbors stay unchanged and the
+  treated commune does not change (tests/test_seguridad.py); ramp 10 years (same
   meaning of credibility as the PPDA); no commune GeoJSON in any branch, so neighbors are by
   centroid distance.
+- L4: Results: cameras -0.6 % to -1.0 % of the treated communes' DMCS rate, lighting -0.2 % to
+  -0.6 %; neighbors up to -3.5 per 100k. Well inside the yearly band. Coverage not raised after
+  seeing it. Air, population and migration outputs are byte-identical to before.

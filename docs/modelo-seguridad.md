@@ -101,3 +101,33 @@ Qué significa:
   con los datos de prueba.
 - **Los efectos de las intervenciones no se pueden validar localmente**: no hay datos de cámaras
   ni de iluminación por comuna. Vienen de los metaanálisis y se presentan como rangos.
+
+## En la simulación 2026–2036
+
+`make simulate` agrega la variable `seguridad` (DMCS por 100.000 habitantes) a
+`viz/datos/simulacion.json`, con banda p10–p90 en cada escenario. Hay dos políticas
+**ilustrativas** con su interruptor (`con-ilustrativa-camaras`, `con-ilustrativa-iluminacion`):
+todavía no hay planes comunales de seguridad clasificados, así que actúan, con una regla fija,
+en las 5 comunas de mayor tasa DMCS 2024 (Santiago, Providencia, Estación Central, La Cisterna y
+Cerrillos). Cada municipio es su propio ejecutor: sus medidas fallan juntas.
+
+Aporte de cada política en 2036 (mediana de la diferencia pareada por réplica, misma semilla):
+
+| Política | En las comunas intervenidas | En las comunas vecinas |
+|---|---|---|
+| Cámaras con monitoreo activo | −0,6 % a −1,0 % de la tasa DMCS | Hasta −3,5 casos por 100.000 (San Miguel) |
+| Iluminación | −0,2 % a −0,6 % | Hasta −1,0 caso por 100.000 |
+
+Qué significa:
+
+- **Con estos supuestos, las políticas de seguridad casi no mueven la tasa comunal**: el efecto
+  queda muy dentro de la banda de un año a otro (en Providencia, la banda 2036 sin políticas va
+  de 5.982 a 7.738). Es la combinación de tres cosas que el modelo no esconde: solo los delitos
+  contra la propiedad responden (35 % de los DMCS), la cobertura es 25 % y la credibilidad
+  municipal es baja.
+- Sí existe interacción entre comunas: las vecinas reciben parte del efecto, con signo abierto.
+- Para la demo, la lectura honesta es «cuánto haría falta»: con cobertura 25 % y la ejecución
+  municipal esperada, una política de cámaras no se nota en la tasa comunal. No se subió la
+  cobertura después de ver el resultado.
+- Las tasas de largo plazo vuelven hacia la media de cada comuna (que incluye los años
+  prepandemia, más altos): por eso varias comunas suben respecto de 2024 aun sin políticas.
