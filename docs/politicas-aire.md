@@ -45,7 +45,7 @@ Qué reporta (20 páginas):
 - Ejemplo 3: dificultades: la SMA dice no tener recursos para priorizar 14 medidas; 4 medidas (Carabineros, GORE, SEREMI Transportes) se cuestionan en su alcance. Además lista unos 30 expedientes de fiscalización a industrias (DFZ-2024-...).
 - El detalle por medida está en un "Anexo digital, planilla Excel" que el PDF menciona pero no enlaza.
 
-Alternativa real que sí es medida por medida: la revisión independiente encargada por la SEREMI MMA RM (ECOS-Chile, 2023): <https://airerm.mma.gob.cl/wp-content/uploads/2024/03/2023_Informe-Revision-PPDA.pdf>. De 157 medidas de los cap. III-XII: 38 conformes (24%), 33 parcialmente conformes (21%), 86 no conformes (55%). Ojo: "no conforme" ahí significa que no hubo evidencia pública para comprobarla, no que se haya incumplido.
+Alternativa real, con detalle por capítulo y no por medida (el documento publicado solo nombra seis medidas por código; ver `data/politicas/README.md`): la revisión independiente encargada por la SEREMI MMA RM (ECOS-Chile, 2023): <https://airerm.mma.gob.cl/wp-content/uploads/2024/03/2023_Informe-Revision-PPDA.pdf>. De 157 medidas de los cap. III-XII: 38 conformes (24%), 33 parcialmente conformes (21%), 86 no conformes (55%). Ojo: "no conforme" ahí significa que no hubo evidencia pública para comprobarla, no que se haya incumplido.
 
 ## 3. Proyectos aprobados en el SEIA (RM, RCA 2018-2025)
 

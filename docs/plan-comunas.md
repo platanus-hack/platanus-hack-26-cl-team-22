@@ -78,8 +78,8 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 | 1. Datos de aire | Mediciones de PM2,5 por estación, 2017 a 2024 | `data/aire/*.csv` | Nada | Hecho |  |
 | 2. Emisiones y comunas | Emisiones por comuna y fuente; tabla de las 52 comunas | `data/emisiones/`, `data/comunas_rm.csv` | Nada | Hecho |  |
 | 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Por empezar | Massiel |
-| 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Libre |  |
-| 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario hecho (`docs/politicas-aire.md`); falta catálogo y credibilidad |  |
+| 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Delitos CEAD hechos; falta ENUSC |  |
+| 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario hecho (`docs/politicas-aire.md`); cumplimiento por capítulo hecho; falta catálogo de intervenciones |  |
 | 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Aire v0 hecho y escribe `simulacion.json`; falta v1 de aire y hogares | Jesús |
 | 7. Validación y experimentos | Ajuste y prueba separados, comparación con alternativas simples, réplicas | `results/`, y escribe `simulacion.json` real | 6 | Por empezar |  |
 | 8. Interfaz | Mapa de la región, control de tiempo, interruptores de políticas, ficha de comuna | `viz/` | Solo el contrato | Puede empezar hoy | Gabriel |
@@ -167,13 +167,32 @@ Es una decisión real que no se puede ensayar, y muestra interacción: comunas u
 mejoran por una medida que se ejecuta en otras. La magnitud no se puede afirmar con el
 modelo de tamizaje. Detalle de zonas y artículos en `docs/politicas-aire.md`.
 
-### Credibilidad: hay datos medida por medida
+### Credibilidad: hay datos por capítulo del plan
 
 El informe de avance de la SMA 2024 agrega por categoría; el detalle por medida está en un
-anexo Excel que no se pudo obtener. Sí hay una revisión encargada por la SEREMI RM
-(ECOS-Chile, 2023) que evalúa 157 medidas una por una: 24 % conformes, 21 % parciales y
-55 % sin evidencia pública. Es la base para calcular la credibilidad con datos reales.
+anexo Excel que no se pudo obtener. La revisión encargada por la SEREMI RM (ECOS-Chile,
+2023) resume 157 medidas (24 % conformes, 21 % parciales, 55 % sin evidencia pública), pero
+el documento publicado solo nombra seis por código. Lo que sí trae, con página y cita, es el
+cumplimiento por capítulo, que calza con las fuentes del modelo:
 
+| Fuente | Medidas evaluadas | Conformes | Parciales | Sin evidencia |
+|---|---|---|---|---|
+| Transporte (fuentes móviles) | 31 | 7 | 19 | 5 |
+| Industria (fuentes estacionarias) | 58 | 10 | 5 | 43 |
+| Leña | 23 | 4 | 7 | 12 |
+| Episodios críticos | 33 | 12 | 5 | 16 |
+
+Tabla completa en `data/politicas/cumplimiento_ppda_capitulos.csv`. Alcanza para una
+credibilidad por tipo de fuente con datos reales; no para una credibilidad medida por
+medida. "Sin evidencia" significa que no hubo evidencia pública para comprobarla, no
+incumplimiento demostrado.
+
+### Seguridad: datos disponibles
+
+`data/seguridad/delitos_comuna_anio.csv`: casos policiales y tasa por 100.000 habitantes del
+CEAD, 52 comunas, 17 categorías, 2017 a 2024. `dmcs_total` es una suma propia de 11
+categorías publicadas, porque el portal no entrega esa fila; la composición está en
+`data/seguridad/README.md`. No incluye victimización (ENUSC).
 
 ## Orden y cortes
 
