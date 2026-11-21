@@ -18,6 +18,7 @@ A deterministic engine that, for a given traveler and device profile, builds thr
 make setup   # create .venv and install dev dependencies
 make test    # run the test suite
 make lint
+python -m travel_sim simulate --city scl --days 7 --data-gb 10 --device esim-only
 ```
 
 Requires Python 3.11 or later. The engine uses the standard library only.
