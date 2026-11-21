@@ -61,3 +61,20 @@ Siguiente paso: completar `docs/sim-spec.md` con `sim-scoping` y repartir roles 
 ## Ideas
 
 <!-- Agregar aquí, una sección por idea. -->
+
+### Simulador realista de viajes: costos vs. fricción (idea lateral, Santiago piloto)
+- **Estado:** idea lateral; guardada como referencia, sin puntuar ni decidir.
+- **Pregunta "¿qué pasaría si…?":** ¿cuánto ahorra y cuánta fricción asume un viajero según las opciones que elige (eSIM global vs. chip local, transfer vs. bus, tarjeta vs. casa de cambio)?
+- **Problema:** los planificadores recomiendan por afiliados y usan promedios desactualizados. Ejemplo: 1 GB a ~US$4 con eSIM global frente a ~100 GB por ~US$10 con un chip prepago local (WOM).
+- **Quién la usaría y qué decisión cambia:** viajeros que planifican un viaje; decide qué contratar en conectividad, transporte, escapadas, comida y pagos.
+- **Rubros del MVP:** conectividad, transporte (aeropuerto y urbano), escapadas (Viña del Mar / Valparaíso), comida por tiers, divisas y pagos.
+- **Entradas:** días de viaje, perfil (ej. turista extranjero sin RUT), consumo de datos, escapadas deseadas, tolerancia a la fricción.
+- **Salida:** 3 escenarios en paralelo (Cero fricción / Balanceado / Optimizado local) con ahorro en USD y CLP frente a un `friction_score` y el tiempo extra.
+- **Premisas de diseño:**
+  - Dataset pre-indexado y actualizado por lotes (`last_verified_at`); sin scraping en tiempo real.
+  - Motor 100 % determinista; un LLM solo como capa opcional para traducir lenguaje natural a parámetros JSON.
+  - Esquema agnóstico a la ciudad; Santiago es solo el seed.
+  - Capas Domain / Application / Infrastructure; primero motor y dataset, después la UI.
+- **Pendiente de definir (preguntas abiertas del planteamiento):** fórmula exacta del `friction_score`, fuentes y frecuencia de actualización del dataset, formato de almacenamiento (JSON, SQLite o PostgreSQL).
+- **Riesgo con la compuerta del track:** el motor determinista es, en el fondo, una proyección que sale de reglas y fórmulas. Una de las exclusiones de `track-simulations.md` es "una proyección que sale de una fórmula o de una planilla". Para calificar necesitaría un modelo con dinámica o incertidumbre (por ejemplo, variabilidad de precios, filas, retrasos, agentes viajeros) que dé resultados no obvios.
+- **Compuerta:** sin evaluar. Probable ❌ en "no es solo una fórmula o planilla" si queda como está.
