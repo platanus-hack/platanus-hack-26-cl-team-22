@@ -42,6 +42,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `flujos` | Por escenario: personas que se mudan entre dos comunas en un año (`anio`, `origen`, `destino`, `personas`; las 15 mayores por año) |
 | `impacto` | Por escenario: personas que viven en comunas sobre la norma anual de PM2,5 (p10, p50, p90 por año) |
 | `validacion` | Error del modelo contra datos reales y contra alternativas simples |
+| `comunas_destacadas` | Códigos de las pocas comunas con contraste medido que la interfaz destaca (regla fija en `docs/modelo-aire.md`) |
 | `migracion_neta` | Por comuna: personas que llegan menos las que salen, una posición por año |
 | `promesas` | Comparación aparte (no es un interruptor): muchas promesas con poca ejecución contra pocas con mucha ejecución. Por paquete: valor de planilla, bandas, probabilidad de cumplir la norma por año. Ver `docs/promesas.md` |
 | `origen_aire` | Opcional. Por escenario y comuna: lista de `{origen, fraccion}` con la parte (0 a 1) del PM2,5 de la comuna que aportan las emisiones de cada comuna de origen; puede sumar menos de 1 (el resto es fondo regional) |
@@ -49,7 +50,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 Reglas del contrato:
 
 - Solo se agregan claves; no se renombran ni se quitan sin avisar a quien hace la interfaz.
-- Falta la variable `seguridad`, que se sumará cuando exista.
+- La variable `seguridad` ya existe (DMCS por 100.000 habitantes, `docs/modelo-seguridad.md`).
 
 ### Archivo real (v1, 21 nov: aire + hogares)
 
@@ -60,8 +61,16 @@ misma corrida da el mismo archivo). Diferencias con el ejemplo que la interfaz d
 - **La variable es `pm25_anual`, no `pm25_invierno`.** El modelo v0 es anual. La interfaz
   debe leer los ids desde `variables`, no fijarlos en el código.
 - Los códigos de comuna son los oficiales de cinco dígitos (`"13101"` es Santiago).
+- **`comunas[].nivel_base`**: `medido` (10 comunas con estación: parten de su medición) o
+  `modelado` (las demás: solo el modelo). Mostrar la diferencia; el contraste entre comunas
+  solo es real en las medidas. `comunas_destacadas` trae 5 de ellas con contraste.
 - Claves nuevas: `comunas[].zona_ppda` (A o B), `politicas[].tipo` (vigente o propuesta),
   `politicas[].procedencia`, `cita` y `efecto`, y `escenarios[].lectura`.
+- **Tercera variable: `seguridad`** (DMCS por 100.000 habitantes, menor es mejor), con banda.
+  Vuelve el perfil `prioriza-seguridad` en `tipos_hogar`, que ahora pesa las tres variables.
+  Dos escenarios nuevos son interruptores: `con-ilustrativa-camaras` y
+  `con-ilustrativa-iluminacion` (políticas `tipo: "ilustrativa"`, `variable: "seguridad"`).
+  Cada política trae `variable` para saber qué mueve.
 - **Segunda variable: `crecimiento_poblacion`** (% desde 2024, mayor es mejor). Sale del
   mecanismo de hogares y no tiene banda (p10 = p50 = p90). `tipos_hogar` ahora pesa
   `pm25_anual` y `crecimiento_poblacion`; el perfil «prioriza seguridad» se reemplazó por

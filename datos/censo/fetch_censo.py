@@ -6,6 +6,8 @@ Outputs in data/censo/:
   mudanzas_2012_2017.csv   Censo 2017, built from person microdata
   mudanzas_2019_2024.csv   Censo 2024, reshaped from the INE table D5 (sheet "2")
   poblacion_viviendas.csv  population and dwellings per comuna, both censuses
+  flujos_externos.csv      people entering or leaving each RM comuna, both periods
+  proyeccion_ine.csv       INE official population projection per comuna, 2017-2035
 Needs pandas, openpyxl, requests and `bsdtar` (the 2017 files are nested RAR archives).
 Never fills gaps: anything missing stays out and is reported in data/censo/README.md.
 """
@@ -22,7 +24,17 @@ import openpyxl
 import pandas as pd
 import requests
 
-from datos.censo.censo import COLUMNAS, completar_rm, es_comuna_rm, matriz_2024, pares_2017
+from datos.censo.censo import (
+    COLUMNAS,
+    EXTERNOS,
+    completar_rm,
+    es_comuna_rm,
+    externos_2017,
+    externos_2024,
+    matriz_2024,
+    pares_2017,
+    sumar_proyeccion,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw" / "censo"
@@ -49,7 +61,12 @@ FUENTES = {
     "csv-viviendas-censo-2017.zip": (
         INE17 + "csv-viviendas-censo-2017.zip",
         "5c68e936aec3fceff15750118d701954c6f25fa3e85ce8720fabac44708b987b"),
+    "estimaciones-y-proyecciones-2002-2035-comunas.xlsx": (
+        ("https://www.ine.gob.cl/docs/default-source/proyecciones-de-poblacion/"
+         "cuadros-estadisticos/base-2017/estimaciones-y-proyecciones-2002-2035-comunas.xlsx"),
+        "de4ed9522031fad091dd2a51b3215bba685ebb851a14fb7421078ba927aa7ec1"),
 }
+PROYECCION_ANIOS = list(range(2017, 2036))
 HEADERS = {"User-Agent": "Mozilla/5.0 (research script; hackathon census data)"}
 
 COLS_P17 = ["COMUNA", "P10", "P10COMUNA", "P11", "P11COMUNA"]
@@ -70,10 +87,14 @@ def verificar(ruta: Path, esperado: str) -> Path:
     return ruta
 
 
-def descargar(nombre: str) -> Path:
-    """Return the cached raw file, downloading it once with retries; checks its SHA-256."""
-    destino = RAW / nombre
-    url, sha = FUENTES[nombre]
+def descargar(nombre: str, fuentes: dict | None = None, raw: Path | None = None) -> Path:
+    """Return the cached raw file, downloading it once with retries; checks its SHA-256.
+
+    `fuentes` maps file name -> (url, sha256) and `raw` is the cache folder; both default to
+    the census ones so other datasets can reuse the same download rules.
+    """
+    destino = (raw or RAW) / nombre
+    url, sha = (fuentes or FUENTES)[nombre]
     if destino.exists() and destino.stat().st_size > 0:
         return verificar(destino, sha)
     destino.parent.mkdir(parents=True, exist_ok=True)
@@ -95,8 +116,9 @@ def descargar(nombre: str) -> Path:
     sys.exit(f"Could not download {url}: {ultimo}")
 
 
-def hoja(nombre: str, pestana: str) -> list[tuple]:
-    libro = openpyxl.load_workbook(descargar(nombre), read_only=True)
+def hoja(nombre: str, pestana: str, fuentes: dict | None = None,
+         raw: Path | None = None) -> list[tuple]:
+    libro = openpyxl.load_workbook(descargar(nombre, fuentes, raw), read_only=True)
     return list(libro[pestana].iter_rows(values_only=True))
 
 
@@ -125,11 +147,13 @@ def csv_2017(archivo: str, interno: str, csv: str, columnas: list[str]):
         sys.exit(f"bsdtar failed while reading {csv} from {archivo}")
 
 
-def mudanzas_2017(codigos: list[int]) -> pd.DataFrame:
-    partes, residentes_rm, ambiguos = [], 0, 0
+def mudanzas_2017(codigos: list[int]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Internal move matrix and external flows 2012-2017, in one pass over the microdata."""
+    partes, externos, residentes_rm, ambiguos = [], [], 0, 0
     for bloque in csv_2017("csv-personas-censo-2017.zip", "microdato_censo2017-personas.rar",
                            "Microdato_Censo2017-Personas.csv", COLS_P17):
         partes.append(pares_2017(bloque))
+        externos.append(externos_2017(bloque))
         habitual = bloque["COMUNA"].where(bloque["P10"].isin((1, 2)), bloque["P10COMUNA"])
         en_rm = es_comuna_rm(habitual) & bloque["P10"].isin((1, 2, 3))
         residentes_rm += int(en_rm.sum())
@@ -138,7 +162,9 @@ def mudanzas_2017(codigos: list[int]) -> pd.DataFrame:
     print(f"2017: RM usual residents with a known comuna = {residentes_rm:,}; "
           f"in the matrix = {int(pares['personas'].sum()):,}; "
           f"dropped (counted elsewhere, 'this comuna' 5 years ago) = {ambiguos:,}")
-    return completar_rm(pares, codigos)
+    ext = (pd.concat(externos).groupby("codigo")[EXTERNOS].sum()
+           .reindex(codigos, fill_value=0).reset_index())
+    return completar_rm(pares, codigos), ext
 
 
 def viviendas_2017() -> pd.Series:
@@ -175,8 +201,26 @@ def main() -> None:
 
     m24 = completar_rm(matriz_2024(hoja("D5_Migracion-interna.xlsx", "2")), codigos)
     m24[COLUMNAS].to_csv(OUT / "mudanzas_2019_2024.csv", index=False)
-    m17 = mudanzas_2017(codigos)
+    m17, ext17 = mudanzas_2017(codigos)
     m17[COLUMNAS].to_csv(OUT / "mudanzas_2012_2017.csv", index=False)
+
+    ext24 = externos_2024(hoja("D5_Migracion-interna.xlsx", "2"))
+    nombres = tabla.drop_duplicates("codigo").set_index("codigo")["comuna"]
+    externos = pd.concat([ext17.assign(periodo="2012-2017"), ext24.assign(periodo="2019-2024")])
+    externos.insert(1, "comuna", externos["codigo"].map(nombres))
+    externos = externos[["codigo", "comuna", "periodo", *EXTERNOS]]
+    externos.sort_values(["periodo", "codigo"]).to_csv(OUT / "flujos_externos.csv", index=False)
+    print(externos.groupby("periodo")[EXTERNOS].sum().T)
+
+    libro = openpyxl.load_workbook(descargar("estimaciones-y-proyecciones-2002-2035-comunas.xlsx"),
+                                   read_only=True)
+    proy = sumar_proyeccion(list(libro.worksheets[0].iter_rows(values_only=True)),
+                            PROYECCION_ANIOS)
+    with (OUT / "proyeccion_ine.csv").open("w", encoding="utf-8", newline="") as fh:
+        fh.write("codigo,comuna,anio,poblacion\n")
+        for codigo in codigos:
+            for anio in PROYECCION_ANIOS:
+                fh.write(f"{codigo},{nombres[codigo]},{anio},{proy[(codigo, anio)]}\n")
 
     for anio, m in (("2012-2017", m17), ("2019-2024", m24)):
         fuera = m[m["codigo_origen"] != m["codigo_destino"]]["personas"].sum()

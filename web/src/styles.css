@@ -1,0 +1,133 @@
+/* Figtree (SIL OFL 1.1), self-hosted. */
+@font-face {
+  font-family: "Figtree";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("/fonts/figtree-latin-700.woff2") format("woff2");
+}
+
+:root {
+  --bg: #092122;
+  --fg: #abcbcc;
+  --dot: #6b3f20;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+}
+
+/* No scrollbar during the intro: otherwise the viewport widens when the
+   simulator takes over and the globe jumps sideways. */
+html.intro-on {
+  scrollbar-width: none;
+}
+html.intro-on::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scroll distance for the intro (the page scrolls 200vh of it). */
+.intro-spacer {
+  height: 300vh;
+}
+
+.logo-layer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* The SVG viewBox hugs the glyph ink, so the letters themselves span
+   50% of the viewport height; width follows the aspect ratio (--ar, set
+   from the measured glyphs) and is capped at 80vw so it never overflows
+   narrower screens. The logo starts at 1/8 of the width. */
+.logo-box {
+  --ar: 2.35;
+  margin-left: 12.5vw;
+  width: min(80vw, calc(50vh * var(--ar)));
+  aspect-ratio: var(--ar);
+  flex: none;
+}
+
+/* intro.ts zooms this with transform (origin at the box's top-left corner). */
+.logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+}
+
+.logo text {
+  font-family: "Figtree", sans-serif;
+  font-weight: 700;
+  letter-spacing: -13px; /* user units: 13% of the 100-unit font size */
+  fill: var(--fg);
+}
+
+/* Placeholder period until the simulator's globe is drawn on top of it. */
+.logo-dot {
+  fill: var(--dot);
+}
+
+/* "Scroll down" cue: shown after a few idle seconds (ScrollHint.tsx). */
+.scroll-hint {
+  position: fixed;
+  right: 5vw;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg);
+  font-family: "Instrument Sans Variable", "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(calc(-50% + 8px));
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.scroll-hint.is-visible {
+  opacity: 0.7;
+  transform: translateY(-50%);
+}
+/* Narrow screens: the logo spans the width, so the cue goes back to the bottom. */
+@media (max-width: 860px) {
+  .scroll-hint {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 28px;
+    transform: translateY(8px);
+  }
+  .scroll-hint.is-visible {
+    transform: none;
+  }
+}
+.scroll-hint-text {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.scroll-hint-wheel {
+  animation: scroll-hint-wheel 1.8s ease-in-out infinite;
+}
+@keyframes scroll-hint-wheel {
+  0% { opacity: 0; transform: translateY(-2px); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint-wheel { animation: none; }
+}
