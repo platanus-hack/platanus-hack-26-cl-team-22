@@ -42,6 +42,10 @@ interface Props {
   valores: Record<string, number | undefined>
   /** sello propio de una variable (p. ej. la norma del aire) que reemplaza al de posición */
   sellos: Record<string, { estado: Estado; texto: string } | undefined>
+  /** comunas que cumplen todos los rangos aceptados; null si no hay rangos */
+  dentro: ReadonlySet<string> | null
+  /** variables en que la comuna elegida queda fuera de rango */
+  fuera: string[]
 
   /** detalle de la variable de la capa, si la capa no es la general */
   detalle: {
@@ -89,7 +93,8 @@ function General(p: Props) {
   const fin = p.comuna ? p.riesgoFin.porCodigo.get(p.comuna.codigo) : undefined
   const veredicto = sel ? veredictoGeneral(sel, p.riesgo.total, p.anio !== p.ultimoAnio && fin ? { indice: fin.indice, anio: p.ultimoAnio } : undefined) : null
   const conIndice = p.riesgo.filas.filter((f) => f.indice !== null)
-  const filas = todas ? conIndice : conIndice.slice(0, 3)
+  const enRango = p.dentro ? conIndice.filter((f) => p.dentro!.has(f.codigo)) : conIndice
+  const filas = todas ? conIndice : enRango.slice(0, 3)
 
   useEffect(() => {
     if (todas) lista.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest' })
@@ -146,7 +151,10 @@ function General(p: Props) {
         <div className="tramo-cabeza">
           <h3 id="h-top">
             {todas ? 'De menor a mayor riesgo' : 'Las 3 de menor riesgo'}
-            <span className="grafico-clave">{p.anio}</span>
+            <span className="grafico-clave">
+              {p.dentro && !todas ? `${enRango.length} de ${conIndice.length} cumplen tus rangos · ` : ''}
+              {p.anio}
+            </span>
           </h3>
           <button type="button" className="lectura ajustar" aria-expanded={todas} onClick={() => setTodas((x) => !x)}>
             {todas ? 'Solo las 3' : `Ver las ${p.riesgo.total}`}
@@ -155,7 +163,12 @@ function General(p: Props) {
         <ol className={`podio${todas ? ' podio-todas' : ''}`} ref={lista}>
           {filas.map((f) => (
             <li key={f.codigo}>
-              <button type="button" className="podio-fila" aria-pressed={f.codigo === p.comuna?.codigo} onClick={() => p.onSeleccionar(f.codigo)}>
+              <button
+                type="button"
+                className={`podio-fila${p.dentro && !p.dentro.has(f.codigo) ? ' podio-fuera' : ''}`}
+                aria-pressed={f.codigo === p.comuna?.codigo}
+                onClick={() => p.onSeleccionar(f.codigo)}
+              >
                 <span className="podio-pos">{f.puesto}</span>
                 <span className="podio-nombre">{p.nombre(f.codigo)}</span>
                 <span className={`podio-num nivel-${papelRiesgo(f.indice!)} txt-nivel-${papelRiesgo(f.indice!)}`}>{fmt(f.indice!, 0)}</span>
@@ -163,6 +176,7 @@ function General(p: Props) {
             </li>
           ))}
         </ol>
+        {!todas && filas.length === 0 && <p className="nota">Ninguna comuna cumple todos tus rangos.</p>}
       </section>
 
       {p.comuna && sel && sel.indice !== null ? (
@@ -181,7 +195,8 @@ function General(p: Props) {
             {p.variables.map((v) => {
               const parte = sel.partes[v.id]
               if (parte === undefined) return null
-              const propio = p.sellos[v.id]
+              const fuera = p.fuera.includes(v.id)
+              const propio = fuera ? { estado: 'riesgo' as const, texto: 'Fuera de tu rango' } : p.sellos[v.id]
               const n = nivelRiesgo(parte)
               const estado = propio?.estado ?? ESTADO_DE_RIESGO[n]
               const apagada = !((p.pesos[v.id] ?? 0) > 0)

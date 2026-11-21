@@ -59,10 +59,17 @@ la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición
 
 ### Entrada guiada
 
-Al abrir, tres pantallas cortas sobre el mapa (`src/components/Onboarding.tsx`): qué busca la persona
-(vivienda, empresa o solo explorar), cuánto pesa cada variable (cinco grados, de «Nada» a «Clave») y, opcional,
-su caso en una frase. Al terminar se abre la hoja Riesgo con ese orden, la comuna de menor riesgo elegida y una
-explicación en una frase. «Solo quiero explorar» entra directo. Con `?directo` en la dirección no aparece.
+Al abrir, dos pantallas sobre el mapa (`src/components/Onboarding.tsx`):
+
+1. **El caso, en texto libre.** `leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía
+   hidráulica, vivienda, industria o evaluación general; la persona ve cómo se leyó y puede cambiarlo.
+2. **Los criterios.** Los tres que simula el modelo llevan peso (cinco grados) y un rango aceptado: para el aire,
+   la norma chilena o las metas de la OMS; para seguridad y crecimiento, cortes sobre los datos de la región.
+   Debajo van los criterios propios de ese caso (caudal, caída, etc.) y los que agregue la persona: **no tienen
+   datos en esta versión, no entran al cálculo y no muestran ningún número**.
+
+Al terminar se abre la hoja Riesgo: las tres de menor riesgo salen solo de las comunas que cumplen todos los
+rangos, y la ficha marca «Fuera de tu rango» donde corresponde. Con `?directo` en la dirección no aparece.
 
 La explicación la arma la propia interfaz con los números del índice (`src/lib/onboarding.ts`). Si al construir
 se define `VITE_GUIA_URL` con la dirección de un intermediario propio y la persona escribió su caso, se le pide

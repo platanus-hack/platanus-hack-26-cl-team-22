@@ -2393,3 +2393,194 @@ body:has(.estado) {
     opacity: 0;
   }
 }
+
+/* ---------- Entrada por caso: texto libre y criterios ---------- */
+.onb-ejemplos,
+.onb-lectura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  margin-top: calc(var(--u) * 1.1);
+  font-size: var(--t-m);
+  color: var(--tinta-2);
+}
+.onb-chip {
+  border: 0;
+  cursor: pointer;
+  background: var(--hoja);
+  box-shadow: inset 0 0 0 1.5px var(--corte);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.9);
+  font-size: var(--t-m);
+  font-weight: 600;
+  color: var(--tinta);
+  transition:
+    background-color 260ms var(--ease),
+    color 260ms var(--ease),
+    box-shadow 260ms var(--ease);
+}
+.onb-chip:hover {
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+}
+.onb-chip[aria-checked='true'] {
+  background: var(--tinta);
+  color: var(--papel);
+  box-shadow: none;
+}
+.onb-chip:focus-visible,
+.onb-agregar input:focus-visible,
+.onb-agregar button:focus-visible,
+.onb-propio button:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.onb-hoja:has(.onb-grupo) h2 {
+  font-size: calc(var(--u) * 3.8);
+}
+.onb-grupo {
+  margin-top: calc(var(--u) * 1.3);
+}
+.onb-grupo h3 {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 0.8);
+  font-weight: 800;
+  font-size: var(--t-l);
+  margin-bottom: calc(var(--u) * 0.5);
+}
+.onb-grupo h3 span {
+  font-weight: 400;
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.onb-criterio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto calc(var(--u) * 23);
+  align-items: center;
+  gap: calc(var(--u) * 1.4);
+  background: var(--hoja);
+  padding: calc(var(--u) * 0.55) calc(var(--u) * 1.1);
+}
+.onb-criterio + .onb-criterio {
+  margin-top: 2px;
+}
+.onb-criterio p,
+.onb-referencias li {
+  display: grid;
+  gap: 0.1em;
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.onb-criterio b,
+.onb-referencias b {
+  font-weight: 800;
+  font-size: var(--t-l);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--tinta);
+}
+.onb-criterio .onb-grados {
+  grid-auto-columns: calc(var(--u) * 5.2);
+}
+.onb-criterio .onb-grado {
+  padding: calc(var(--u) * 0.45) 0;
+  font-size: var(--t-s);
+}
+.onb-criterio .desplegable {
+  justify-content: flex-end;
+}
+.onb-criterio .desplegable-boton {
+  min-width: calc(var(--u) * 17);
+  justify-content: space-between;
+}
+.onb-referencias {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+}
+.onb-referencias li {
+  position: relative;
+  align-content: start;
+  background: color-mix(in srgb, var(--hoja) 55%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--corte);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9);
+}
+.onb-referencias b {
+  font-size: var(--t-m);
+  color: var(--tinta-2);
+}
+.onb-propio {
+  padding-right: calc(var(--u) * 2.4) !important;
+}
+.onb-propio button {
+  position: absolute;
+  top: calc(var(--u) * 0.3);
+  right: calc(var(--u) * 0.4);
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  font-size: var(--t-l);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--tinta-2);
+}
+.onb-propio button:hover {
+  color: var(--tinta);
+}
+.onb-referencias .onb-agregar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 0.4);
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+  background: var(--hoja);
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.4) calc(var(--u) * 0.3) calc(var(--u) * 0.8);
+}
+.onb-agregar input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--t-s);
+  font-weight: 600;
+  color: var(--tinta);
+}
+.onb-agregar button {
+  border: 0;
+  cursor: pointer;
+  background: var(--tinta);
+  color: var(--papel);
+  padding: calc(var(--u) * 0.35) calc(var(--u) * 0.7);
+  font-size: var(--t-xs);
+  font-weight: 800;
+}
+.onb-agregar button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.onb-hoja:has(.onb-grupo) .onb-pie {
+  margin-top: calc(var(--u) * 1.4);
+}
+.podio-fuera .podio-nombre {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: var(--tinta-2);
+}
+.podio-todas .podio-fila[aria-pressed='true'].podio-fuera .podio-nombre {
+  color: var(--papel-2);
+}
+/* El desplegable de rango abre sobre lo que sigue, y sus opciones no heredan el tamaño del nombre del criterio */
+.onb-grupo:has(.desplegable-lista) {
+  position: relative;
+  z-index: 6;
+}
+.onb-criterio:has(.desplegable-lista) {
+  position: relative;
+  z-index: 2;
+}
+.onb-criterio .desplegable-opcion b {
+  font-size: var(--t-s);
+  letter-spacing: 0;
+  color: inherit;
+}

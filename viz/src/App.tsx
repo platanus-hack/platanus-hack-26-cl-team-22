@@ -35,7 +35,7 @@ import {
 import { variableCorta } from './lib/variables'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
-import { explicar, PERFILES } from './lib/onboarding'
+import { casoDe, explicar, fueraDeRango, resolverLimites } from './lib/onboarding'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -120,6 +120,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   // Entrada guiada: se muestra al abrir, salvo con ?directo en la dirección (para ensayar o proyectar sin ella).
   const [onb, setOnb] = useState(() => !new URLSearchParams(window.location.search).has('directo'))
   const [busqueda, setBusqueda] = useState<Busqueda | null>(null)
+  /** rango aceptado por variable (id de la opción); vacío = sin límites */
+  const [rangos, setRangos] = useState<Record<string, string>>({})
   const [guiaIA, setGuiaIA] = useState<{ cargando: boolean; texto?: string } | null>(null)
   const pedido = useRef(0)
   const onbRef = useRef(onb)
@@ -495,29 +497,42 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const referenciaNorma =
     data.impacto?.norma !== undefined ? { valor: data.impacto.norma, texto: `norma ${fmt(data.impacto.norma, 0)} ${u}` } : undefined
 
+  // Rangos aceptados: qué comunas cumplen todos y, de la elegida, en qué variables queda fuera.
+  const valoresAnio = useMemo(() => filasDe(idx), [filasDe, idx])
+  const limites = useMemo(() => resolverLimites(rangos, data.variables, valoresAnio.map((f) => f.valores)), [rangos, data.variables, valoresAnio])
+  const hayLimites = Object.values(limites).some((v) => v !== null)
+  const dentro = useMemo(
+    () => (hayLimites ? new Set(valoresAnio.filter((f) => fueraDeRango(f.valores, limites, data.variables).length === 0).map((f) => f.codigo)) : null),
+    [hayLimites, valoresAnio, limites, data.variables],
+  )
+
   const terminarEntrada = (b: Busqueda) => {
-    const r = calcularRiesgo(filasDe(idx), data.variables, b.prioridades)
-    const top = r.filas.filter((f) => f.indice !== null).slice(0, 3)
+    const filasAnio = filasDe(idx)
+    const r = calcularRiesgo(filasAnio, data.variables, b.prioridades)
+    const lim = resolverLimites(b.rangos, data.variables, filasAnio.map((f) => f.valores))
+    const cumple = new Set(filasAnio.filter((f) => fueraDeRango(f.valores, lim, data.variables).length === 0).map((f) => f.codigo))
+    const top = r.filas.filter((f) => f.indice !== null && cumple.has(f.codigo)).slice(0, 3)
     setPesos(b.prioridades)
+    setRangos(b.rangos)
     setPerfilId(PERSONALIZADO)
     setCapa(GENERAL)
     setVistaIdx(0)
     if (top[0]) setSeleccionada(top[0].codigo)
     setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
-    setBusqueda(b.perfil === 'explorar' ? null : b)
+    const guiada = b.contexto !== '' || b.caso !== 'general' || b.sinDatos.length > 0 || Object.keys(b.rangos).length > 0
+    setBusqueda(guiada ? b : null)
     setOnb(false)
     setGuiaIA(null)
     const n = ++pedido.current
     const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
-    const perfil = PERFILES.find((x) => x.id === b.perfil)
-    if (!url || !b.contexto || !perfil) return
+    if (!url || !b.contexto) return
     setGuiaIA({ cargando: true })
     void pedirGuia(url, {
-      perfil: perfil.titulo,
+      perfil: casoDe(b.caso).titulo,
       contexto: b.contexto,
       prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, b.prioridades[v.id] ?? 0])),
       anio,
-      falta: perfil.falta,
+      falta: b.sinDatos.length > 0 ? `Sin datos en esta versión: ${b.sinDatos.join(', ')}.` : undefined,
       top: top.map((f) => ({
         comuna: nombre(f.codigo),
         riesgo: Math.round(f.indice!),
@@ -533,17 +548,17 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       setGuiaIA(g ? { cargando: false, texto: g.texto } : null)
     })
   }
-  const perfilBusqueda = busqueda ? PERFILES.find((x) => x.id === busqueda.perfil) : undefined
-  const guia =
-    busqueda && perfilBusqueda
-      ? {
-          titulo: perfilBusqueda.titulo,
-          texto: guiaIA?.texto ?? (guiaIA?.cargando ? 'Leyendo tu caso…' : explicar(riesgo, cortas, pesos, nombre, perfilBusqueda.falta)),
-          cargando: !!guiaIA?.cargando,
-          porIA: !!guiaIA?.texto,
-          onCambiar: () => setOnb(true),
-        }
-      : null
+  const guia = busqueda
+    ? {
+        titulo: casoDe(busqueda.caso).titulo,
+        texto:
+          guiaIA?.texto ??
+          (guiaIA?.cargando ? 'Leyendo tu caso…' : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: busqueda.sinDatos })),
+        cargando: !!guiaIA?.cargando,
+        porIA: !!guiaIA?.texto,
+        onCambiar: () => setOnb(true),
+      }
+    : null
 
   let hoja: ReactNode = null
   if (vista === 'riesgo') {
@@ -593,6 +608,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         onSeleccionar={setSeleccionada}
         valores={valores}
         sellos={sellos}
+        dentro={dentro}
+        fuera={cod ? fueraDeRango(valores, limites, data.variables) : []}
         detalle={
           s
             ? {
