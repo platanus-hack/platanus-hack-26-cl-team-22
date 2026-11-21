@@ -96,20 +96,21 @@ cada comuna entre 2017 y 2024; no se alcanza en ninguna comuna.
 - La población de cada comuna se publica como la variable `crecimiento_poblacion` (% desde
   2024). No tiene banda: las mudanzas son flujos esperados, no se sortean.
 
-PM2,5 en 2036, promedio ponderado por la población de 2036 (nivel 2023: 23,4 µg/m³):
+PM2,5 en 2036, promedio ponderado por la población de 2036 (nivel 2023: 23,1 µg/m³, con las
+comunas con estación ancladas a su medición):
 
 | Escenario | Leña fija | Leña sigue a la gente |
 |---|---|---|
-| Ninguna política avanza | 23,2 | **24,7** |
-| Planes vigentes, cumplimiento real | 21,7 (20,5–22,7) | **23,2** (22,0–24,2) |
-| Planes vigentes + prohibición en la Zona B | 18,8 (15,8–21,4) | 19,8 (16,4–22,7) |
+| Ninguna política avanza | 22,9 | **24,4** |
+| Planes vigentes, cumplimiento real | 21,4 (20,2–22,4) | **22,9** (21,7–23,9) |
+| Planes vigentes + prohibición en la Zona B | 18,5 (15,6–21,1) | 19,5 (16,1–22,4) |
 
 Qué significa:
 
 - **Si la leña sigue a la gente, la migración a la Zona B compensa la mejora del plan.** El
   plan rinde lo mismo en ambas lecturas (unos −1,5 µg/m³), pero la migración agrega unos
-  +1,5: sin políticas la región pasaría de 23,2 a 24,7, y con el plan vigente queda en 23,2,
-  prácticamente el nivel de hoy. Es la cota superior; con la leña fija queda en 21,7.
+  +1,5: sin políticas la región pasaría de 22,9 a 24,4, y con el plan vigente queda en 22,9,
+  prácticamente el nivel de hoy (23,1). Es la cota superior; con la leña fija queda en 21,4.
 - **La prohibición en la Zona B vale más cuanta más gente se muda allí**: mediana de la
   diferencia pareada por réplica (con y sin la prohibición, misma semilla) de −3,9 µg/m³ con
   la leña siguiendo a la gente contra −3,2 con la leña fija (19 % más), porque también cubre

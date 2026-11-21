@@ -72,6 +72,9 @@ CONCENTRATION = 10.0  # assumption: Beta alpha + beta, sets the width of each me
 DEFAULT_READING = "conservadora"
 
 ASSUMPTIONS = [
+    ("Communes with a station start from their measured level: the station's 2023 residual is "
+     "kept constant (measured level + modelled change); communes without a station use the "
+     "model alone (docs/modelo-aire.md)."),
     ("Emissions start at the 2023 RETC values (industry 2023, avoiding the 2024 Las Condes "
      "jump) and stay constant until 2026 and for every source no policy targets."),
     (f"Each executed year delivers 1/{YEARS_TO_FULL} of a measure's full effect (PPDA 10-year "
@@ -176,6 +179,7 @@ class Setup:
     air: AirModel
     state: RegionState
     calibration: dict
+    measured: np.ndarray  # communes whose level is anchored to a station
 
 
 def load_setup() -> Setup:
@@ -194,11 +198,28 @@ def load_setup() -> Setup:
     params = calibration["parameters"]
     transfer = exponential_transfer(distance_matrix_km(communes.lat, communes.lon),
                                     params["scale_km"])
+    anchoring = calibration["anchoring"]["communes"]
+    offset = np.array([anchoring[c]["residuo_ugm3"] if c in anchoring else 0.0
+                       for c in communes.codes])
+    measured = np.array([c in anchoring for c in communes.codes])
     air = AirModel(transfer, params["background_ugm3"],
-                   np.array([params["coefficients_by_source"][s] for s in SOURCES]))
+                   np.array([params["coefficients_by_source"][s] for s in SOURCES]), offset)
     state = RegionState(BASE_YEAR, communes.codes, air.concentration(emissions),
                         communes.population_2024, emissions)
-    return Setup(communes, in_b, masks, air, state, calibration)
+    for i, code in enumerate(communes.codes):
+        if code in anchoring and abs(state.pm25[i] - anchoring[code]["medido_ugm3"]) > 0.01:
+            raise SystemExit(f"Anchored commune {code} does not start at its measured level: "
+                             f"rerun python -m experiments.calibrar_aire")
+    return Setup(communes, in_b, masks, air, state, calibration, measured)
+
+
+def featured_communes(setup: Setup) -> list[str]:
+    """Few communes with contrast (team review): the two highest and two lowest measured
+    levels, plus every Zona B commune with a station. Only measured communes qualify."""
+    measured = np.flatnonzero(setup.measured)
+    order = measured[np.argsort(-setup.state.pm25[measured])]
+    chosen = [*order[:2], *order[-2:], *[i for i in measured if setup.in_b[i]]]
+    return [setup.communes.codes[i] for i in dict.fromkeys(int(i) for i in chosen)]
 
 
 def main() -> None:
@@ -330,8 +351,14 @@ def main() -> None:
             "lecturas_hogares": HOUSEHOLD_READINGS,
             "poblacion_sin_banda": "crecimiento_poblacion no tiene banda (p10 = p50 = p90): "
                                    "las mudanzas son flujos esperados, no se sortean.",
-            "aviso": "El modelo v0 responde cuánto mejora la región, no qué comunas ganan más: "
-                     "su patrón espacial no le gana a «el mismo cambio en todas».",
+            "aviso": "El modelo de aire responde cuánto mejora la región, no qué comunas ganan "
+                     "más: su patrón espacial no le gana a «el mismo cambio en todas». Las "
+                     "diferencias de nivel entre comunas solo son medidas donde hay estación.",
+            "nivel_base": "medido: nivel anclado a la estación de la comuna (modelo + residuo "
+                          "2023); modelado: comunas sin estación, solo el modelo. Los cambios "
+                          "por política son modelados en ambos casos.",
+            "comunas_destacadas": "Regla fija: las dos de mayor y las dos de menor nivel "
+                                  "medido, más las de la Zona B con estación.",
             "supuestos": ASSUMPTIONS,
         },
         "variables": [
@@ -342,11 +369,13 @@ def main() -> None:
         "comunas": [
             {"codigo": code, "nombre": name, "lat": float(lat), "lon": float(lon),
              "zona_ppda": "B" if b else "A", f"poblacion_{POP_START_YEAR}": int(p0),
+             "nivel_base": "medido" if med else "modelado",
              "base": {VARIABLE: round(float(c), 3), POP_VARIABLE: 0.0}}
-            for code, name, lat, lon, b, c, p0 in zip(
+            for code, name, lat, lon, b, c, p0, med in zip(
                 communes.codes, communes.names, communes.lat, communes.lon, in_b, state.pm25,
-                pop_start, strict=True)
+                pop_start, setup.measured, strict=True)
         ],
+        "comunas_destacadas": featured_communes(setup),
         "tipos_hogar": [
             {"id": "sensible-aire", "nombre": "Sensible a la contaminación",
              "pesos": {VARIABLE: 0.8, POP_VARIABLE: 0.2}},
