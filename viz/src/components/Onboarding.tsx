@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import logoRoot from '../assets/logo-root.png'
 import { GRADOS, LARGO_CASO, PERFILES, prioridadesDe, type Perfil, type PerfilId } from '../lib/onboarding'
 import type { VariableCorta } from '../lib/variables'
 
@@ -60,7 +61,9 @@ export function Onboarding({ variables, onListo }: Props) {
     <div className={`onb${saliendo ? ' onb-saliendo' : ''}`} role="dialog" aria-modal="true" aria-label="Antes de empezar">
       <div className="onb-marco">
         <header className="onb-cabeza">
-          <p className="onb-marca">root</p>
+          <p className="onb-marca">
+            <img src={logoRoot} alt="root" />
+          </p>
           <ol className="onb-pasos" aria-label={`Paso ${paso + 1} de 3`}>
             {[0, 1, 2].map((i) => (
               <li key={i} className={i === paso ? 'onb-paso-actual' : i < paso ? 'onb-paso-hecho' : undefined} />

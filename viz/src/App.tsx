@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Anios, ControlesMapa, Leyenda } from './components/Marco'
+import logoRoot from './assets/logo-root.png'
 import { Mapa } from './components/Mapa'
 import type { Cinta, Encuadre } from './components/MapaPapel'
 import { VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
@@ -738,10 +739,10 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           <h1 className="marca">
             {inicio ? (
               <a href={inicio} title="Volver al inicio">
-                root
+                <img src={logoRoot} alt="root" />
               </a>
             ) : (
-              'root'
+              <img src={logoRoot} alt="root" />
             )}
           </h1>
           <div className="cabecera-meta">

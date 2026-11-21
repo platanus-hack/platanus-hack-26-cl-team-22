@@ -209,13 +209,13 @@ body.sim-on .site-header {
   }
 }
 
-/* Velo de salida hacia el simulador: el papel de viz/ (#fafaf7). Keep in sync with VELO_MS in simulador.ts. */
+/* Velo de salida hacia el simulador: el papel de viz/ (--papel, #e8efee). Keep in sync with VELO_MS in simulador.ts. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: #fafaf7;
+  background: #e8efee;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
