@@ -2,6 +2,8 @@
 
 Estado al 21 de noviembre de 2026. Este plan reparte el trabajo en frentes que avanzan
 en paralelo. Complementa `work-plan.md` (roles y horas) y las observaciones al whitepaper.
+El contexto base del proyecto (decisiones, modelo, datos, validación, demo) está en
+[`contexto-proyecto.md`](./contexto-proyecto.md).
 
 ## La decisión de arquitectura
 
@@ -56,10 +58,10 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 | Frente | Qué construye | Entrega | Depende de | Estado | Quién |
 |---|---|---|---|---|---|
 | 1. Datos de aire | Mediciones de PM2,5 por estación, 2017 a 2024 | `data/aire/*.csv` | Nada | Hecho |  |
-| 2. Emisiones y comunas | Emisiones por comuna y fuente; tabla de las 52 comunas | `data/emisiones/`, `data/comunas_rm.csv` | Nada | En curso |  |
-| 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Libre |  |
+| 2. Emisiones y comunas | Emisiones por comuna y fuente; tabla de las 52 comunas | `data/emisiones/`, `data/comunas_rm.csv` | Nada | Hecho |  |
+| 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Por empezar | Massiel |
 | 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Libre |  |
-| 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario inicial en curso |  |
+| 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario hecho (`docs/politicas-aire.md`); falta catálogo y credibilidad |  |
 | 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Por empezar | Jesús |
 | 7. Validación y experimentos | Ajuste y prueba separados, comparación con alternativas simples, réplicas | `results/`, y escribe `simulacion.json` real | 6 | Por empezar |  |
 | 8. Interfaz | Mapa de la región, control de tiempo, interruptores de políticas, ficha de comuna | `viz/` | Solo el contrato | Puede empezar hoy | Gabriel |
@@ -67,6 +69,93 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 
 Los frentes 3, 4 y 5 no dependen de nadie y el modelo los necesita. Son los mejores para
 tomar ahora.
+
+## Por dónde empieza cada uno
+
+### Jesús: frente 6, el modelo
+
+Es el código de la simulación en `core/`. Orden de construcción:
+
+1. **Aire acoplado por la cuenca.** Entradas ya disponibles en `data/aire/` (mediciones por
+   estación) y, cuando termine el frente 2, `data/emisiones/` y `data/comunas_rm.csv`.
+   `experiments/prueba_brecha.py` tiene una versión de tamizaje del acople entre comunas
+   que sirve como punto de partida, no como modelo final.
+2. **Flujos de hogares por tipo**, cuando Massiel entregue las matrices del censo.
+3. **Seguridad**, solo si queda tiempo.
+
+Lo primero que necesita la interfaz es que el modelo escriba `simulacion.json` con la
+forma del contrato de arriba, aunque sea solo con aire.
+
+### Massiel: frente 3, censo y mudanzas
+
+Entrega tablas limpias en `data/censo/`, con el script de descarga en `datos/censo/` y un
+README con fuente, fecha y vacíos:
+
+1. **Matriz de mudanzas 2019 a 2024**: del Censo 2024, comuna de residencia actual contra
+   comuna de residencia hace 5 años, para las 52 comunas de la región.
+2. **Matriz de mudanzas 2012 a 2017**: lo mismo del Censo 2017.
+3. **Viviendas y población por comuna** en ambos censos, para el tope de viviendas.
+
+Formato sugerido de cada matriz: una fila por par, con columnas `codigo_origen`,
+`codigo_destino`, `personas`. Los códigos de comuna son los de cinco dígitos (13101 es
+Santiago), los mismos que usa `viz/public/geo/comunas_rm.geojson`.
+
+Por comprobar al empezar: si el INE publica esas matrices ya tabuladas por comuna o hay
+que construirlas desde los microdatos.
+
+### Gabriel: frente 8, la interfaz
+
+Trabaja en la rama `feat/viz-interfaz` con el ejemplo de `viz/ejemplo/simulacion.json`.
+
+
+## Resultado de la prueba de la brecha (21 nov)
+
+Se corrió `python -m experiments.prueba_brecha` con emisiones 2023 del RETC y las medias
+anuales de 10 estaciones. Es un modelo de tamizaje, no el modelo final.
+
+| Escenario | Cambio medio (µg/m³) | Brecha entre comunas | Orden conservado (Spearman) |
+|---|---|---|---|
+| Leña -50 % en toda la región | -5,7 | 18,1 → 14,4 | 0,97 |
+| Transporte -20 % en toda la región | -1,8 | 18,1 → 16,2 | 0,99 |
+| Todas las fuentes -20 % | -4,3 | 18,1 → 14,5 | 1,00 |
+| Cierra la industria de Renca | -0,2 | 18,1 → 17,9 | 1,00 |
+| Proyecto nuevo de 108 t/año en Tiltil | +0,2 | 18,1 → 18,3 | 1,00 |
+| Sin leña en las 5 comunas que más emiten | -4,4 | 18,1 → 15,8 | 0,98 |
+
+Qué significa:
+
+- **El orden entre comunas casi no cambia.** El titular de la demo no puede ser "el ranking
+  se reordena". Pasa a ser la trayectoria de cada comuna y de qué depende.
+- **Los proyectos locales pesan muy poco** (±0,2 µg/m³). Un proyecto del SEIA como shock de
+  la demo no se va a notar.
+- **La leña es la palanca**: es el 60 % de las emisiones reguladas (leña, transporte,
+  industria).
+
+Cuánto confiar: poco. El ajuste explica el 55 % de la diferencia entre estaciones, eligió
+la escala máxima permitida (40 km, toda la cuenca como una sola caja) y las emisiones no
+calzan con lo medido: la leña se quema en la periferia (Paine, Lampa, Buin) y el aire peor
+está en El Bosque, Cerro Navia y Pudahuel. **Un acople solo por distancia no alcanza como
+modelo de aire**; faltan relieve y viento.
+
+### Hallazgo para la demo: la leña y la Zona B
+
+El plan de descontaminación prohíbe la leña en la Zona A (34 comunas urbanas, art. 74). En
+la Zona B (18 comunas periféricas, 15 % de la población) solo restringe los calefactores
+nuevos (art. 75). Según el RETC 2023, el **77 % de las emisiones de leña está en la Zona B**
+(2.487 de 3.218 t).
+
+Pregunta candidata para la demo: **¿qué pasa si la prohibición se extiende a la Zona B?**
+Es una decisión real que no se puede ensayar, y muestra interacción: comunas urbanas
+mejoran por una medida que se ejecuta en otras. La magnitud no se puede afirmar con el
+modelo de tamizaje. Detalle de zonas y artículos en `docs/politicas-aire.md`.
+
+### Credibilidad: hay datos medida por medida
+
+El informe de avance de la SMA 2024 agrega por categoría; el detalle por medida está en un
+anexo Excel que no se pudo obtener. Sí hay una revisión encargada por la SEREMI RM
+(ECOS-Chile, 2023) que evalúa 157 medidas una por una: 24 % conformes, 21 % parciales y
+55 % sin evidencia pública. Es la base para calcular la credibilidad con datos reales.
+
 
 ## Orden y cortes
 

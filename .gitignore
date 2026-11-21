@@ -21,3 +21,6 @@ llm-logs/*.jsonl
 # Secrets and local config
 .env
 .claude/settings.local.json
+
+# Descargas originales: pesan cientos de MB, se regeneran con los scripts de datos/
+data/raw/

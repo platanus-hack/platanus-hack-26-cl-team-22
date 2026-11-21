@@ -98,7 +98,11 @@ def cargar_emisiones(comunas: list[str]) -> tuple[np.ndarray, int, list[str]]:
     anios = sorted({int(f["anio"]) for f in filas if (f.get("anio") or "").strip().isdigit()})
     if not anios:
         sys.exit("El archivo de emisiones no trae la columna anio con valores.")
-    anio = anios[-1]
+    # Año más reciente que trae las tres fuentes reguladas por comuna.
+    fuentes_por_anio = {a: {_norm(f.get("fuente", "")) for f in filas if f["anio"] == str(a)}
+                        for a in anios}
+    completos = [a for a in anios if {"lena", "transporte", "industria"} <= fuentes_por_anio[a]]
+    anio = (completos or anios)[-1]
     indice = {_norm(c): i for i, c in enumerate(comunas)}
     matriz = np.zeros((len(comunas), len(FUENTES)))
     sin_calce: set[str] = set()
@@ -198,6 +202,8 @@ def main() -> None:
     comunas, xy_comunas = cargar_comunas()
     emis, anio_emis, sin_calce = cargar_emisiones(comunas)
     estaciones, xy_est, obs, anio_obs = cargar_estaciones(anio_emis)
+    # Incendios, quemas y polvo ('otras') no responden a las medidas del plan: fuera del total.
+    emis[:, FUENTES.index("otras")] = 0.0
     total = emis.sum(axis=1)
 
     print(f"Comunas con coordenadas: {len(comunas)} | emisiones {anio_emis} | "
