@@ -1,0 +1,15 @@
+{
+  "name": "servidor-guia",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Intermediary between the simulator and the Claude API: reads the person's case and words the guide. The API key lives only here.",
+  "engines": { "node": ">=23.6" },
+  "scripts": {
+    "start": "node servidor.ts",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.12.0"
+  }
+}

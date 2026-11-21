@@ -35,7 +35,8 @@ import {
 import { variableCorta } from './lib/variables'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
-import { explicar, PERFILES } from './lib/onboarding'
+import { explicar, GRADOS, PERFILES } from './lib/onboarding'
+import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -121,6 +122,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const [onb, setOnb] = useState(() => !new URLSearchParams(window.location.search).has('directo'))
   const [busqueda, setBusqueda] = useState<Busqueda | null>(null)
   const [guiaIA, setGuiaIA] = useState<{ cargando: boolean; texto?: string } | null>(null)
+  // Lectura del caso por Claude: ajustes propuestos que la persona puede apagar uno por uno.
+  const [lecturaCaso, setLecturaCaso] = useState<{ cargando: boolean; r?: Interpretacion; apagados: Set<string>; base: Record<string, number> } | null>(null)
   const pedido = useRef(0)
   const onbRef = useRef(onb)
   onbRef.current = onb
@@ -495,27 +498,17 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const referenciaNorma =
     data.impacto?.norma !== undefined ? { valor: data.impacto.norma, texto: `norma ${fmt(data.impacto.norma, 0)} ${u}` } : undefined
 
-  const terminarEntrada = (b: Busqueda) => {
-    const r = calcularRiesgo(filasDe(idx), data.variables, b.prioridades)
-    const top = r.filas.filter((f) => f.indice !== null).slice(0, 3)
-    setPesos(b.prioridades)
-    setPerfilId(PERSONALIZADO)
-    setCapa(GENERAL)
-    setVistaIdx(0)
-    if (top[0]) setSeleccionada(top[0].codigo)
-    setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
-    setBusqueda(b.perfil === 'explorar' ? null : b)
-    setOnb(false)
-    setGuiaIA(null)
-    const n = ++pedido.current
+  /** Pide a Claude que redacte la guía de las comunas que quedan primeras con estas prioridades. */
+  const pedirGuiaPara = (b: Busqueda, prioridades: Record<string, number>, n: number) => {
     const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
     const perfil = PERFILES.find((x) => x.id === b.perfil)
     if (!url || !b.contexto || !perfil) return
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.filter((f) => f.indice !== null).slice(0, 3)
     setGuiaIA({ cargando: true })
     void pedirGuia(url, {
       perfil: perfil.titulo,
       contexto: b.contexto,
-      prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, b.prioridades[v.id] ?? 0])),
+      prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, prioridades[v.id] ?? 0])),
       anio,
       falta: perfil.falta,
       top: top.map((f) => ({
@@ -533,15 +526,86 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       setGuiaIA(g ? { cargando: false, texto: g.texto } : null)
     })
   }
+
+  /** Aplica unas prioridades: ordena, elige la primera comuna y la deja seleccionada. */
+  const aplicarPrioridades = (prioridades: Record<string, number>) => {
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.find((f) => f.indice !== null)
+    setPesos(prioridades)
+    if (top) setSeleccionada(top.codigo)
+  }
+
+  const terminarEntrada = (b: Busqueda) => {
+    aplicarPrioridades(b.prioridades)
+    setPerfilId(PERSONALIZADO)
+    setCapa(GENERAL)
+    setVistaIdx(0)
+    setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
+    setBusqueda(b.perfil === 'explorar' ? null : b)
+    setOnb(false)
+    setGuiaIA(null)
+    setLecturaCaso(null)
+    const n = ++pedido.current
+    const perfil = PERFILES.find((x) => x.id === b.perfil)
+    const urlCaso = urlGuia(import.meta.env.VITE_CASO_URL as string | undefined)
+    if (!urlCaso || !b.contexto || !perfil || b.perfil === 'explorar') return pedirGuiaPara(b, b.prioridades, n)
+    // Primero Claude lee el caso y propone ajustes; el índice ordena con ellos; después se redacta la guía.
+    setLecturaCaso({ cargando: true, apagados: new Set(), base: b.prioridades })
+    void pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: perfil.titulo, prioridades: b.prioridades }).then((r) => {
+      if (n !== pedido.current) return
+      if (!r) {
+        setLecturaCaso(null)
+        return pedirGuiaPara(b, b.prioridades, n)
+      }
+      const nuevas = aplicarAjustes(b.prioridades, r)
+      setLecturaCaso({ cargando: false, r, apagados: new Set(), base: b.prioridades })
+      aplicarPrioridades(nuevas)
+      pedirGuiaPara(b, nuevas, n)
+    })
+  }
+
+  /**
+   * Enciende o apaga un ajuste propuesto por Claude y vuelve a ordenar. Parte de las prioridades actuales, así
+   * que conserva lo que la persona movió a mano; la guía de Claude hablaba de otro orden y vuelve la propia.
+   */
+  const alternarAjuste = (variable: string) => {
+    const ajuste = lecturaCaso?.r?.ajustes.find((a) => a.variable === variable)
+    if (!lecturaCaso || !ajuste) return
+    const apagados = new Set(lecturaCaso.apagados)
+    const encender = apagados.has(variable)
+    if (encender) apagados.delete(variable)
+    else apagados.add(variable)
+    setLecturaCaso({ ...lecturaCaso, apagados })
+    aplicarPrioridades({ ...pesos, [variable]: encender ? ajuste.grado : (lecturaCaso.base[variable] ?? pesos[variable] ?? 5) })
+    pedido.current++
+    setGuiaIA(null)
+  }
+  const textoGrado = (g: number) => GRADOS.find((x) => x.valor === g)?.texto ?? String(g)
+  const ajustesGuia =
+    lecturaCaso?.r?.ajustes.map((a) => ({
+      variable: a.variable,
+      texto: `${cortas.find((v) => v.id === a.variable)?.nombre ?? a.variable}: ${textoGrado(a.grado)}`,
+      cita: a.cita,
+      activo: !lecturaCaso.apagados.has(a.variable),
+    })) ?? []
+  const notasGuia = lecturaCaso?.r
+    ? [
+        ...lecturaCaso.r.indicadores.map((k) => `Conviene mirar: ${INDICADORES[k].toLowerCase()}.`),
+        ...(lecturaCaso.r.no_medido.length > 0 ? [`El modelo no mide ${lecturaCaso.r.no_medido.map((k) => NO_MEDIDO[k]).join(', ')}.`] : []),
+      ]
+    : []
   const perfilBusqueda = busqueda ? PERFILES.find((x) => x.id === busqueda.perfil) : undefined
   const guia =
     busqueda && perfilBusqueda
       ? {
           titulo: perfilBusqueda.titulo,
-          texto: guiaIA?.texto ?? (guiaIA?.cargando ? 'Leyendo tu caso…' : explicar(riesgo, cortas, pesos, nombre, perfilBusqueda.falta)),
-          cargando: !!guiaIA?.cargando,
+          texto: guiaIA?.texto ?? (guiaIA?.cargando || lecturaCaso?.cargando ? 'Leyendo tu caso…' : explicar(riesgo, cortas, pesos, nombre, perfilBusqueda.falta)),
+          cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
           porIA: !!guiaIA?.texto,
           onCambiar: () => setOnb(true),
+          leyendo: !!lecturaCaso?.cargando,
+          ajustes: ajustesGuia,
+          notas: notasGuia,
+          onAlternarAjuste: alternarAjuste,
         }
       : null
 
@@ -573,6 +637,9 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         pesos={pesos}
         onPerfil={(id) => {
           setPerfilId(id)
+          // otro perfil: una lectura del caso todavía en camino ya no aplica
+          pedido.current++
+          setLecturaCaso((l) => (l?.cargando ? null : l))
           const t = data.tipos_hogar.find((x) => x.id === id)
           if (t) setPesos(aPrioridades(t.pesos))
         }}
@@ -582,6 +649,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           // el texto de Claude hablaba de otro orden: vuelve la explicación propia
           pedido.current++
           setGuiaIA(null)
+          setLecturaCaso((l) => (l?.cargando ? null : l))
         }}
         guia={guia}
         riesgo={riesgo}
