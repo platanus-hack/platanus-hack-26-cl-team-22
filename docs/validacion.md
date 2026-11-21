@@ -64,3 +64,23 @@ Avisos:
 - Transporte 2017 usa el inventario 2023 (el RETC no lo trae antes); ninguna medida vigente lo toca, así que no mueve el cambio simulado.
 - 9 estaciones: no alcanza para afirmar significancia estadística.
 - La escala del kernel quedó en el borde de la grilla (toda la cuenca como una caja): el acople entre comunas es casi uniforme.
+
+## Riesgo hídrico contra los decretos de escasez
+
+24 de 52 comunas tuvieron un decreto de escasez de la DGA entre
+2008 y 2023. Los años de un modelo climático no son años reales, así que la prueba compara
+comunas, no años: ¿el riesgo del modelo pone primero a las comunas con decreto? Se mide con el
+AUC (0,5 = azar, 1 = las ordena perfecto). El indicador del modelo se eligió antes de ver el
+resultado: cambio de la frecuencia de sequía (drought_periods, ssp245,
+2041-2060, mediana entre réplicas).
+
+| Ordena por | AUC |
+|---|---|
+| Modelo: más aumento de la frecuencia de sequía | 0,60 |
+| Fuera de la provincia de Santiago | 0,92 |
+| Menos lluvia modelada en 1991-2020 | 0,12 |
+
+Resultado: **el modelo no le gana a una alternativa simple**. Los decretos son actos administrativos: probablemente dependen también de
+la exposición (riego, agua de pozo, comunas rurales) y no solo del clima, y 15 de 186 se dictaron
+para una provincia completa. El riesgo climático del motor mide cuánto cambia el clima de cada
+comuna, no cuán expuesta está hoy.

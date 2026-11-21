@@ -71,3 +71,19 @@ def test_air_hindcast_is_reproducible(hindcast):
 def test_weather_widens_the_band(hindcast):
     model = hindcast["modelo"]
     assert model["ancho_banda_con_residuo_ugm3"] > model["ancho_banda_ugm3"]
+
+
+def test_auc_ranks_and_counts_ties_as_half():
+    labels = np.array([1, 1, 0, 0])
+    assert validar.auc(np.array([4.0, 3.0, 2.0, 1.0]), labels) == pytest.approx(1.0)
+    assert validar.auc(np.array([1.0, 2.0, 3.0, 4.0]), labels) == pytest.approx(0.0)
+    assert validar.auc(np.array([1.0, 1.0, 1.0, 1.0]), labels) == pytest.approx(0.5)
+
+
+def test_water_check_labels_the_24_communes_with_a_dga_decree():
+    report = validar.water_vs_decrees(replicas=40)
+    assert report["comunas"] == 52
+    assert report["con_decreto"] == 24
+    assert set(report["auc"]) == {"modelo", "fuera_provincia_santiago", "precipitacion_base"}
+    assert all(0.0 <= v <= 1.0 for v in report["auc"].values())
+    assert report["gana"] in {"modelo", "fuera_provincia_santiago", "precipitacion_base", "empate"}
