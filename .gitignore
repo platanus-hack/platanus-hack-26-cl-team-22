@@ -28,3 +28,6 @@ llm-logs/*.jsonl
 
 # Descargas originales: pesan cientos de MB, se regeneran con los scripts de datos/
 data/raw/
+
+# Agent skill registry (generated)
+.atl/
