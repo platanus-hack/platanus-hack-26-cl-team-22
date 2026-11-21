@@ -81,7 +81,8 @@ make test       # 112 pruebas del núcleo y de los datos
 make simulate   # calibra, simula y escribe viz/datos/simulacion.json (~15 s)
 ```
 
-Para ver el resultado en el mapa en relieve (la interfaz de `viz/`, no la landing de `web/`):
+El sitio publicado es la landing de `web/` con la interfaz de `viz/` dentro, en `simulador/`: `npm run build`
+en `web/` construye las dos. Para ver solo el resultado en el mapa en relieve (la interfaz de `viz/`):
 
 ```bash
 cd viz

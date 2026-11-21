@@ -2375,3 +2375,21 @@ body:has(.estado) {
   font-size: var(--t-xs);
   color: var(--tinta-2);
 }
+.marca a {
+  color: inherit;
+  text-decoration: none;
+}
+.marca a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.08em;
+}
+/* Llegada desde la landing: la escena aparece desde el papel, sin corte. */
+.escena {
+  animation: escena-entra 700ms var(--ease) both;
+}
+@keyframes escena-entra {
+  from {
+    opacity: 0;
+  }
+}

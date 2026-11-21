@@ -57,6 +57,8 @@ const CORTES_OCUPACION: readonly number[] = [85, 90, 95, 100, 105]
 const VARIABLE_OCUPACION = { id: 'ocupacion_vivienda', nombre: 'Ocupación de la vivienda', unidad: '% de la capacidad', mejor: 'menor' as const }
 
 const ESPERA_DEMO_MS = 45_000
+/** Dirección de la landing cuando el simulador se publica junto a ella (la fija web/scripts/incluir-simulador.mjs). */
+const inicio = (import.meta.env.VITE_INICIO_URL as string | undefined) === '../' ? '../' : null
 const PASO_DEMO_MS = 3_200
 const PASO_JUGAR_MS = 900
 
@@ -733,7 +735,15 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
 
       <section className="columna" aria-label="Lectura de la simulación" inert={onb}>
         <header className="cabecera">
-          <h1 className="marca">root</h1>
+          <h1 className="marca">
+            {inicio ? (
+              <a href={inicio} title="Volver al inicio">
+                root
+              </a>
+            ) : (
+              'root'
+            )}
+          </h1>
           <div className="cabecera-meta">
             {data.meta.es_ejemplo ? (
               <p className="etiqueta-ejemplo">Datos de ejemplo</p>

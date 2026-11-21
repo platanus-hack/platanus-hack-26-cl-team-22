@@ -76,6 +76,14 @@ a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.
   tarda más de 12 s o responde otra cosa, queda la explicación propia.
 - Lo que escribe la persona sale de la página solo en ese pedido; sin `VITE_GUIA_URL` no sale nunca.
 
+### Junto a la landing
+
+`web/` (la landing) y `viz/` se publican como un solo sitio: `npm run build` en `web/` construye la landing,
+construye esta interfaz con `VITE_INICIO_URL=../` y la copia a `web/dist/simulador`
+(`web/scripts/incluir-simulador.mjs`). En la landing, «Entrar a Santiago» hace volar el globo hasta la región y
+abre `simulador/`; aquí, la marca «root» vuelve a la landing. Para probar el paso en desarrollo, correr esta
+interfaz con `npm run dev -- --port 5174` y la landing con `npm run dev` (su `.env.development` apunta a ese puerto).
+
 ### Cómo correrla
 
 ```bash
