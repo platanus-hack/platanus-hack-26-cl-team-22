@@ -66,7 +66,15 @@ def test_plants_without_commune_are_kept_with_coordinates():
     assert orphans and all(r["latitud"] and r["longitud"] for r in orphans)
 
 
-@pytest.mark.parametrize("source", ["dga", "energia", "sma"])
+def test_seia_has_every_project_once_with_rm_cuts():
+    rows = read("data/seia/proyectos_rm.csv")
+    manifest = json.loads((ROOT / "data/seia/manifest.json").read_text(encoding="utf-8"))
+    assert len(rows) == len({r["expediente_id"] for r in rows}) == manifest["proyectos"]
+    codes = {c for r in rows for c in r["codigos_comuna"].split(";") if c}
+    assert codes <= RM
+
+
+@pytest.mark.parametrize("source", ["seia", "dga", "energia", "sma"])
 def test_manifest_records_url_date_and_hash(source):
     manifest = json.loads((ROOT / f"data/{source}/manifest.json").read_text(encoding="utf-8"))
     assert manifest["archivos"]
