@@ -31,6 +31,7 @@ def test_winner_is_the_lowest_error_and_close_errors_tie():
 
 def test_air_fit_and_test_years_do_not_overlap():
     assert set(validar.AIR_TRAIN_YEARS).isdisjoint(validar.AIR_TEST_YEARS)
+    assert validar.AIR_KERNEL_FIT_YEAR in validar.AIR_TRAIN_YEARS
     assert set(validar.AIR_ATYPICAL_YEARS).isdisjoint(validar.AIR_TEST_YEARS)
     assert max(validar.AIR_TRAIN_YEARS) == validar.AIR_ORIGIN < min(validar.AIR_TEST_YEARS)
 
@@ -53,6 +54,10 @@ def test_air_model_without_execution_is_persistence(hindcast):
     assert zero["rmse_ugm3"] == pytest.approx(hindcast["sin_cambio"]["rmse_ugm3"])
 
 
+def test_air_kernel_used_by_the_hindcast_is_fitted_outside_the_test_years(hindcast):
+    assert hindcast["protocolo"]["kernel"]["anio"] not in validar.AIR_TEST_YEARS
+
+
 def test_air_hindcast_scores_only_test_years(hindcast):
     assert {p["anio"] for p in hindcast["pares"]} <= set(validar.AIR_TEST_YEARS)
     assert hindcast["n_pares"] == len(hindcast["pares"]) > 0
@@ -65,4 +70,4 @@ def test_air_hindcast_is_reproducible(hindcast):
 
 def test_weather_widens_the_band(hindcast):
     model = hindcast["modelo"]
-    assert model["ancho_banda_con_clima_ugm3"] > model["ancho_banda_ugm3"]
+    assert model["ancho_banda_con_residuo_ugm3"] > model["ancho_banda_ugm3"]

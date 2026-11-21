@@ -11,11 +11,15 @@ Protocol (fixed before looking at the results; constants below):
   executed each year according to their credibility, through the calibrated air model. Each
   station's prediction is its measured 2019 level plus the change the engine simulates for its
   commune from 2019 to the test year. Fit years 2017-2019, test years 2022-2024; 2020 and 2021
-  (pandemic) are neither fitted nor scored.
+  (pandemic) are neither fitted nor scored. The air kernel (scale, background, k) is refitted
+  on 2017 stations with the method of calibrar_aire.py: the simulation's own kernel is fitted
+  on 2023, a test year, so it is reported only as a superseded reading.
+  * "Same change everywhere": every station gets the engine's mean change over the scored
+    stations. If it ties the per-station engine, the spatial pattern is not validated.
   * Persistence: the 2019 level. Trend: least-squares line over 2017-2019, extended.
-  * Engine band: execution uncertainty only. "With weather" adds year-to-year noise whose
-    size is estimated on the fit years only (one-year changes 2017->2018 and 2018->2019 minus
-    the engine's change), never on the test years.
+  * Engine band: execution uncertainty only. The wider band adds the engine's residual error
+    on the fit years (one-year changes 2017->2018 and 2018->2019 minus the engine's change:
+    weather plus whatever the engine does not model), never estimated on the test years.
   * Credibility leak: the PPDA compliance review used for credibility is from 2023, inside the
     test period. The report shows theta = 0 (nothing executed) and theta = 1 (plan as written)
     next to it so the effect of that choice is visible.
@@ -35,10 +39,12 @@ from collections.abc import Mapping
 
 import numpy as np
 
+from core.aire import AirModel, distance_matrix_km, exponential_transfer
 from core.ciclo import Intervention, simulate
 from core.credibilidad import BetaCredibility, Measure, draw_theta
 from core.estado import SOURCES, RegionState
-from experiments.datos_aire import F_ANUAL, F_ESTACIONES, ROOT, load_emissions
+from experiments.calibrar_aire import MODELLED, SCALES_KM, fit, loo_errors
+from experiments.datos_aire import F_ANUAL, F_ESTACIONES, ROOT, load_emissions, load_stations
 from experiments.simular import (
     CONCENTRATION,
     EXECUTOR,
@@ -55,6 +61,7 @@ AIR_ORIGIN = 2019
 AIR_TEST_YEARS = (2022, 2023, 2024)
 AIR_ATYPICAL_YEARS = (2020, 2021)
 AIR_SIM_START = 2017  # initial emissions; the first year with PPDA execution is 2018
+AIR_KERNEL_FIT_YEAR = 2017  # the air kernel is refitted on this year for the hindcast
 AIR_READING = "conservadora"
 REPLICAS = 500
 TIE_TOLERANCE = 0.02  # errors within 2 % of each other count as a tie
@@ -110,14 +117,40 @@ def _station_series() -> tuple[dict[tuple[str, int], float], dict[str, str]]:
     return series, commune
 
 
-def _engine(setup, theta_mode: str, replicas: int) -> np.ndarray:
-    """(replicas, years 2017..2024, communes) PM2.5 from 2017 emissions and the PPDA in force."""
+def fit_kernel(setup, emissions: np.ndarray, year: int) -> tuple[AirModel, dict]:
+    """Air kernel fitted on `year` stations, same method as calibrar_aire.py (LOO scale, NNLS)."""
+    st = load_stations(year)
+    communes = setup.communes
+    total = emissions[:, MODELLED].sum(axis=1)
+
+    def signal(scale_km: float) -> np.ndarray:
+        d = distance_matrix_km(st.lat, st.lon, communes.lat, communes.lon)
+        return exponential_transfer(d, scale_km) @ total
+
+    by_scale = {L: rmse(loo_errors(signal(L), st.pm25)) for L in SCALES_KM}
+    scale = min(by_scale, key=by_scale.get)
+    background, k = fit(signal(scale), st.pm25)
+    transfer = exponential_transfer(distance_matrix_km(communes.lat, communes.lon), scale)
+    air = AirModel(transfer, background, np.where(MODELLED, k, 0.0), None)
+    return air, {"anio": year, "estaciones": len(st.ids), "escala_km": scale,
+                 "fondo_ugm3": round(background, 3), "k_ugm3_por_t": k,
+                 "escala_en_el_borde": scale == max(SCALES_KM)}
+
+
+def _emissions_2017(setup) -> np.ndarray:
     codes = setup.communes.codes
     emissions, _ = load_emissions(codes, AIR_SIM_START)
     transport = SOURCES.index("transport")
     # Transport exists only for 2023 in the RETC; calibrar_aire.py makes the same choice.
     emissions[:, transport] = load_emissions(codes, 2023)[0][:, transport]
-    initial = RegionState(AIR_SIM_START, codes, setup.air.concentration(emissions),
+    return emissions
+
+
+def _engine(setup, air: AirModel, theta_mode: str, replicas: int) -> np.ndarray:
+    """(replicas, years 2017..2024, communes) PM2.5 from 2017 emissions and the PPDA in force."""
+    codes = setup.communes.codes
+    emissions = _emissions_2017(setup)
+    initial = RegionState(AIR_SIM_START, codes, air.concentration(emissions),
                                     setup.communes.population_2017, emissions)
     mean = READINGS[AIR_READING]
     credibility = BetaCredibility(mean * CONCENTRATION, (1 - mean) * CONCENTRATION)
@@ -132,7 +165,7 @@ def _engine(setup, theta_mode: str, replicas: int) -> np.ndarray:
         else:
             theta = np.full(len(ivs), {"sin-ejecucion": 0.0, "plan-escrito": 1.0}[theta_mode])
         out[r, 0] = initial.pm25
-        out[r, 1:] = simulate(initial, setup.air, ivs, theta, n_years=n_years, seed=SEED,
+        out[r, 1:] = simulate(initial, air, ivs, theta, n_years=n_years, seed=SEED,
                               replica=r)
     return out
 
@@ -151,8 +184,11 @@ def air_hindcast(replicas: int = REPLICAS) -> dict:
     def change(engine: np.ndarray, sid: str, start: int, end: int) -> np.ndarray:
         return engine[:, t[end], col[sid]] - engine[:, t[start], col[sid]]
 
-    engines = {mode: _engine(setup, mode, replicas)
+    air, kernel = fit_kernel(setup, _emissions_2017(setup), AIR_KERNEL_FIT_YEAR)
+    engines = {mode: _engine(setup, air, mode, replicas)
                for mode in ("historial", "sin-ejecucion", "plan-escrito")}
+    # Superseded: the simulation's kernel, fitted on 2023 (a test year). Reported, not scored.
+    engines["kernel-2023"] = _engine(setup, setup.air, "historial", replicas)
     main = engines["historial"]
 
     # Weather noise from the fit years only: one-year observed change minus the engine's change.
@@ -178,6 +214,15 @@ def air_hindcast(replicas: int = REPLICAS) -> dict:
                 "draws": draws, "median": median}
 
     readings = {mode: reading(engine) for mode, engine in engines.items()}
+    # Same change everywhere: each station gets the engine's mean change over the scored stations
+    # of that year. Uses no observed test value.
+    years = np.array([y for _, y in pairs])
+    delta = readings["historial"]["median"] - origin
+    uniform = origin + np.array([delta[years == y].mean() for y in years])
+    readings["mismo-cambio-en-todas"] = {
+        "rmse_ugm3": round(rmse(uniform - observed), 3),
+        "sesgo_ugm3": round(float(np.mean(uniform - observed)), 3),
+        "draws": None, "median": uniform}
     draws = readings["historial"]["draws"]
     weather = draws + weather_sd * noise
     q_engine = np.quantile(draws, [low, high], axis=1)
@@ -186,16 +231,17 @@ def air_hindcast(replicas: int = REPLICAS) -> dict:
         "rmse_ugm3": readings["historial"]["rmse_ugm3"],
         "sesgo_ugm3": readings["historial"]["sesgo_ugm3"],
         "cobertura_80": round(coverage(observed, *q_engine), 3),
-        "cobertura_80_con_clima": round(coverage(observed, *q_weather), 3),
+        "cobertura_80_con_residuo": round(coverage(observed, *q_weather), 3),
         "ancho_banda_ugm3": round(float(np.mean(q_engine[1] - q_engine[0])), 3),
-        "ancho_banda_con_clima_ugm3": round(float(np.mean(q_weather[1] - q_weather[0])), 3),
+        "ancho_banda_con_residuo_ugm3": round(float(np.mean(q_weather[1] - q_weather[0])), 3),
     }
     return {
         "pregunta": "¿El motor (plan de descontaminación + credibilidad) predice el PM2,5 por "
                     "estación mejor que la persistencia y la tendencia?",
         "protocolo": {"ajuste": list(AIR_TRAIN_YEARS), "origen": AIR_ORIGIN,
                       "prueba": list(AIR_TEST_YEARS), "no_puntuados": list(AIR_ATYPICAL_YEARS),
-                      "lectura_credibilidad": AIR_READING, "replicas": replicas, "semilla": SEED},
+                      "lectura_credibilidad": AIR_READING, "replicas": replicas, "semilla": SEED,
+                      "kernel": kernel},
         "estaciones": stations,
         "n_pares": len(pairs),
         "modelo": model,
@@ -205,7 +251,7 @@ def air_hindcast(replicas: int = REPLICAS) -> dict:
                       "sesgo_ugm3": round(float(np.mean(trend - observed)), 3)},
         "lecturas": {mode: {k: v for k, v in r.items() if k not in ("draws", "median")}
                      for mode, r in readings.items() if mode != "historial"},
-        "clima_sd_ugm3": round(weather_sd, 3),
+        "residuo_ajuste_sd_ugm3": round(weather_sd, 3),
         "pares": [{"estacion": sid, "anio": y, "observado": round(float(o), 2),
                    "modelo": round(float(m), 2), "sin_cambio": round(float(p), 2),
                    "tendencia": round(float(tr), 2)}
@@ -218,7 +264,12 @@ def air_hindcast(replicas: int = REPLICAS) -> dict:
             ("Acertar la baja no prueba que la causa sea el plan: el motor no tiene renovación "
              "del parque vehicular ni clima, que también bajan el PM2,5."),
             "La tendencia usa tres puntos (2017-2019): es frágil.",
+            ("Transporte 2017 usa el inventario 2023 (el RETC no lo trae antes); ninguna medida "
+             "vigente lo toca, así que no mueve el cambio simulado."),
             f"{len(stations)} estaciones: no alcanza para afirmar significancia estadística.",
+            *([("La escala del kernel quedó en el borde de la grilla (toda la cuenca como una "
+               "caja): el acople entre comunas es casi uniforme.")]
+              if kernel["escala_en_el_borde"] else []),
         ],
     }
 
@@ -245,10 +296,11 @@ def collect(air: dict) -> list[dict]:
         _row("Aire", f"PM2,5 por estación {AIR_TEST_YEARS[0]}-{AIR_TEST_YEARS[-1]} desde "
              f"{AIR_ORIGIN} (ajuste {AIR_TRAIN_YEARS[0]}-{AIR_TRAIN_YEARS[-1]})",
              "RMSE µg/m³", m["rmse_ugm3"], air["sin_cambio"]["rmse_ugm3"],
-             air["tendencia"]["rmse_ugm3"], m["cobertura_80_con_clima"],
+             air["tendencia"]["rmse_ugm3"], m["cobertura_80_con_residuo"],
              f"{air['n_pares']} pares, {len(air['estaciones'])} estaciones",
              "python -m experiments.validar",
-             f"Banda del motor sola: {m['cobertura_80']:.0%} (sin clima)."),
+             f"Banda del motor sola: {m['cobertura_80']:.0%}. El mismo cambio en todas las "
+             f"estaciones: {air['lecturas']['mismo-cambio-en-todas']['rmse_ugm3']:.2f}."),
         _row("Hogares", f"Migración neta por comuna {households['prueba']} "
              f"(ajuste {households['ajuste']})", "RMSE personas",
              hh["modelo"]["rmse_personas"], hh["nadie_se_muda"]["rmse_personas"],
@@ -256,9 +308,10 @@ def collect(air: dict) -> list[dict]:
              households["comando"], "Modelo determinista: sin banda."),
         _row("Población", "Población por comuna 2024 desde 2017 (tasas 2012-2017)",
              "RMSE personas", pop["cerrado"]["rmse_personas"], pop["sin_cambio"]["rmse_personas"],
-             pop["ine_crecimiento"]["rmse_personas"], None, "52 comunas", population["comando"],
-             "Tendencia = proyección oficial del INE. Sistema cerrado: no suma nacimientos ni "
-             "llegadas."),
+             None, None, "52 comunas", population["comando"],
+             f"Proyección oficial del INE: {pop['ine_crecimiento']['rmse_personas']:,.0f} "
+             "(no es una tendencia de los años de ajuste). Sistema cerrado: no suma nacimientos "
+             "ni llegadas."),
         _row("Seguridad", "Tasa de delitos 2024 a 1 año (comunas fuera del ajuste)",
              "RMSE log (≈ error relativo)", sec["modelo_1_anio"], sec["persistencia_2023"],
              sec["tendencia_2022_2023"], sec["cobertura_banda_80_1_anio"], "52 comunas",
@@ -296,6 +349,14 @@ def table(rows: list[dict]) -> str:
 
 def document(rows: list[dict], air: dict) -> str:
     m, readings = air["modelo"], air["lecturas"]
+    kernel = air["protocolo"]["kernel"]
+    pattern = winner({"modelo": m["rmse_ugm3"],
+                      "uniforme": readings["mismo-cambio-en-todas"]["rmse_ugm3"]})
+    spatial = ("El patrón entre comunas aporta: el cambio por estación le gana a repartir el "
+               "mismo cambio en todas." if pattern == "modelo" else
+               "**El patrón entre comunas no está validado**: repartir el mismo cambio en todas "
+               "las estaciones predice igual o mejor. El motor acierta la magnitud regional; qué "
+               "comunas ganan más sale del supuesto de acople, no de la prueba.")
     notes = "\n".join(f"- **{r['variable']}** ({r['prueba']}): {r['notas']} Comando: "
                       f"`{r['fuente']}`." for r in rows)
     return f"""# Validación fuera de muestra
@@ -316,27 +377,35 @@ del 80 % de los valores reales.
 
 ## Aire: el motor de la simulación contra la realidad
 
-El protocolo se fijó antes de ver los resultados (constantes al inicio de `experiments/validar.py`).
 Parte de las emisiones de {AIR_SIM_START}, ejecuta las medidas vigentes del plan de
 descontaminación desde 2018 según su credibilidad (lectura {air['protocolo']['lectura_credibilidad']}),
 y suma el cambio simulado entre {AIR_ORIGIN} y cada año de prueba al nivel medido de cada
-estación en {AIR_ORIGIN}. 2020 y 2021 (pandemia) no se ajustan ni se puntúan.
+estación en {AIR_ORIGIN}. 2020 y 2021 (pandemia) no se ajustan ni se puntúan. El kernel de aire
+se reajusta con las estaciones de {kernel['anio']} (escala {kernel['escala_km']:.0f} km, mismo
+método que `calibrar_aire.py`).
 
-| Lectura de la credibilidad | RMSE (µg/m³) | Sesgo (µg/m³) |
+**Corrección del protocolo.** La primera versión usaba el kernel de la simulación, que está
+ajustado con 2023, un año de prueba. Se reemplazó por el de {kernel['anio']} después de ver ese
+primer resultado; el reemplazado queda abajo como referencia, no como resultado.
+
+| Lectura | RMSE (µg/m³) | Sesgo (µg/m³) |
 |---|---|---|
 | Ninguna medida se ejecuta (θ = 0) | {_fmt(readings['sin-ejecucion']['rmse_ugm3'], '')} | {_fmt(readings['sin-ejecucion']['sesgo_ugm3'], '')} |
-| Historial de cumplimiento (la que usa la simulación) | {_fmt(m['rmse_ugm3'], '')} | {_fmt(m['sesgo_ugm3'], '')} |
+| **Historial de cumplimiento (la que usa la simulación)** | {_fmt(m['rmse_ugm3'], '')} | {_fmt(m['sesgo_ugm3'], '')} |
 | Plan tal como está escrito (θ = 1) | {_fmt(readings['plan-escrito']['rmse_ugm3'], '')} | {_fmt(readings['plan-escrito']['sesgo_ugm3'], '')} |
+| El mismo cambio del motor en todas las estaciones | {_fmt(readings['mismo-cambio-en-todas']['rmse_ugm3'], '')} | {_fmt(readings['mismo-cambio-en-todas']['sesgo_ugm3'], '')} |
+| Reemplazado: kernel ajustado con 2023 | {_fmt(readings['kernel-2023']['rmse_ugm3'], '')} | {_fmt(readings['kernel-2023']['sesgo_ugm3'], '')} |
 
 - Con θ = 0 el motor no agrega cambio y coincide con «sin cambio»: toda la ventaja del modelo
   viene de las medidas del plan.
+- {spatial}
 - Sesgo positivo = el modelo predice más contaminación de la que hubo. La lectura usada en la
   simulación no se cambia por este resultado: elegirla mirando los años de prueba sería ajustar
   con la prueba.
 - Banda del motor sola: {m['cobertura_80']:.0%} de cobertura (ancho medio
-  {_fmt(m['ancho_banda_ugm3'], '')} µg/m³). Solo contiene la incertidumbre de ejecución, no la
-  del clima de cada año. Sumando un ruido de clima de {_fmt(air['clima_sd_ugm3'], '')} µg/m³,
-  estimado solo con los años de ajuste, cubre {m['cobertura_80_con_clima']:.0%}.
+  {_fmt(m['ancho_banda_ugm3'], '')} µg/m³). Solo contiene la incertidumbre de ejecución.
+  Sumando el error residual del motor en los años de ajuste ({_fmt(air['residuo_ajuste_sd_ugm3'], '')} µg/m³:
+  clima y lo que el motor no modela), cubre {m['cobertura_80_con_residuo']:.0%}.
 
 Avisos:
 
