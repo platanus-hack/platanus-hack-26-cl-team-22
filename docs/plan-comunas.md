@@ -92,7 +92,7 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 | 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Aire v0 y hogares hechos, escriben `simulacion.json`; falta v1 de aire | Jesús |
 | 7. Validación y experimentos | Ajuste y prueba separados, comparación con alternativas simples, réplicas | `results/`, y escribe `simulacion.json` real | 6 | Por empezar |  |
 | 8. Interfaz | Mapa de la región, control de tiempo, interruptores de políticas, ficha de comuna | `viz/` | Solo el contrato | Puede empezar hoy | Gabriel |
-| 9. Spec, README y pitch | `sim-spec.md` completo, guion de demo, textos de entrega | `docs/`, `README.md` | Avanza con todos | Por empezar |  |
+| 9. Spec, README y pitch | `sim-spec.md` completo, guion de demo, textos de entrega | `docs/`, `README.md` | Avanza con todos | Spec y README hechos; falta guion de demo y textos de entrega (`project-description.md`, `platanus-hack-project.jsonc`) | Massiel |
 
 Los frentes 3, 4 y 5 no dependen de nadie y el modelo los necesita. Son los mejores para
 tomar ahora.
