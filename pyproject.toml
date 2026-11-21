@@ -12,7 +12,7 @@ api = ["fastapi>=0.110", "uvicorn>=0.29", "websockets>=12"]
 datos = ["pandas>=2.2", "openpyxl>=3.1", "requests>=2.32.4"]
 
 [tool.setuptools]
-packages = ["core", "experiments", "datos", "datos.censo", "datos.vitales"]
+packages = ["core", "experiments", "datos", "datos.censo", "datos.vitales", "datos.vivienda"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
