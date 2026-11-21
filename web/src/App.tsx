@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Logo } from "./Logo";
 import { ScrollHint } from "./ScrollHint";
+import { SiteHeader } from "./SiteHeader";
 import { startIntro } from "./intro";
 import type { IntroHandle } from "./intro";
 import { Simulator } from "./simulator/Simulator";
@@ -12,6 +13,7 @@ export function App() {
   const spacerRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const rootsRef = useRef<HTMLCanvasElement>(null);
   const introRef = useRef<IntroHandle | null>(null);
   const [sim, setSim] = useState<Sim | null>(null);
 
@@ -21,7 +23,7 @@ export function App() {
   // Runs right away (the letters can zoom before the globe has loaded) and
   // again once the simulator is ready to take over the period.
   useEffect(() => {
-    const intro = startIntro({ spacer: spacerRef.current!, layer: layerRef.current!, box: boxRef.current!, sim });
+    const intro = startIntro({ spacer: spacerRef.current!, layer: layerRef.current!, box: boxRef.current!, roots: rootsRef.current!, sim });
     introRef.current = intro;
     return intro.dispose;
   }, [sim]);
@@ -30,10 +32,12 @@ export function App() {
     <>
       <div className="intro-spacer" ref={spacerRef} />
       <div className="logo-layer" ref={layerRef}>
+        <canvas className="intro-roots" ref={rootsRef} aria-hidden="true" />
         <Logo ref={boxRef} />
       </div>
       <Simulator onReady={onReady} onHome={onHome} />
       <ScrollHint />
+      <SiteHeader />
     </>
   );
 }

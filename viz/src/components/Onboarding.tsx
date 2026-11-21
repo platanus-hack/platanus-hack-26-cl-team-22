@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import logoRoot from '../assets/logo-root.png'
 import {
   CASOS,
   casoDe,
@@ -30,6 +31,8 @@ export interface Busqueda {
 interface Props {
   variables: VariableCorta[]
   onListo: (b: Busqueda) => void
+  /** Where "Atrás" on the first step goes: the landing, when the simulator was opened from it. */
+  inicio: string | null
 }
 
 const SALIDA_MS = 520
@@ -39,7 +42,7 @@ const orden = (i: number) => ({ '--i': i }) as CSSProperties
  * Entrada en dos pantallas: el caso en texto libre y, a partir de él, los criterios a medir.
  * Los simulados llevan peso y rango; los del caso y los propios se muestran sin número porque no hay datos.
  */
-export function Onboarding({ variables, onListo }: Props) {
+export function Onboarding({ variables, onListo, inicio }: Props) {
   const [paso, setPaso] = useState(0)
   const [atras, setAtras] = useState(false)
   const [contexto, setContexto] = useState('')
@@ -86,7 +89,9 @@ export function Onboarding({ variables, onListo }: Props) {
     <div className={`onb${saliendo ? ' onb-saliendo' : ''}`} role="dialog" aria-modal="true" aria-label="Antes de empezar">
       <div className="onb-marco">
         <header className="onb-cabeza">
-          <p className="onb-marca">root</p>
+          <p className="onb-marca">
+            <img src={logoRoot} alt="root" />
+          </p>
           <ol className="onb-pasos" aria-label={`Paso ${paso + 1} de 2`}>
             {[0, 1].map((i) => (
               <li key={i} className={i === paso ? 'onb-paso-actual' : i < paso ? 'onb-paso-hecho' : undefined} />
@@ -129,6 +134,11 @@ export function Onboarding({ variables, onListo }: Props) {
                 ))}
               </div>
               <div className="onb-pie" style={orden(3)}>
+                {inicio && (
+                  <a className="onb-volver" href={inicio}>
+                    Atrás
+                  </a>
+                )}
                 <button type="button" className="onb-volver" onClick={explorar}>
                   Entrar sin responder
                 </button>

@@ -46,6 +46,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `migracion_neta` | Por comuna: personas que llegan menos las que salen, una posición por año |
 | `promesas` | Comparación aparte (no es un interruptor): muchas promesas con poca ejecución contra pocas con mucha ejecución. Por paquete: valor de planilla, bandas, probabilidad de cumplir la norma por año. Ver `docs/promesas.md` |
 | `origen_aire` | Opcional. Por escenario y comuna: lista de `{origen, fraccion}` con la parte (0 a 1) del PM2,5 de la comuna que aportan las emisiones de cada comuna de origen; puede sumar menos de 1 (el resto es fondo regional) |
+| `transformaciones` | Opcional. Por escenario: descriptor espacio-temporal pareado (`referencia`, `variable`, `tipo`, `max_abs_delta`, `epicentro`, `bbox`, `intensidad_regional` y `comunas_foco` con `delta_p50`, `incertidumbre`, `intensidad`) para transiciones dinámicas del mapa. Ver [`docs/opciones-transformacion-mapa.md`](./opciones-transformacion-mapa.md) |
 
 Reglas del contrato:
 

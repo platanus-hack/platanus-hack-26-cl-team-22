@@ -32,7 +32,14 @@ llm-logs/*.jsonl
 .claude/settings.local.json
 
 # Descargas originales: pesan cientos de MB, se regeneran con los scripts de datos/
-data/raw/
+# Excepción: los ZIPs de licitaciones 2024 se versionan con Git LFS (.gitattributes).
+data/raw/*
+!data/raw/licitaciones/
+data/raw/licitaciones/*
+!data/raw/licitaciones/*.zip
+
+# Agent skill registry (generated)
+.atl/
 
 # Trabajo local del flujo de diseño
 .impeccable/*.log

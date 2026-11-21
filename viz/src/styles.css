@@ -33,8 +33,8 @@ ol {
   margin: 0;
 }
 ::selection {
-  background: var(--nivel-1);
-  color: var(--tinta);
+  background: var(--cafe);
+  color: var(--papel);
 }
 :focus-visible {
   outline: 3px solid var(--tinta);
@@ -1017,7 +1017,7 @@ input[type='range']:disabled {
 }
 .anio:focus-visible {
   outline-offset: -5px;
-  outline-color: var(--nivel-1);
+  outline-color: var(--cafe);
 }
 .anios-pie {
   display: grid;
@@ -2081,6 +2081,13 @@ body:has(.estado) {
   line-height: 0.78;
   letter-spacing: -0.04em;
 }
+/* Official "root." logo (src/assets/logo-root.png): as tall as the old wordmark's ink. */
+.marca img,
+.onb-marca img {
+  display: block;
+  height: calc(var(--t-marca) * 0.74);
+  width: auto;
+}
 .onb-pasos {
   list-style: none;
   padding: 0;
@@ -2110,6 +2117,7 @@ body:has(.estado) {
   --desde: calc(var(--u) * -3);
 }
 .onb-hoja h2 {
+  color: var(--marca);
   font-weight: 800;
   font-size: calc(var(--u) * 5.2);
   line-height: 0.95;
@@ -2176,7 +2184,7 @@ body:has(.estado) {
   translate: 0 calc(var(--u) * -0.6);
   background: var(--tinta);
   color: var(--papel-2);
-  box-shadow: calc(var(--u) * 0.6) calc(var(--u) * 0.6) 0 var(--nivel-1);
+  box-shadow: calc(var(--u) * 0.6) calc(var(--u) * 0.6) 0 var(--acento);
   outline: none;
 }
 .onb-tarjeta:hover b,
@@ -2187,7 +2195,7 @@ body:has(.estado) {
 }
 .onb-tarjeta:active {
   translate: 0 0;
-  box-shadow: 2px 2px 0 var(--nivel-1);
+  box-shadow: 2px 2px 0 var(--acento);
 }
 .onb-variables {
   display: grid;
@@ -2311,7 +2319,7 @@ body:has(.estado) {
 .onb-ejemplo:hover,
 .guia-cambiar:hover {
   color: var(--tinta);
-  text-decoration-color: var(--nivel-1);
+  text-decoration-color: var(--cafe);
 }
 .onb-seguir {
   margin-left: auto;
@@ -2322,18 +2330,18 @@ body:has(.estado) {
   padding: calc(var(--u) * 0.9) calc(var(--u) * 2.2);
   font-size: var(--t-l);
   font-weight: 800;
-  box-shadow: calc(var(--u) * 0.4) calc(var(--u) * 0.4) 0 var(--nivel-1);
+  box-shadow: calc(var(--u) * 0.4) calc(var(--u) * 0.4) 0 var(--acento);
   transition:
     translate 260ms var(--ease),
     box-shadow 260ms var(--ease);
 }
 .onb-seguir:hover:not(:disabled) {
   translate: calc(var(--u) * -0.2) calc(var(--u) * -0.2);
-  box-shadow: calc(var(--u) * 0.6) calc(var(--u) * 0.6) 0 var(--nivel-1);
+  box-shadow: calc(var(--u) * 0.6) calc(var(--u) * 0.6) 0 var(--acento);
 }
 .onb-seguir:active:not(:disabled) {
   translate: calc(var(--u) * 0.2) calc(var(--u) * 0.2);
-  box-shadow: 2px 2px 0 var(--nivel-1);
+  box-shadow: 2px 2px 0 var(--acento);
 }
 .onb-seguir:disabled {
   opacity: 0.35;

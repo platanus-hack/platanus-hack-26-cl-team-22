@@ -87,6 +87,10 @@ a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.
 - El modelo solo redacta: el orden de las comunas lo calcula siempre el índice. Si el intermediario no está,
   tarda más de 12 s o responde otra cosa, queda la explicación propia.
 - Lo que escribe la persona sale de la página solo en ese pedido; sin `VITE_GUIA_URL` no sale nunca.
+- Con `VITE_CASO_URL` (ruta `/interpretar` de `servidor-guia/`), antes de ordenar se le pide a Claude que lea el
+  caso y proponga ajustes de prioridad de un catálogo cerrado (`src/lib/caso.ts`). La persona los ve como
+  «Por lo que contaste: Aire: Clave» y puede apagarlos; el índice recalcula el orden. Detalle en
+  `servidor-guia/README.md`.
 
 ### Junto a la landing
 

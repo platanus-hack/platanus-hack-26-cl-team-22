@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Anios, ControlesMapa, Leyenda } from './components/Marco'
+import logoRoot from './assets/logo-root.png'
 import { Mapa } from './components/Mapa'
 import type { Cinta, Encuadre } from './components/MapaPapel'
 import { VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
@@ -38,7 +39,8 @@ import type { VistaId } from './lib/interaccion'
 import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, type SeccionId } from './lib/pestanas'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
-import { casoDe, explicar, fueraDeRango, resolverLimites } from './lib/onboarding'
+import { casoDe, explicar, fueraDeRango, GRADOS, resolverLimites } from './lib/onboarding'
+import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -61,7 +63,8 @@ const VARIABLE_OCUPACION = { id: 'ocupacion_vivienda', nombre: 'Ocupación de la
 
 const ESPERA_DEMO_MS = 45_000
 /** Dirección de la landing cuando el simulador se publica junto a ella (la fija web/scripts/incluir-simulador.mjs). */
-const inicio = (import.meta.env.VITE_INICIO_URL as string | undefined) === '../' ? '../' : null
+// Link back to the landing: '../' in the published site, the landing's dev server in development (.env.development).
+const inicio = (import.meta.env.VITE_INICIO_URL as string | undefined) || null
 const PASO_DEMO_MS = 3_200
 const PASO_JUGAR_MS = 900
 
@@ -127,6 +130,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   /** rango aceptado por variable (id de la opción); vacío = sin límites */
   const [rangos, setRangos] = useState<Record<string, string>>({})
   const [guiaIA, setGuiaIA] = useState<{ cargando: boolean; texto?: string } | null>(null)
+  // Lectura del caso por Claude: ajustes propuestos que la persona puede apagar uno por uno.
+  const [lecturaCaso, setLecturaCaso] = useState<{ cargando: boolean; r?: Interpretacion; apagados: Set<string>; base: Record<string, number> } | null>(null)
   const pedido = useRef(0)
   const onbRef = useRef(onb)
   onbRef.current = onb
@@ -540,30 +545,26 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     [hayLimites, valoresAnio, limites, data.variables],
   )
 
-  const terminarEntrada = (b: Busqueda) => {
+  /** Comunas que cumplen los rangos de una búsqueda (el estado aún no los tiene cuando se termina la entrada). */
+  const cumplenDe = (b: Busqueda) => {
     const filasAnio = filasDe(idx)
-    const r = calcularRiesgo(filasAnio, data.variables, b.prioridades)
     const lim = resolverLimites(b.rangos, data.variables, filasAnio.map((f) => f.valores))
-    const cumple = new Set(filasAnio.filter((f) => fueraDeRango(f.valores, lim, data.variables).length === 0).map((f) => f.codigo))
-    const top = r.filas.filter((f) => f.indice !== null && cumple.has(f.codigo)).slice(0, 3)
-    setPesos(b.prioridades)
-    setRangos(b.rangos)
-    setPerfilId(PERSONALIZADO)
-    setVistaIdx(0)
-    if (top[0]) setSeleccionada(top[0].codigo)
-    setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
-    const guiada = b.contexto !== '' || b.caso !== 'general' || b.sinDatos.length > 0 || Object.keys(b.rangos).length > 0
-    setBusqueda(guiada ? b : null)
-    setOnb(false)
-    setGuiaIA(null)
-    const n = ++pedido.current
+    return new Set(filasAnio.filter((f) => fueraDeRango(f.valores, lim, data.variables).length === 0).map((f) => f.codigo))
+  }
+
+  /** Pide a Claude que redacte la guía de las comunas que quedan primeras con estas prioridades. */
+  const pedirGuiaPara = (b: Busqueda, prioridades: Record<string, number>, n: number) => {
     const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
     if (!url || !b.contexto) return
+    const cumple = cumplenDe(b)
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades)
+      .filas.filter((f) => f.indice !== null && cumple.has(f.codigo))
+      .slice(0, 3)
     setGuiaIA({ cargando: true })
     void pedirGuia(url, {
       perfil: casoDe(b.caso).titulo,
       contexto: b.contexto,
-      prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, b.prioridades[v.id] ?? 0])),
+      prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, prioridades[v.id] ?? 0])),
       anio,
       falta: b.sinDatos.length > 0 ? `Sin datos en esta versión: ${b.sinDatos.join(', ')}.` : undefined,
       top: top.map((f) => ({
@@ -581,15 +582,89 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       setGuiaIA(g ? { cargando: false, texto: g.texto } : null)
     })
   }
+
+  /** Aplica unas prioridades: ordena, elige la primera comuna que cumple los rangos y la deja seleccionada. */
+  const aplicarPrioridades = (prioridades: Record<string, number>, cumple?: ReadonlySet<string> | null) => {
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.find((f) => f.indice !== null && (!cumple || cumple.has(f.codigo)))
+    setPesos(prioridades)
+    if (top) setSeleccionada(top.codigo)
+  }
+
+  const terminarEntrada = (b: Busqueda) => {
+    const cumple = cumplenDe(b)
+    aplicarPrioridades(b.prioridades, cumple)
+    setRangos(b.rangos)
+    setPerfilId(PERSONALIZADO)
+    setVistaIdx(0)
+    setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
+    const guiada = b.contexto !== '' || b.caso !== 'general' || b.sinDatos.length > 0 || Object.keys(b.rangos).length > 0
+    setBusqueda(guiada ? b : null)
+    setOnb(false)
+    setGuiaIA(null)
+    setLecturaCaso(null)
+    const n = ++pedido.current
+    const urlCaso = urlGuia(import.meta.env.VITE_CASO_URL as string | undefined)
+    if (!urlCaso || !b.contexto) return pedirGuiaPara(b, b.prioridades, n)
+    // Primero Claude lee el caso y propone ajustes; el índice ordena con ellos; después se redacta la guía.
+    setLecturaCaso({ cargando: true, apagados: new Set(), base: b.prioridades })
+    void pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: casoDe(b.caso).titulo, prioridades: b.prioridades }).then((r) => {
+      if (n !== pedido.current) return
+      if (!r) {
+        setLecturaCaso(null)
+        return pedirGuiaPara(b, b.prioridades, n)
+      }
+      const nuevas = aplicarAjustes(b.prioridades, r)
+      setLecturaCaso({ cargando: false, r, apagados: new Set(), base: b.prioridades })
+      aplicarPrioridades(nuevas, cumple)
+      pedirGuiaPara(b, nuevas, n)
+    })
+  }
+
+  /**
+   * Enciende o apaga un ajuste propuesto por Claude y vuelve a ordenar. Parte de las prioridades actuales, así
+   * que conserva lo que la persona movió a mano; la guía de Claude hablaba de otro orden y vuelve la propia.
+   */
+  const alternarAjuste = (variable: string) => {
+    const ajuste = lecturaCaso?.r?.ajustes.find((a) => a.variable === variable)
+    if (!lecturaCaso || !ajuste) return
+    const apagados = new Set(lecturaCaso.apagados)
+    const encender = apagados.has(variable)
+    if (encender) apagados.delete(variable)
+    else apagados.add(variable)
+    setLecturaCaso({ ...lecturaCaso, apagados })
+    aplicarPrioridades({ ...pesos, [variable]: encender ? ajuste.grado : (lecturaCaso.base[variable] ?? pesos[variable] ?? 5) }, dentro)
+    pedido.current++
+    setGuiaIA(null)
+  }
+  const textoGrado = (g: number) => GRADOS.find((x) => x.valor === g)?.texto ?? String(g)
+  const ajustesGuia =
+    lecturaCaso?.r?.ajustes.map((a) => ({
+      variable: a.variable,
+      texto: `${cortas.find((v) => v.id === a.variable)?.nombre ?? a.variable}: ${textoGrado(a.grado)}`,
+      cita: a.cita,
+      activo: !lecturaCaso.apagados.has(a.variable),
+    })) ?? []
+  const notasGuia = lecturaCaso?.r
+    ? [
+        ...lecturaCaso.r.indicadores.map((k) => `Conviene mirar: ${INDICADORES[k].toLowerCase()}.`),
+        ...(lecturaCaso.r.no_medido.length > 0 ? [`El modelo no mide ${lecturaCaso.r.no_medido.map((k) => NO_MEDIDO[k]).join(', ')}.`] : []),
+      ]
+    : []
   const guia = busqueda
     ? {
         titulo: casoDe(busqueda.caso).titulo,
         texto:
           guiaIA?.texto ??
-          (guiaIA?.cargando ? 'Leyendo tu caso…' : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: busqueda.sinDatos })),
-        cargando: !!guiaIA?.cargando,
+          (guiaIA?.cargando || lecturaCaso?.cargando
+            ? 'Leyendo tu caso…'
+            : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: busqueda.sinDatos })),
+        cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
         porIA: !!guiaIA?.texto,
         onCambiar: () => setOnb(true),
+        leyendo: !!lecturaCaso?.cargando,
+        ajustes: ajustesGuia,
+        notas: notasGuia,
+        onAlternarAjuste: alternarAjuste,
       }
     : null
 
@@ -621,6 +696,9 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         pesos={pesos}
         onPerfil={(id) => {
           setPerfilId(id)
+          // otro perfil: una lectura del caso todavía en camino ya no aplica
+          pedido.current++
+          setLecturaCaso((l) => (l?.cargando ? null : l))
           const t = data.tipos_hogar.find((x) => x.id === id)
           if (t) setPesos(aPrioridades(t.pesos))
         }}
@@ -630,6 +708,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           // el texto de Claude hablaba de otro orden: vuelve la explicación propia
           pedido.current++
           setGuiaIA(null)
+          setLecturaCaso((l) => (l?.cargando ? null : l))
         }}
         guia={guia}
         riesgo={riesgo}
@@ -782,17 +861,17 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         </Mapa>
       </main>
 
-      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} />}
+      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} />}
 
       <section className="columna" aria-label="Lectura de la simulación" inert={onb}>
         <header className="cabecera">
           <h1 className="marca">
             {inicio ? (
               <a href={inicio} title="Volver al inicio">
-                root
+                <img src={logoRoot} alt="root" />
               </a>
             ) : (
-              'root'
+              <img src={logoRoot} alt="root" />
             )}
           </h1>
           <div className="cabecera-meta">

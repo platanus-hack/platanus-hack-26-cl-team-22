@@ -1,0 +1,42 @@
+"""ChileCompra public procurement ingestion schema and parsers."""
+from __future__ import annotations
+
+from datos.licitaciones.esquema import (
+    AWARDED_STATUS_CODES,
+    CHILECOMPRA_URL_TEMPLATE,
+    FAILED_STATUS_CODES,
+    MAX_REASONABLE_AMOUNT_CLP,
+    SECTORS,
+    CommuneSectorMetrics,
+    CommuneYearMetrics,
+    TenderLineRecord,
+    aggregate_records,
+    classify_sector,
+    iter_records_from_csv_stream,
+    iter_records_from_zip,
+    load_rm_commune_index,
+    match_rm_commune,
+    normalize_text,
+    parse_chilecompra_date,
+    parse_chilecompra_float,
+)
+
+__all__ = [
+    "AWARDED_STATUS_CODES",
+    "CHILECOMPRA_URL_TEMPLATE",
+    "FAILED_STATUS_CODES",
+    "MAX_REASONABLE_AMOUNT_CLP",
+    "SECTORS",
+    "CommuneSectorMetrics",
+    "CommuneYearMetrics",
+    "TenderLineRecord",
+    "aggregate_records",
+    "classify_sector",
+    "iter_records_from_csv_stream",
+    "iter_records_from_zip",
+    "load_rm_commune_index",
+    "match_rm_commune",
+    "normalize_text",
+    "parse_chilecompra_date",
+    "parse_chilecompra_float",
+]

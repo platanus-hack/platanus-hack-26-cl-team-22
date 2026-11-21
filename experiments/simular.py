@@ -29,6 +29,7 @@ from core.credibilidad import (
 from core.estado import SOURCES, RegionState
 from core.hogares import MigrationModel
 from core.seguridad import GROUPS, CrimeModel, EffectSize, SecurityIntervention, simulate_security
+from core.transformaciones import compute_scenario_transformation, serialize_transformations
 from experiments.datos_aire import ROOT, Communes, load_communes, load_emissions
 from experiments.datos_hogares import load_moves, load_population_dwellings
 
@@ -469,6 +470,47 @@ def main() -> None:
                               "destino": communes.codes[d], "personas": round(float(f[o, d]))})
     net = year_flows.sum(axis=1) - year_flows.sum(axis=2)  # (years, communes)
     oos = households_fit["fuera_de_muestra_2019_2024"]
+
+    base_sc = scenarios[0]
+    base_pm = run(base_sc["politicas_activas"], base_sc["lectura"], base_sc["hogares"])
+    base_sec = run_security(base_sc["politicas_activas"])
+    no_pol_pm = run([], DEFAULT_READING, DEFAULT_HOUSEHOLDS)
+    sec_ids = {sp.id for sp in SECURITY_POLICIES}
+    transformations = []
+    for sc in scenarios:
+        sid = sc["id"]
+        if sid == "base":
+            ref_id, var_id, tipo = "sin-politicas", VARIABLE, "reduccion_emisiones"
+            act_arr, ref_arr = base_pm, no_pol_pm
+        elif any(pid in sec_ids for pid in sc["politicas_activas"]):
+            ref_id, var_id, tipo = "base", SEC_VARIABLE, "seguridad_comunal"
+            act_arr, ref_arr = run_security(sc["politicas_activas"]), base_sec
+        else:
+            ref_id, var_id = "base", VARIABLE
+            if sc["hogares"] != DEFAULT_HOUSEHOLDS:
+                tipo = "acople_hogares"
+            elif sc["lectura"] != DEFAULT_READING:
+                tipo = "comparacion_credibilidad"
+            else:
+                tipo = "reduccion_emisiones"
+            act_arr = run(sc["politicas_activas"], sc["lectura"], sc["hogares"])
+            ref_arr = base_pm
+        transformations.append(
+            compute_scenario_transformation(
+                sid,
+                ref_id,
+                var_id,
+                tipo,
+                "menor",
+                act_arr,
+                ref_arr,
+                communes.codes,
+                communes.lat,
+                communes.lon,
+                espacial=var_id != VARIABLE,  # PM2.5 pattern across communes is not validated
+            )
+        )
+
     output = {
         "meta": {
             "version": "1.0",
@@ -612,6 +654,9 @@ def main() -> None:
             "por_comuna": {code: [round(float(v)) for v in net[:, i]]
                            for i, code in enumerate(communes.codes)},
         },
+        "transformaciones": serialize_transformations(
+            transformations, default_reference="base"
+        ),
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
