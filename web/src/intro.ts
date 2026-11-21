@@ -59,7 +59,7 @@ export function startIntro({ spacer, layer, box, sim }: Elements): IntroHandle {
   const html = document.documentElement;
   const svg = box.querySelector("svg")!;
   const dot = box.querySelector<SVGCircleElement>(".logo-dot")!;
-  const pageColor = getComputedStyle(html).getPropertyValue("--page").trim() || "#EEF1ED";
+  const pageColor = getComputedStyle(html).getPropertyValue("--page").trim() || "#E8EFEE";
   let raf = 0;
   let autoRaf = 0;
   // Read from the page, not assumed: if this controller is re-created after the

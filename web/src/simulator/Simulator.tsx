@@ -46,12 +46,12 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
           </div>
 
           <div className="intro">
-            <h1>Mira hacia dónde va una comuna antes de comprar</h1>
-            <p>Proyectamos el aire y la seguridad de cada comuna a 5, 10 y 30 años, según los planes públicos que la afectan y la probabilidad real de que se cumplan.</p>
+            <h1>¿Quieres invertir a largo plazo?<br />Descubre qué comunas arriesgan tu inversión</h1>
+            <p>Proyectamos el aire y la seguridad de cada comuna hasta 15 años, y te mostramos cuáles se deterioran aunque hoy parezcan buenas.</p>
             <button className="cta" id="cta">Acercar a Santiago</button>
           </div>
 
-          <p className="hint">Arrastra para girar el mundo. Usa la rueda o pellizca para acercarte hasta ver las calles.</p>
+          <p className="hint">Arrastra para girar el mundo. Pellizca para acercarte hasta ver las calles.</p>
 
           <div className="zoom" aria-label="Zoom">
             <button id="zin" aria-label="Acercar">+</button>
