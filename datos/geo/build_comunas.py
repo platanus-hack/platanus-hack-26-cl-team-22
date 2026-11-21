@@ -20,9 +20,9 @@ import os
 import sys
 
 import shapefile  # pyshp
+import shapely
 from shapely.geometry import mapping, shape
 from shapely.validation import make_valid
-import shapely
 
 REGION_RM = "13"
 GRID = 1e-5          # ~1.1 m; redondeo a 5 decimales

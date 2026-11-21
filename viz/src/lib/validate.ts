@@ -221,7 +221,11 @@ export function validarSimulacion(raw: unknown): Resultado {
     const fl: Record<string, Flujo[]> = {}
     for (const [esc, l] of Object.entries(raw.flujos)) {
       if (Array.isArray(l)) {
-        fl[esc] = l.filter((f): f is Flujo => esObj(f) && esNum(f.anio) && esStr(f.origen) && esStr(f.destino) && esNum(f.hogares))
+        fl[esc] = l.flatMap((f): Flujo[] => {
+          if (!esObj(f) || !esNum(f.anio) || !esStr(f.origen) || !esStr(f.destino)) return []
+          const personas = esNum(f.personas) ? f.personas : esNum(f.hogares) ? f.hogares : null
+          return personas === null ? [] : [{ anio: f.anio, origen: f.origen, destino: f.destino, personas }]
+        })
       }
     }
     out.flujos = fl

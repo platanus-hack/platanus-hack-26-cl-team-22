@@ -72,7 +72,8 @@ export interface Flujo {
   anio: number
   origen: string
   destino: string
-  hogares: number
+  /** Personas que se mudan (archivos antiguos lo llamaban `hogares`). */
+  personas: number
 }
 
 /** Parte (0 a 1) del PM2,5 de una comuna que aportan las emisiones de la comuna de origen. */
