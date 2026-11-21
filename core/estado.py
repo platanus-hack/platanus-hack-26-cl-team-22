@@ -6,7 +6,9 @@ from dataclasses import dataclass
 import numpy as np
 
 # Emission sources of the air mechanism (docs/contexto-proyecto.md, section 4).
-SOURCES: tuple[str, ...] = ("heating", "transport", "industry")
+# "other" (wildfires, agricultural burning, dust; RETC "otras") is not targeted by any policy,
+# but it is kept as a source instead of being folded silently into the background.
+SOURCES: tuple[str, ...] = ("heating", "transport", "industry", "other")
 
 
 @dataclass(frozen=True)
