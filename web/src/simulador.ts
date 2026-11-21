@@ -14,7 +14,7 @@ let saliendo = false;
 
 /**
  * Deja que el globo vuele hasta Santiago y, al llegar, cubre la página con el papel del simulador
- * y navega. Con movimiento reducido navega de inmediato.
+ * y navega. Con movimiento reducido navega de inmediato. La intro lo dispara sola al terminar el scroll.
  */
 export function entrarAlSimulador(): void {
   if (saliendo) return;
@@ -30,7 +30,12 @@ export function entrarAlSimulador(): void {
 }
 
 // Al volver con el botón "atrás" el navegador puede restaurar la página tal como quedó: se limpia el velo.
-window.addEventListener("pageshow", () => {
+// La intro siempre parte desde el logo, así que una página restaurada tal como quedó se vuelve a cargar.
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted) {
+    location.reload();
+    return;
+  }
   saliendo = false;
   document.body.classList.remove("saliendo", "velo");
 });
