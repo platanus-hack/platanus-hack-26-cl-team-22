@@ -42,6 +42,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `flujos` | Por escenario: hogares que se mudan entre dos comunas en un año |
 | `impacto` | Por escenario: personas que viven en comunas sobre la norma anual de PM2,5 (p10, p50, p90 por año) |
 | `validacion` | Error del modelo contra datos reales y contra alternativas simples |
+| `promesas` | Comparación aparte (no es un interruptor): muchas promesas con poca ejecución contra pocas con mucha ejecución. Por paquete: valor de planilla, bandas, probabilidad de cumplir la norma por año. Ver `docs/promesas.md` |
 
 Reglas del contrato:
 
@@ -50,7 +51,7 @@ Reglas del contrato:
 
 ### Archivo real (v0, 21 nov)
 
-`viz/datos/simulacion.json`, generado con `python -m experiments.simular` (determinista: la
+`viz/datos/simulacion.json`, generado con `make simulate` (calibración, promesas y simulación, en ese orden; determinista: la
 misma corrida da el mismo archivo). Diferencias con el ejemplo que la interfaz debe saber:
 
 - **La variable es `pm25_anual`, no `pm25_invierno`.** El modelo v0 es anual. La interfaz

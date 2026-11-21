@@ -16,12 +16,19 @@ import numpy as np
 
 from core.aire import AirModel, distance_matrix_km, exponential_transfer
 from core.ciclo import Intervention, simulate
-from core.credibilidad import DEFAULT_RHO, BetaCredibility, Measure, draw_theta
+from core.credibilidad import (
+    DEFAULT_RHO,
+    DEFAULT_RHO_THETA,
+    BetaCredibility,
+    Measure,
+    draw_theta,
+)
 from core.estado import SOURCES, RegionState
-from experiments.datos_aire import ROOT, load_communes, load_emissions
+from experiments.datos_aire import ROOT, Communes, load_communes, load_emissions
 
 OUTPUT = ROOT / "viz" / "datos" / "simulacion.json"
 CALIBRATION = ROOT / "results" / "aire_calibracion.json"
+PROMISES = ROOT / "results" / "promesas.json"
 
 SEED = 22
 REPLICAS = 500
@@ -56,7 +63,9 @@ ASSUMPTIONS = [
     "Turning off a policy in force means no further progress from the 2023 level, not a rebound.",
     ("Credibility of every PPDA measure comes from the ECOS-Chile (2023) base rate; partial "
      "measures count as half; the Beta concentration (10) is an assumption."),
-    f"Measures of the same executor fail together (one-factor copula, rho = {DEFAULT_RHO}).",
+    (f"Measures of the same executor fail together in the same year (rho = {DEFAULT_RHO}) and "
+     f"share part of their credibility (rho_theta = {DEFAULT_RHO_THETA}); both are one-factor "
+     "copulas."),
     ("The -30 % for large establishments (arts. 57-58) is applied to all declared industry: an "
      "upper bound."),
     "Population is held at the 2024 census; households do not move yet.",
@@ -121,7 +130,18 @@ def build_scenarios() -> list[dict]:
     return scenarios
 
 
-def main() -> None:
+@dataclass(frozen=True)
+class Setup:
+    communes: Communes
+    in_b: np.ndarray
+    masks: dict[str, np.ndarray]
+    air: AirModel
+    state: RegionState
+    calibration: dict
+
+
+def load_setup() -> Setup:
+    """Communes, PPDA zones, calibrated air model and the initial state (2023 emissions)."""
     communes = load_communes()
     n = len(communes.codes)
     zona_b_keys = {_key(name) for name in ZONA_B}
@@ -132,10 +152,6 @@ def main() -> None:
     masks = {"A": ~in_b, "B": in_b, "todas": np.ones(n, dtype=bool)}
 
     emissions, _ = load_emissions(communes.codes, BASE_YEAR)
-    heating_b = emissions[in_b, SOURCES.index("heating")].sum()
-    print(f"Leña {BASE_YEAR}: Zona B {heating_b:.0f} of "
-          f"{emissions[:, SOURCES.index('heating')].sum():.0f} t")
-
     calibration = json.loads(CALIBRATION.read_text(encoding="utf-8"))
     params = calibration["parameters"]
     transfer = exponential_transfer(distance_matrix_km(communes.lat, communes.lon),
@@ -144,6 +160,21 @@ def main() -> None:
                    np.array([params["coefficients_by_source"][s] for s in SOURCES]))
     state = RegionState(BASE_YEAR, communes.codes, air.concentration(emissions),
                         communes.population_2024, emissions)
+    return Setup(communes, in_b, masks, air, state, calibration)
+
+
+def main() -> None:
+    setup = load_setup()
+    communes, in_b, masks, air, state = (setup.communes, setup.in_b, setup.masks, setup.air,
+                                         setup.state)
+    calibration = setup.calibration
+    if not PROMISES.exists():
+        raise SystemExit(f"Missing {PROMISES.relative_to(ROOT)}: run python -m "
+                         "experiments.promesas first (or make simulate)")
+    promises = json.loads(PROMISES.read_text(encoding="utf-8"))
+    n = len(communes.codes)
+    heating = state.emissions[:, SOURCES.index("heating")]
+    print(f"Leña {BASE_YEAR}: Zona B {heating[in_b].sum():.0f} of {heating.sum():.0f} t")
 
     def intervention(policy: Policy, reading: str) -> Intervention:
         # "plan-escrito" overrides theta with 1, so its Beta is never sampled.
@@ -275,6 +306,8 @@ def main() -> None:
             },
             "ajuste_2023": {"estaciones": fit["stations"], "r2": round(fit["r2"], 2)},
         },
+        # Separate comparison, not a toggle scenario: see docs/promesas.md.
+        "promesas": {"fuente": f"results/{PROMISES.name}", **promises},
         "flujos": {sc["id"]: [] for sc in scenarios},
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
