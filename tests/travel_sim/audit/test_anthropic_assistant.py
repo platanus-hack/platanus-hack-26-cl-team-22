@@ -5,7 +5,9 @@ import email
 import http.client
 import io
 import json
+import traceback
 import urllib.error
+import urllib.parse
 import urllib.request
 import urllib.response
 from collections.abc import Mapping
@@ -46,13 +48,16 @@ def _ok_response(content_blocks: list[dict[str, object]]) -> TransportResponse:
 
 
 def _assert_no_secrets_leaked(exc: BaseException) -> None:
-    for text in (str(exc), repr(exc)):
-        assert FAKE_SECRET not in text
-        assert FAKE_SECRET[:12] not in text
-        assert FAKE_BASE_URL not in text
-        assert f"/{FAKE_URL_TOKEN}" not in text
-        assert FAKE_URL_TOKEN not in text
+    formatted_tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    for text in (str(exc), repr(exc), formatted_tb):
+        lowered = text.lower()
+        assert FAKE_SECRET.lower() not in lowered
+        assert FAKE_SECRET[:12].lower() not in lowered
+        assert FAKE_BASE_URL.lower() not in lowered
+        assert f"/{FAKE_URL_TOKEN}".lower() not in lowered
+        assert FAKE_URL_TOKEN.lower() not in lowered
     assert exc.__cause__ is None
+    assert exc.__context__ is None
 
 
 def test_implements_assistant_port() -> None:
@@ -727,3 +732,281 @@ def test_invalid_constructor_and_malformed_response_validation(
     )
     with pytest.raises(AnthropicAssistantError, match="no text content blocks"):
         empty_content.ask("prompt", "rep-0")
+
+
+def test_httperror_with_oversized_body_detaches_cause_context_and_traceback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, FAKE_BASE_URL)
+
+    oversized_body = (
+        f"tok={FAKE_URL_TOKEN} url={FAKE_BASE_URL} key={FAKE_SECRET} ".encode("utf-8")
+        + b"x" * (MAX_RESPONSE_BYTES + 64)
+    )
+
+    def raising_httperror_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        del headers, body, timeout
+        raise urllib.error.HTTPError(
+            url=url,
+            code=502,
+            msg=f"Bad Gateway for {url} ({FAKE_URL_TOKEN})",
+            hdrs=email.message_from_string("Content-Type: text/plain\r\n"),
+            fp=io.BytesIO(oversized_body),
+        )
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=raising_httperror_transport,
+    )
+
+    with pytest.raises(AnthropicAssistantError, match=str(MAX_RESPONSE_BYTES)) as exc_info:
+        assistant.ask("hello", "rep-0")
+
+    exc = exc_info.value
+    assert exc.__cause__ is None
+    assert exc.__context__ is None
+    formatted = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    for surface in (str(exc), repr(exc), repr(exc.__cause__), repr(exc.__context__), formatted):
+        lowered = surface.lower()
+        assert FAKE_URL_TOKEN.lower() not in lowered
+        assert FAKE_BASE_URL.lower() not in lowered
+        assert FAKE_SECRET.lower() not in lowered
+
+    # Also exercise the _urllib_transport HTTPError oversized-body path.
+    real_build_opener = urllib.request.build_opener
+
+    class _OversizedErrorHandler(urllib.request.HTTPSHandler):
+        def https_open(self, req: urllib.request.Request) -> urllib.response.addinfourl:
+            response = urllib.response.addinfourl(
+                io.BytesIO(oversized_body),
+                email.message_from_string("Content-Type: text/plain\r\n"),
+                req.full_url,
+                code=502,
+            )
+            response.msg = f"Bad Gateway for {req.full_url} ({FAKE_URL_TOKEN})"
+            return response
+
+    monkeypatch.setattr(
+        urllib.request,
+        "build_opener",
+        lambda *handlers: real_build_opener(*handlers, _OversizedErrorHandler()),
+    )
+
+    urllib_assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=_urllib_transport,
+    )
+    with pytest.raises(AnthropicAssistantError, match=str(MAX_RESPONSE_BYTES)) as urllib_exc_info:
+        urllib_assistant.ask("hello", "rep-0")
+
+    urllib_exc = urllib_exc_info.value
+    assert urllib_exc.__cause__ is None
+    assert urllib_exc.__context__ is None
+    urllib_formatted = "".join(
+        traceback.format_exception(type(urllib_exc), urllib_exc, urllib_exc.__traceback__)
+    )
+    for surface in (
+        str(urllib_exc),
+        repr(urllib_exc),
+        repr(urllib_exc.__cause__),
+        repr(urllib_exc.__context__),
+        urllib_formatted,
+    ):
+        lowered = surface.lower()
+        assert FAKE_URL_TOKEN.lower() not in lowered
+        assert FAKE_BASE_URL.lower() not in lowered
+        assert FAKE_SECRET.lower() not in lowered
+
+
+@pytest.mark.parametrize(
+    ("secret_key", "base_url", "echo_builder"),
+    [
+        (
+            FAKE_SECRET,
+            FAKE_BASE_URL,
+            lambda _k, _u: f"invalid tok {FAKE_URL_TOKEN.upper()}",
+        ),
+        (
+            FAKE_SECRET,
+            FAKE_BASE_URL,
+            lambda _k, _u: "invalid tok SeCrEt-PrOxY-ToK-54321",
+        ),
+        (
+            "Dummy-Key/Part+1=99",
+            f"https://proxy.example.test/{FAKE_URL_TOKEN}/Sub+Seg",
+            lambda k, _u: f"bad key {urllib.parse.quote(k, safe='').lower()}",
+        ),
+        (
+            "Dummy-Key/Part+1=99",
+            f"https://proxy.example.test/{FAKE_URL_TOKEN}/Sub+Seg",
+            lambda _k, u: f"bad url {urllib.parse.quote(u, safe='').lower()}",
+        ),
+        (
+            "Dummy-Key/Part+1=99",
+            f"https://proxy.example.test/{FAKE_URL_TOKEN}/Sub+Seg",
+            lambda _k, _u: f"bad seg {urllib.parse.quote('Sub+Seg', safe='').upper()}",
+        ),
+    ],
+)
+def test_401_redaction_is_case_insensitive_and_covers_url_encoded_forms(
+    monkeypatch: pytest.MonkeyPatch,
+    secret_key: str,
+    base_url: str,
+    echo_builder: object,
+) -> None:
+    assert callable(echo_builder)
+    monkeypatch.setenv(API_KEY_ENV_VAR, secret_key)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, base_url)
+    echoed = str(echo_builder(secret_key, base_url))
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=lambda url, headers, body, timeout: TransportResponse(
+            status_code=401,
+            body=json.dumps(
+                {"type": "error", "error": {"type": "authentication_error", "message": echoed}}
+            ).encode("utf-8"),
+        ),
+    )
+
+    with pytest.raises(AnthropicAPIError) as exc_info:
+        assistant.ask("hello", "rep-0")
+
+    msg = str(exc_info.value)
+    assert exc_info.value.status_code == 401
+    assert "[REDACTED]" in msg
+    lowered = msg.lower()
+    for forbidden in (
+        secret_key,
+        urllib.parse.quote(secret_key, safe=""),
+        base_url,
+        urllib.parse.quote(base_url, safe=""),
+        FAKE_URL_TOKEN,
+        "sub+seg",
+        urllib.parse.quote("Sub+Seg", safe=""),
+    ):
+        assert forbidden.lower() not in lowered
+    assert exc_info.value.__cause__ is None
+    assert exc_info.value.__context__ is None
+
+
+def test_200_reply_text_echoing_secrets_is_redacted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    secret_key = "Dummy-Key/Echo+42"
+    base_url = f"https://proxy.example.test/{FAKE_URL_TOKEN}/Extra+Seg"
+    monkeypatch.setenv(API_KEY_ENV_VAR, secret_key)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, base_url)
+
+    encoded_url = urllib.parse.quote(base_url, safe="").lower()
+    encoded_seg = urllib.parse.quote("Extra+Seg", safe="").upper()
+    encoded_key = urllib.parse.quote(secret_key, safe="").lower()
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=lambda url, headers, body, timeout: _ok_response(
+            [
+                {
+                    "type": "text",
+                    "text": (
+                        f"ok: tok={FAKE_URL_TOKEN} upper={FAKE_URL_TOKEN.upper()} "
+                        f"url={encoded_url} seg={encoded_seg} key={secret_key.upper()} "
+                        f"enc_key={encoded_key}"
+                    ),
+                }
+            ]
+        ),
+    )
+
+    reply = assistant.ask("hello", "rep-0")
+    assert reply.startswith("ok: ")
+    assert "[REDACTED]" in reply
+    lowered = reply.lower()
+    for forbidden in (
+        FAKE_URL_TOKEN,
+        base_url,
+        encoded_url,
+        "extra+seg",
+        encoded_seg,
+        secret_key,
+        encoded_key,
+    ):
+        assert forbidden.lower() not in lowered
+
+
+@pytest.mark.parametrize(
+    "invalid_base_url",
+    [
+        f"https://proxy.example.test:/{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test:0/{FAKE_URL_TOKEN}",
+        f"http://localhost:/{FAKE_URL_TOKEN}",
+        f"http://localhost:0/{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test./{FAKE_URL_TOKEN}",
+        f"http://localhost./{FAKE_URL_TOKEN}",
+        f"https://.proxy.example.test/{FAKE_URL_TOKEN}",
+        f"https://proxy..example.test/{FAKE_URL_TOKEN}",
+        f"https://.../{FAKE_URL_TOKEN}",
+        f"https://./{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test\\{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test\\@evil.test/{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test\x00/{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test/{FAKE_URL_TOKEN}\r\n",
+        f"https://proxy.example.test/{FAKE_URL_TOKEN}\x1b",
+        f"https://proxy.example.test\x7f/{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test\x85/{FAKE_URL_TOKEN}",
+        f"https://pr\u00f6xy.example.test/{FAKE_URL_TOKEN}",
+        f"https://pr\u043exy.example.test/{FAKE_URL_TOKEN}",
+        f"https://proxy\u200b.example.test/{FAKE_URL_TOKEN}",
+        f"https://proxy\ufeff.example.test/{FAKE_URL_TOKEN}",
+        f"https://user:pass@proxy.example.test/{FAKE_URL_TOKEN}",
+        f"https://user@proxy.example.test/{FAKE_URL_TOKEN}",
+        f"https://@proxy.example.test/{FAKE_URL_TOKEN}",
+        f"https://proxy.example.test/{FAKE_URL_TOKEN}?a=1",
+        f"https://proxy.example.test/{FAKE_URL_TOKEN}?",
+        f"https://proxy.example.test/{FAKE_URL_TOKEN}#frag",
+        f"https://proxy.example.test/{FAKE_URL_TOKEN}#",
+        f"http://remote.example.test/{FAKE_URL_TOKEN}",
+    ],
+)
+def test_validate_base_url_hardened_rejections(
+    monkeypatch: pytest.MonkeyPatch,
+    invalid_base_url: str,
+) -> None:
+    monkeypatch.setenv(API_KEY_ENV_VAR, FAKE_SECRET)
+    monkeypatch.setenv(BASE_URL_ENV_VAR, invalid_base_url)
+
+    transport_called = False
+
+    def spy_transport(
+        url: str,
+        headers: Mapping[str, str],
+        body: bytes,
+        timeout: float,
+    ) -> TransportResponse:
+        nonlocal transport_called
+        del url, headers, body, timeout
+        transport_called = True
+        return _ok_response([{"type": "text", "text": "ok"}])
+
+    assistant = AnthropicAssistant(
+        "claude-sonnet-4-20250514",
+        transport=spy_transport,
+    )
+
+    with pytest.raises(AnthropicAssistantError) as exc_info:
+        assistant.ask("hello", "rep-0")
+
+    assert not transport_called
+    msg = str(exc_info.value)
+    assert "proxy.example.test" not in msg
+    assert "remote.example.test" not in msg
+    assert "evil.test" not in msg
+    assert "user" not in msg
+    assert "frag" not in msg
+    _assert_no_secrets_leaked(exc_info.value)
