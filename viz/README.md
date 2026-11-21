@@ -77,7 +77,7 @@ Pensada para escritorio 16:9 y 16:10 (1920×1080, 1440×900, 1280×720), sin des
 | Tecla | Qué hace |
 |---|---|
 | `1` … `3` (`4`) | Vistas: Riesgo, El plan, La leña y, si el archivo trae `validacion`, La prueba |
-| `Q` `W` `E` `R` … | Pega o despega la política de esa tira (la letra está impresa en cada tira) |
+| `Q` `W` `E` `R` … | Enciende o apaga el plan de esa fila en El plan (la letra está impresa en cada fila) |
 | `←` `→` | Año anterior o siguiente |
 | `Espacio` | Reproduce o pausa los años |
 | `D` | En El plan, alterna el mapa entre valor y diferencia frente al escenario de referencia |
