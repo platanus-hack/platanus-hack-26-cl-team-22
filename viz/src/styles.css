@@ -1357,3 +1357,52 @@ body:has(.estado) {
   font-size: var(--t-xs);
   color: var(--tinta-2);
 }
+
+/* ---------- Veredicto: el dato dice algo ---------- */
+.sello {
+  display: inline-block;
+  justify-self: start;
+  padding: calc(var(--u) * 0.22) calc(var(--u) * 0.65);
+  font-weight: 800;
+  font-size: var(--t-s);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.sello-riesgo { background: var(--nivel-4); color: var(--nivel-txt-4); }
+.sello-limite { background: var(--nivel-1); color: var(--nivel-txt-1); }
+.sello-cumple { background: var(--pol-3); color: var(--pol-txt-3); }
+.veredicto-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+.veredicto .sello {
+  font-size: var(--t-m);
+}
+.veredicto-futuro {
+  font-size: var(--t-s);
+  margin-top: calc(var(--u) * 0.3);
+}
+.cuenca-lectura .veredicto {
+  margin-top: calc(var(--u) * 0.2);
+}
+.cuenca-lectura .veredicto p {
+  margin-top: 0;
+}
+.cuenca-lectura .veredicto .veredicto-futuro {
+  margin-top: calc(var(--u) * 0.3);
+  font-weight: 600;
+}
+.detalle .veredicto {
+  margin-bottom: calc(var(--u) * 0.6);
+}
+.detalle .veredicto-futuro {
+  font-weight: 600;
+}
+.tag-mapa .sello {
+  font-size: var(--t-xs);
+  margin: 0.15em 0 0.1em;
+}

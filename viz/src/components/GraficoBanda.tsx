@@ -73,7 +73,7 @@ export function GraficoBanda({ anios, serie, comparacion, idxAnio, unidad, refer
       {referencia && (
         <g>
           <line x1={M.l} x2={W - M.r} y1={y(referencia.valor)} y2={y(referencia.valor)} className="g-ref" />
-          <text x={M.l + 6} y={y(referencia.valor) - 6} textAnchor="start" className="g-txt g-txt-ref">
+          <text x={M.l + 6} y={y(referencia.valor) < M.t + 18 ? y(referencia.valor) + 16 : y(referencia.valor) - 6} textAnchor="start" className="g-txt g-txt-ref">
             {referencia.texto}
           </text>
         </g>

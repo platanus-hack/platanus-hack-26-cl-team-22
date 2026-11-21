@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { Estado, Veredicto } from '../lib/estado'
 import { rutaRodela } from '../lib/feston'
 
 /**
@@ -124,7 +125,22 @@ export interface Etiqueta {
   unidad?: string
   /** clase de papel del dato (nivel-3, mejora-2, zona-a…) */
   clase?: string
+  /** veredicto frente a la norma, si aplica */
+  estado?: { id: Estado; texto: string }
   lineas: string[]
+}
+
+/** Veredicto directo: el sello de color dice el estado y al lado va el porqué. */
+export function Sello({ v, futuro = true }: { v: Veredicto; futuro?: boolean }) {
+  return (
+    <div className="veredicto">
+      <p className="veredicto-fila">
+        <b className={`sello sello-${v.estado}`}>{v.titulo}</b>
+        <span>{v.razon}</span>
+      </p>
+      {futuro && v.futuro && <p className="veredicto-futuro">{v.futuro}</p>}
+    </div>
+  )
 }
 
 /** Tarjeta que sigue al puntero sobre el mapa: nombre, dato grande con su color y hasta dos líneas. */
@@ -132,6 +148,7 @@ export function TarjetaMapa({ e, x, y, ancho }: { e: Etiqueta; x: number; y: num
   return (
     <div className="tag-mapa" role="tooltip" style={{ left: x + 18, top: y + 18, transform: x > ancho * 0.62 ? 'translateX(calc(-100% - 36px))' : undefined }}>
       <b>{e.titulo}</b>
+      {e.estado && <span className={`sello sello-${e.estado.id}`}>{e.estado.texto}</span>}
       {e.valor && (
         <span className="tag-valor">
           {e.clase && <i className={`tag-muestra ${e.clase}`} />}

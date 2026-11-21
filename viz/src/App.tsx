@@ -11,6 +11,7 @@ import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, vistasDisponibles } from './lib/interaccion'
 import { leerLena, type Zona } from './lib/lena'
+import { estadoAire, TEXTO_ESTADO } from './lib/estado'
 import { claseFondo } from './lib/fondo'
 import { nivel, tablaPara } from './lib/niveles'
 import type { Etiqueta } from './components/Papel'
@@ -364,7 +365,8 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     if (!p) return { titulo, lineas: ['Sin dato'] }
     const lineas = [`Banda ${fmt(p.p10, 1)}–${fmt(p.p90, 1)} · ${anio}`]
     if (norma !== undefined) lineas.push(p.p50 > norma ? `${fmtSigned(p.p50 - norma)} sobre la norma` : `${fmt(norma - p.p50, 1)} bajo la norma`)
-    return { titulo, valor: fmt(p.p50, 1), unidad: u, clase, lineas }
+    const est = norma !== undefined && variable.mejor === 'menor' ? estadoAire(p.p50, norma) : undefined
+    return { titulo, valor: fmt(p.p50, 1), unidad: u, clase, estado: est && { id: est, texto: TEXTO_ESTADO[est] }, lineas }
   }
   const nombreAccesible = (f: GeoFeature) => {
     const t = textoComuna(f)

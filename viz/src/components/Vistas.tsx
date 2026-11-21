@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
+import { SIN_CAMBIO, veredictoComuna } from '../lib/estado'
 import { fmt, fmtBanda, fmtPct, fmtSigned } from '../lib/format'
 import { TECLAS_POLITICA, textoBanda, veredicto, type ResumenDif } from '../lib/interaccion'
 import type { Lena } from '../lib/lena'
@@ -9,7 +10,7 @@ import type { ResumenOrigen } from '../lib/origen'
 import type { Ranking } from '../lib/scoring'
 import type { Aporte, Banda, Comuna, Escenario, Politica, TipoHogar, Validacion, Variable } from '../lib/types'
 import { GraficoBanda } from './GraficoBanda'
-import { Cifras, ClaveGrafico, Rodela, type Cifra } from './Papel'
+import { Cifras, ClaveGrafico, Rodela, Sello, type Cifra } from './Papel'
 import { TiraPolitica } from './TiraPolitica'
 
 const plural = (n: number, uno: string, varios: string) => `${fmt(n, 0)} ${n === 1 ? uno : varios}`
@@ -58,6 +59,10 @@ export function VistaCuenca(p: CuencaProps) {
   const cruce = p.punto ? cruceBanda(p.punto, p.cortes) : null
   const ordenados = [...p.aportes].filter((a) => Math.abs(a.delta_p50_final) > 0).sort((a, b) => Math.abs(b.delta_p50_final) - Math.abs(a.delta_p50_final))
   const maxAp = Math.max(0.01, ...ordenados.map((a) => Math.abs(a.delta_p50_final)))
+  const veredicto =
+    p.punto && p.grafico?.referencia && p.variable.mejor === 'menor'
+      ? veredictoComuna(p.grafico.serie.p50, p.grafico.anios, p.grafico.idxAnio, p.grafico.referencia.valor, p.punto)
+      : null
   return (
     <div className="v-cuenca">
       <h2 className="v-titulo">{p.comuna.nombre}</h2>
@@ -75,22 +80,20 @@ export function VistaCuenca(p: CuencaProps) {
               <p className="banda-grande">
                 {fmt(p.punto.p10, 1)}–{fmt(p.punto.p90, 1)} {u}
               </p>
-              <p className="chips">
-                <span className={`chip nivel-${papelNivel(n ?? 0, p.cortes)}`}>
-                  Nivel {(n ?? 0) + 1} de {p.cortes.length + 1}
-                </span>
-                {p.grafico?.referencia && (
-                  <span className="chip">
-                    {p.punto.p50 > p.grafico.referencia.valor
-                      ? `${fmtSigned(p.punto.p50 - p.grafico.referencia.valor)} sobre la norma`
-                      : `${fmt(p.grafico.referencia.valor - p.punto.p50, 1)} bajo la norma`}
+              {veredicto ? (
+                <Sello v={veredicto} />
+              ) : (
+                <p className="chips">
+                  <span className={`chip nivel-${papelNivel(n ?? 0, p.cortes)}`}>
+                    Nivel {(n ?? 0) + 1} de {p.cortes.length + 1}
                   </span>
-                )}
-                {cruce && <span className="chip">puede llegar a {textoNivel(cruce.nivel, p.cortes)}</span>}
-              </p>
+                  {cruce && <span className="chip">puede llegar a {textoNivel(cruce.nivel, p.cortes)}</span>}
+                </p>
+              )}
               <p className="nota">
                 Mediana y banda p10–p90, {p.anio}
                 {p.replicas ? ` · ${fmt(p.replicas, 0)} réplicas` : ''}
+                {veredicto && p.grafico?.referencia ? ` · riesgo: sobre la norma anual de ${fmt(p.grafico.referencia.valor, 0)} ${u}` : ''}
               </p>
             </>
           ) : (
@@ -387,6 +390,13 @@ export function VistaComuna(p: ComunaProps) {
     lista.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest' })
   }, [p.seleccionada, p.ranking])
 
+  const veredicto =
+    p.detalle && p.referencia && p.variable.mejor === 'menor'
+      ? veredictoComuna(p.detalle.serie.p50, p.anios, p.idxAnio, p.referencia.valor, {
+          p10: p.detalle.serie.p10[p.idxAnio] ?? NaN,
+          p90: p.detalle.serie.p90[p.idxAnio] ?? NaN,
+        })
+      : null
   const cifras: Cifra[] = []
   let top: { nombre: string; indice: number; delta: number } | null = null
   if (p.detalle) {
@@ -401,7 +411,7 @@ export function VistaComuna(p: ComunaProps) {
     if (n >= 2 && s.p50[0] !== undefined && s.p50[n - 1] !== undefined) {
       const d = s.p50[n - 1]! - s.p50[0]!
       const mejora = p.variable.mejor === 'menor' ? d < 0 : d > 0
-      const quieto = Math.abs(d) < 0.05
+      const quieto = Math.abs(d) <= SIN_CAMBIO
       cifras.push({
         etiqueta: `${p.anios[0]} → ${p.anios[n - 1]}`,
         valor: fmtSigned(d),
@@ -489,6 +499,7 @@ export function VistaComuna(p: ComunaProps) {
               </span>
             )}
           </h3>
+          {veredicto && <Sello v={veredicto} />}
           <Cifras items={cifras} />
           <ClaveGrafico nivelBanda={p.detalle.nivelBanda} comparacion={p.detalle.comparacion?.nombre} />
           <GraficoBanda
@@ -499,7 +510,7 @@ export function VistaComuna(p: ComunaProps) {
             unidad={u}
             referencia={p.referencia}
             nivelBanda={p.detalle.nivelBanda}
-            alto={122}
+            alto={104}
           />
           {top && (
             <p className="clave-politica">
