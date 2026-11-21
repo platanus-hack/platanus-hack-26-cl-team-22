@@ -21,6 +21,7 @@ results/*
 !results/seguridad_calibracion.json
 !results/poblacion_validacion.json
 !results/vivienda_validacion.json
+!results/redes_validacion.json
 
 # LLM record/replay logs: commit only the ones needed for the demo
 llm-logs/*.jsonl

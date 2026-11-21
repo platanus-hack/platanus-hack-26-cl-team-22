@@ -8,6 +8,8 @@ Outputs in data/censo/:
   poblacion_viviendas.csv  population and dwellings per comuna, both censuses
   flujos_externos.csv      people entering or leaving each RM comuna, both periods
   proyeccion_ine.csv       INE official population projection per comuna, 2017-2035
+  stock_extranjero.csv     foreign-born residents per comuna in 2017, and those who arrived
+                           before 2012 (network rule of the moves simulation)
 Needs pandas, openpyxl, requests and `bsdtar` (the 2017 files are nested RAR archives).
 Never fills gaps: anything missing stays out and is reported in data/censo/README.md.
 """
@@ -33,6 +35,7 @@ from datos.censo.censo import (
     externos_2024,
     matriz_2024,
     pares_2017,
+    stock_extranjero_2017,
     sumar_proyeccion,
 )
 
@@ -69,7 +72,7 @@ FUENTES = {
 PROYECCION_ANIOS = list(range(2017, 2036))
 HEADERS = {"User-Agent": "Mozilla/5.0 (research script; hackathon census data)"}
 
-COLS_P17 = ["COMUNA", "P10", "P10COMUNA", "P11", "P11COMUNA"]
+COLS_P17 = ["COMUNA", "P10", "P10COMUNA", "P11", "P11COMUNA", "P12", "P12A_LLEGADA"]
 # Censo 2017 dwelling type P01: 1-7 private dwellings, 8 collective; 9 and 10 are
 # "operativo personas en tránsito / calle" and are not dwellings.
 P01_VIVIENDA = range(1, 9)
@@ -147,13 +150,18 @@ def csv_2017(archivo: str, interno: str, csv: str, columnas: list[str]):
         sys.exit(f"bsdtar failed while reading {csv} from {archivo}")
 
 
-def mudanzas_2017(codigos: list[int]) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Internal move matrix and external flows 2012-2017, in one pass over the microdata."""
+def mudanzas_2017(codigos: list[int]) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+    """Internal move matrix, external flows 2012-2017 and foreign-born stock, in one pass."""
     partes, externos, residentes_rm, ambiguos = [], [], 0, 0
+    stock: dict[int, list[int]] = {}
     for bloque in csv_2017("csv-personas-censo-2017.zip", "microdato_censo2017-personas.rar",
                            "Microdato_Censo2017-Personas.csv", COLS_P17):
         partes.append(pares_2017(bloque))
         externos.append(externos_2017(bloque))
+        for c, (total, previo) in stock_extranjero_2017(bloque).items():
+            acum = stock.setdefault(c, [0, 0])
+            acum[0] += total
+            acum[1] += previo
         habitual = bloque["COMUNA"].where(bloque["P10"].isin((1, 2)), bloque["P10COMUNA"])
         en_rm = es_comuna_rm(habitual) & bloque["P10"].isin((1, 2, 3))
         residentes_rm += int(en_rm.sum())
@@ -164,7 +172,7 @@ def mudanzas_2017(codigos: list[int]) -> tuple[pd.DataFrame, pd.DataFrame]:
           f"dropped (counted elsewhere, 'this comuna' 5 years ago) = {ambiguos:,}")
     ext = (pd.concat(externos).groupby("codigo")[EXTERNOS].sum()
            .reindex(codigos, fill_value=0).reset_index())
-    return completar_rm(pares, codigos), ext
+    return completar_rm(pares, codigos), ext, stock
 
 
 def viviendas_2017() -> pd.Series:
@@ -201,11 +209,18 @@ def main() -> None:
 
     m24 = completar_rm(matriz_2024(hoja("D5_Migracion-interna.xlsx", "2")), codigos)
     m24[COLUMNAS].to_csv(OUT / "mudanzas_2019_2024.csv", index=False)
-    m17, ext17 = mudanzas_2017(codigos)
+    m17, ext17, stock = mudanzas_2017(codigos)
     m17[COLUMNAS].to_csv(OUT / "mudanzas_2012_2017.csv", index=False)
 
     ext24 = externos_2024(hoja("D5_Migracion-interna.xlsx", "2"))
     nombres = tabla.drop_duplicates("codigo").set_index("codigo")["comuna"]
+    with (OUT / "stock_extranjero.csv").open("w", encoding="utf-8", newline="") as fh:
+        fh.write("codigo,comuna,nacidos_extranjero_2017,llegaron_antes_2012\n")
+        for c in codigos:
+            total, previo = stock.get(c, [0, 0])
+            fh.write(f"{c},{nombres[c]},{total},{previo}\n")
+    print("foreign-born RM 2017:", sum(v[0] for v in stock.values()),
+          "arrived before 2012:", sum(v[1] for v in stock.values()))
     externos = pd.concat([ext17.assign(periodo="2012-2017"), ext24.assign(periodo="2019-2024")])
     externos.insert(1, "comuna", externos["codigo"].map(nombres))
     externos = externos[["codigo", "comuna", "periodo", *EXTERNOS]]
