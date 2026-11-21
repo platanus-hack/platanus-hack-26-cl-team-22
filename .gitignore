@@ -17,6 +17,7 @@ results/*
 !results/aire_calibracion.json
 !results/promesas.json
 !results/hogares_calibracion.json
+!results/poblacion_validacion.json
 
 # LLM record/replay logs: commit only the ones needed for the demo
 llm-logs/*.jsonl
