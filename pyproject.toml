@@ -9,6 +9,7 @@ dependencies = ["numpy>=2.0", "scipy>=1.13"]
 dev = ["pytest>=8", "ruff>=0.6"]
 agents = ["mesa>=3.0"]
 api = ["fastapi>=0.110", "uvicorn>=0.29", "websockets>=12"]
+datos = ["pandas>=2.2", "openpyxl>=3.1", "requests>=2.31"]
 
 [tool.setuptools]
 packages = ["core", "experiments"]
