@@ -21,3 +21,6 @@ llm-logs/*.jsonl
 # Secrets and local config
 .env
 .claude/settings.local.json
+
+# Census raw downloads (hundreds of MB; rebuild with python -m datos.censo.fetch_censo)
+data/raw/censo/
