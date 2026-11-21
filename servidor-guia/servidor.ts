@@ -10,30 +10,60 @@
  */
 import Anthropic from '@anthropic-ai/sdk'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
-import { interpretarCaso, redactarGuia, validarPedidoCaso, type ClienteClaude } from './claude.ts'
+import { interpretarCaso, redactarGuia, validarPedidoCaso, validarPedidoGuia, type ClienteClaude } from './claude.ts'
 
 const LIMITE_CUERPO = 8_000
 const ORIGENES_DEFECTO = ['http://localhost:5173', 'http://localhost:4173']
 
+const DEMASIADO_GRANDE = Symbol('demasiado grande')
+
+/** Parsed JSON body, null if it is not JSON, or DEMASIADO_GRANDE past the byte limit (always resolves). */
 function leerCuerpo(req: IncomingMessage): Promise<unknown> {
   return new Promise((ok) => {
-    let datos = ''
-    req.on('data', (c: Buffer) => {
-      datos += c
-      if (datos.length > LIMITE_CUERPO) {
-        datos = ''
-        req.destroy()
+    const partes: Buffer[] = []
+    let bytes = 0
+    let listo = false
+    const terminar = (v: unknown) => {
+      if (!listo) {
+        listo = true
+        ok(v)
       }
+    }
+    req.on('data', (c: Buffer) => {
+      bytes += c.length
+      if (bytes > LIMITE_CUERPO) {
+        terminar(DEMASIADO_GRANDE)
+        req.pause()
+        return
+      }
+      partes.push(c)
     })
     req.on('end', () => {
       try {
-        ok(JSON.parse(datos))
+        terminar(JSON.parse(Buffer.concat(partes).toString('utf8')))
       } catch {
-        ok(null)
+        terminar(null)
       }
     })
-    req.on('error', () => ok(null))
+    req.on('error', () => terminar(null))
+    req.on('close', () => terminar(null))
   })
+}
+
+/** Fixed one-minute window per client address: enough to stop a script from draining the API key. */
+function crearLimitador(porMinuto: number) {
+  const ventanas = new Map<string, { desde: number; n: number }>()
+  return (quien: string): boolean => {
+    const ahora = Date.now()
+    const v = ventanas.get(quien)
+    if (!v || ahora - v.desde >= 60_000) {
+      ventanas.set(quien, { desde: ahora, n: 1 })
+      if (ventanas.size > 10_000) ventanas.clear()
+      return true
+    }
+    v.n++
+    return v.n <= porMinuto
+  }
 }
 
 function responder(res: ServerResponse, estado: number, cuerpo: unknown) {
@@ -49,7 +79,12 @@ function estadoDeError(e: unknown): number {
 }
 
 /** `obtenerCliente` returns null when there is no API key; the routes then answer 503. */
-export function crearServidor(obtenerCliente: () => ClienteClaude | null, origenes: readonly string[]): Server {
+export function crearServidor(
+  obtenerCliente: () => ClienteClaude | null,
+  origenes: readonly string[],
+  opciones: { pedidosPorMinuto?: number } = {},
+): Server {
+  const permitir = crearLimitador(opciones.pedidosPorMinuto ?? 20)
   return createServer(async (req, res) => {
     const origen = req.headers.origin
     if (origen && origenes.includes(origen)) {
@@ -65,17 +100,28 @@ export function crearServidor(obtenerCliente: () => ClienteClaude | null, origen
     const cliente = obtenerCliente()
     if (!cliente) return responder(res, 503, { error: 'falta ANTHROPIC_API_KEY en el servidor' })
     const cuerpo = await leerCuerpo(req)
+    if (cuerpo === DEMASIADO_GRANDE) {
+      res.setHeader('connection', 'close')
+      return responder(res, 413, { error: 'pedido demasiado grande' })
+    }
+    const pedidoCaso = req.url === '/interpretar' ? validarPedidoCaso(cuerpo) : null
+    const pedidoGuia = req.url === '/guia' ? validarPedidoGuia(cuerpo) : null
+    if (!pedidoCaso && !pedidoGuia) return responder(res, 400, { error: 'pedido no válido' })
+    if (!permitir(req.socket.remoteAddress ?? 'desconocido')) return responder(res, 429, { error: 'demasiados pedidos; espera un minuto' })
+    // If the page gives up (it waits 12-15 s), stop the model call instead of spending tokens on it.
+    const corte = new AbortController()
+    res.on('close', () => {
+      if (!res.writableEnded) corte.abort()
+    })
     try {
-      if (req.url === '/interpretar') {
-        const pedido = validarPedidoCaso(cuerpo)
-        if (!pedido) return responder(res, 400, { error: 'pedido no válido' })
-        const r = await interpretarCaso(cliente, pedido)
+      if (pedidoCaso) {
+        const r = await interpretarCaso(cliente, pedidoCaso, corte.signal)
         return r ? responder(res, 200, r) : responder(res, 502, { error: 'sin interpretación' })
       }
-      if (typeof cuerpo !== 'object' || cuerpo === null) return responder(res, 400, { error: 'pedido no válido' })
-      const g = await redactarGuia(cliente, cuerpo as Parameters<typeof redactarGuia>[1])
+      const g = await redactarGuia(cliente, pedidoGuia!, corte.signal)
       return g ? responder(res, 200, g) : responder(res, 502, { error: 'sin guía' })
     } catch (e) {
+      if (corte.signal.aborted) return
       console.error('Claude API:', e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : e)
       return responder(res, estadoDeError(e), { error: 'falló la llamada al modelo' })
     }
@@ -84,7 +130,8 @@ export function crearServidor(obtenerCliente: () => ClienteClaude | null, origen
 
 if (import.meta.main) {
   const clave = process.env.ANTHROPIC_API_KEY
-  const cliente = clave ? (new Anthropic() as unknown as ClienteClaude) : null
+  // Bounded wait: the page gives up after 12-15 s, so a longer call would only spend tokens.
+  const cliente = clave ? (new Anthropic({ timeout: 20_000, maxRetries: 1 }) as unknown as ClienteClaude) : null
   const origenes = process.env.ORIGENES ? process.env.ORIGENES.split(',').map((s) => s.trim()) : ORIGENES_DEFECTO
   const puerto = Number(process.env.PORT ?? 8787)
   crearServidor(() => cliente, origenes).listen(puerto, () => {

@@ -22,6 +22,14 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 5. La persona ve cada ajuste («Aire: Clave») y puede apagarlo; el orden se recalcula al instante.
 
 Si no hay clave, el modelo rechaza la consulta o algo falla, la página sigue sin ajustes y con su explicación propia.
+
+Protecciones del servidor:
+- Cada pedido se valida antes de llamar a Claude (`/interpretar` y `/guia`). Uno inválido responde 400 sin gastar
+  la clave; uno de más de 8 KB responde 413.
+- Hay un límite de 20 llamadas por minuto por dirección (429 si se pasa). CORS no basta, porque solo frena a los
+  navegadores. Antes de publicarlo, conviene además ponerlo detrás de un límite del proveedor.
+- Las llamadas a Claude esperan como máximo 20 s, con un reintento. Si la página se va (espera 12 a 15 s), la
+  llamada se corta para no gastar tokens.
 Ante un rechazo por política, la API reintenta sola con un modelo de respaldo (`fallbacks: "default"`).
 
 ## Cómo correrlo

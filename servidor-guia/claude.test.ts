@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { MODELO, interpretarCaso, redactarGuia, validarPedidoCaso, type ClienteClaude } from './claude.ts'
+import { MODELO, interpretarCaso, redactarGuia, validarPedidoCaso, validarPedidoGuia, type ClienteClaude } from './claude.ts'
 
 /** Fake Claude client: records the request and answers with a fixed response. */
 function falso(respuesta: { stop_reason?: string; texto?: string }) {
@@ -82,4 +82,17 @@ test('redactarGuia returns one capped paragraph from the model', async () => {
   })
   assert.ok(g && g.texto.length <= 600 && !g.texto.includes('\n'))
   assert.equal((pedidos[0] as Record<string, any>).model, MODELO)
+})
+
+test('validarPedidoGuia accepts the page contract and rejects anything else', () => {
+  const ok = { perfil: 'Comprar una vivienda', contexto: 'mi hijo tiene asma', prioridades: { Aire: 10 }, anio: 2026, top: [] }
+  assert.deepEqual(validarPedidoGuia(ok), ok)
+  assert.equal(validarPedidoGuia({ cualquier: 'cosa' }), null)
+  assert.equal(validarPedidoGuia({ ...ok, contexto: 'x'.repeat(700) }), null)
+  assert.equal(validarPedidoGuia({ ...ok, top: [{ comuna: 'A', riesgo: 'alto', variables: [] }] }), null)
+})
+
+test('redactarGuia discards a guide cut by max_tokens', async () => {
+  const { cliente } = falso({ stop_reason: 'max_tokens', texto: 'María Pinto encabeza porque' })
+  assert.equal(await redactarGuia(cliente, { perfil: 'x', contexto: 'y', prioridades: {}, anio: 2026, top: [] }), null)
 })

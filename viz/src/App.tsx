@@ -36,7 +36,7 @@ import { variableCorta } from './lib/variables'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
 import { explicar, GRADOS, PERFILES } from './lib/onboarding'
-import { aplicarAjustes, INDICADORES, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
+import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -550,7 +550,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     if (!urlCaso || !b.contexto || !perfil || b.perfil === 'explorar') return pedirGuiaPara(b, b.prioridades, n)
     // Primero Claude lee el caso y propone ajustes; el índice ordena con ellos; después se redacta la guía.
     setLecturaCaso({ cargando: true, apagados: new Set(), base: b.prioridades })
-    void pedirInterpretacion(urlCaso, { caso: b.contexto, perfil: perfil.titulo, prioridades: b.prioridades }).then((r) => {
+    void pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: perfil.titulo, prioridades: b.prioridades }).then((r) => {
       if (n !== pedido.current) return
       if (!r) {
         setLecturaCaso(null)
@@ -563,14 +563,21 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     })
   }
 
-  /** Enciende o apaga un ajuste propuesto por Claude y vuelve a ordenar. */
+  /**
+   * Enciende o apaga un ajuste propuesto por Claude y vuelve a ordenar. Parte de las prioridades actuales, así
+   * que conserva lo que la persona movió a mano; la guía de Claude hablaba de otro orden y vuelve la propia.
+   */
   const alternarAjuste = (variable: string) => {
-    if (!lecturaCaso?.r) return
+    const ajuste = lecturaCaso?.r?.ajustes.find((a) => a.variable === variable)
+    if (!lecturaCaso || !ajuste) return
     const apagados = new Set(lecturaCaso.apagados)
-    if (apagados.has(variable)) apagados.delete(variable)
+    const encender = apagados.has(variable)
+    if (encender) apagados.delete(variable)
     else apagados.add(variable)
     setLecturaCaso({ ...lecturaCaso, apagados })
-    aplicarPrioridades(aplicarAjustes(lecturaCaso.base, lecturaCaso.r, apagados))
+    aplicarPrioridades({ ...pesos, [variable]: encender ? ajuste.grado : (lecturaCaso.base[variable] ?? pesos[variable] ?? 5) })
+    pedido.current++
+    setGuiaIA(null)
   }
   const textoGrado = (g: number) => GRADOS.find((x) => x.valor === g)?.texto ?? String(g)
   const ajustesGuia =
@@ -630,6 +637,9 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         pesos={pesos}
         onPerfil={(id) => {
           setPerfilId(id)
+          // otro perfil: una lectura del caso todavía en camino ya no aplica
+          pedido.current++
+          setLecturaCaso((l) => (l?.cargando ? null : l))
           const t = data.tipos_hogar.find((x) => x.id === id)
           if (t) setPesos(aPrioridades(t.pesos))
         }}
@@ -639,6 +649,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           // el texto de Claude hablaba de otro orden: vuelve la explicación propia
           pedido.current++
           setGuiaIA(null)
+          setLecturaCaso((l) => (l?.cargando ? null : l))
         }}
         guia={guia}
         riesgo={riesgo}

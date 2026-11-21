@@ -62,3 +62,31 @@ test('unknown routes are 404', async () => {
     assert.equal((await fetch(`${base}/otra`, { method: 'POST' })).status, 404)
   })
 })
+
+test('an oversized body gets a 413 instead of hanging', async () => {
+  await conServidor(cliente('{}'), async (base) => {
+    const r = await fetch(`${base}/interpretar`, { method: 'POST', headers: { origin: ORIGEN }, body: 'x'.repeat(20_000) })
+    assert.equal(r.status, 413)
+  })
+})
+
+test('POST /guia rejects a body that is not a guide request', async () => {
+  await conServidor(cliente('texto'), async (base) => {
+    const r = await fetch(`${base}/guia`, { method: 'POST', headers: { origin: ORIGEN }, body: JSON.stringify({ cualquier: 'cosa' }) })
+    assert.equal(r.status, 400)
+  })
+})
+
+test('each client gets a limited number of model calls per minute', async () => {
+  const c = cliente(JSON.stringify({ ajustes: [], indicadores: [], no_medido: [] }))
+  const s = crearServidor(() => c, [ORIGEN], { pedidosPorMinuto: 2 })
+  await new Promise<void>((ok) => s.listen(0, '127.0.0.1', ok))
+  const base = `http://127.0.0.1:${(s.address() as AddressInfo).port}`
+  try {
+    const estados = []
+    for (let i = 0; i < 3; i++) estados.push((await fetch(`${base}/interpretar`, { method: 'POST', body: cuerpo })).status)
+    assert.deepEqual(estados, [200, 200, 429])
+  } finally {
+    await new Promise((ok) => s.close(ok))
+  }
+})
