@@ -8,7 +8,7 @@ export type IntroCam = {
   mix: number;
   /** Opacidad del marcador de Santiago (0 a 1). */
   ui: number;
-  tint: Partial<Record<"ocean" | "land" | "border" | "grat", string>>;
+  tint: Partial<Record<"ocean" | "land" | "border" | "grat" | "accent", string>>;
 };
 
 export type SimulatorApi = {

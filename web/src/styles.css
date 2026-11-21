@@ -8,8 +8,9 @@
 }
 
 :root {
-  --bg: #e6e6e6;
-  --fg: #212121;
+  --bg: #092122;
+  --fg: #abcbcc;
+  --dot: #6b3f20;
 }
 
 html,
@@ -76,5 +77,5 @@ html.intro-on::-webkit-scrollbar {
 
 /* Placeholder period until the simulator's globe is drawn on top of it. */
 .logo-dot {
-  fill: var(--fg);
+  fill: var(--dot);
 }

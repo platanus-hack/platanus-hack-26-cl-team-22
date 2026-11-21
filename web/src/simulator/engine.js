@@ -21,7 +21,7 @@ let intro=null;
 // startHidden: no dibujar nada hasta el primer setIntro(). Sin esto, al cargar
 // se alcanza a pintar un cuadro con el globo grande de la vista "Mundo".
 let hidden=!!opts.startHidden;
-const TINT_KEYS=["ocean","land","border","grat"];
+const TINT_KEYS=["ocean","land","border","grat","accent"];
 function tinted(mix){
   const out={...C};
   for(const key of TINT_KEYS) if(intro.tint[key]) out[key]=d3.interpolateRgb(intro.tint[key],C[key])(mix);

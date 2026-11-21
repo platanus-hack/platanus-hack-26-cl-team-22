@@ -1,12 +1,13 @@
 import type { SimulatorApi } from "./simulator/engine";
 
-// Landing colors (keep in sync with --bg / --fg in styles.css).
-const BG = "#e6e6e6";
-const FG = "#212121";
+// Landing colors (keep in sync with --bg / --dot in styles.css).
+const BG = "#092122";
+const DOT = "#6b3f20";
 
-// The globe starts painted like the period it replaces, then fades into the
-// simulator's own palette.
-const TINT = { ocean: FG, land: BG, border: FG, grat: "#3a3a3a" };
+// The globe starts as a flat disc of the dot's color (every layer painted the
+// same, so it reads as a plain circle), then fades into the simulator's own
+// palette as the zoom goes in, revealing the world.
+const TINT = { ocean: DOT, land: DOT, border: DOT, grat: DOT, accent: DOT };
 
 type Elements = {
   spacer: HTMLElement;
@@ -103,7 +104,9 @@ export function startIntro({ spacer, layer, box, sim }: Elements): IntroHandle {
     }px) scale(${s})`;
     svg.style.opacity = String(1 - smooth(0.2, 0.65, p));
 
-    const mix = smooth(0.25, 0.8, p);
+    // The disc dissolves into the world in step with the zoom (a), not the raw
+    // scroll, so it stays a plain circle at the start and is revealed as we go in.
+    const mix = smooth(0.1, 0.9, a);
     document.body.style.background = mixHex(BG, pageColor, mix);
 
     if (sim) {
