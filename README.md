@@ -60,14 +60,19 @@ Detalle y supuestos: [`docs/modelo-aire.md`](docs/modelo-aire.md),
 Cada mecanismo se ajusta con un período y se prueba con otro que no vio, contra alternativas
 simples. También publicamos dónde pierde.
 
-| Prueba fuera de muestra | Modelo | Alternativa simple |
-|---|---|---|
-| Aire: cambio medio 2017 → 2023 | −3,0 µg/m³ | Observado: −3,2 |
-| Aire: niveles 2024, RMSE | 4,29 | Persistencia de 2023: **1,91** (gana la alternativa) |
-| Aire v1: niveles 2024 anclados al nivel medido de cada estación | 1,91 | Persistencia: 1,91 (empate) |
-| Hogares: migración neta 2019→2024, RMSE | **4.335** | Repetir 2012→2017: 5.054 · Nadie se muda: 7.716 |
-| Seguridad: tasa DMCS 2024 a 2 años, error relativo (comunas fuera del ajuste) | **10,8 %** | Persistencia: 12,4 % · Tendencia: 13,1 % |
-| Seguridad: tasa DMCS 2024 a 1 año | 8,5 % | Persistencia: **7,4 %** (gana la alternativa) |
+<!-- validacion:inicio (generado por make validate) -->
+| Variable | Prueba fuera de muestra | Métrica | Modelo | Sin cambio | Tendencia | Cobertura banda 80 % | Gana |
+|---|---|---|---|---|---|---|---|
+| Aire | PM2,5 por estación 2022-2024 desde 2019 (ajuste 2017-2019) | RMSE µg/m³ | 1,92 | 2,40 | 4,24 | 74% | **Modelo** |
+| Hogares | Migración neta por comuna 2019-2024 (ajuste 2012-2017) | RMSE personas | 4.335 | 7.716 | 5.054 | — | **Modelo** |
+| Población | Población por comuna 2024 desde 2017 (tasas 2012-2017) | RMSE personas | 16.904 | 15.046 | 18.391 | — | Sin cambio |
+| Seguridad | Tasa de delitos 2024 a 1 año (comunas fuera del ajuste) | RMSE log (≈ error relativo) | 0,085 | 0,074 | 0,131 | 70% | Sin cambio |
+| Seguridad | Tasa de delitos 2024 a 2 años (comunas fuera del ajuste) | RMSE log (≈ error relativo) | 0,108 | 0,124 | — | 66% | **Modelo** |
+<!-- validacion:fin -->
+
+Un solo comando reproduce la tabla: `make validate` (recalibra y escribe
+[`docs/validacion.md`](docs/validacion.md) y `results/validacion.json`). Las alternativas
+son **sin cambio** (se repite el último valor) y **tendencia** (sigue la línea del ajuste).
 
 El modelo de aire acierta cuánto mejora la región, pero todavía **no qué comunas ganan más**.
 Donde hay estación (10 comunas), el nivel parte de lo medido y el modelo calcula el cambio.
@@ -77,8 +82,9 @@ Más detalle en [`docs/sim-spec.md`](docs/sim-spec.md#validación).
 
 ```bash
 make setup      # crea .venv e instala dependencias
-make test       # 112 pruebas del núcleo y de los datos
+make test       # 179 pruebas del núcleo y de los datos
 make simulate   # calibra, simula y escribe viz/datos/simulacion.json (~15 s)
+make validate   # prueba fuera de muestra contra sin cambio y tendencia -> docs/validacion.md
 ```
 
 Para volver a descargar los datos crudos: `pip install -e ".[datos]"` y correr el script de

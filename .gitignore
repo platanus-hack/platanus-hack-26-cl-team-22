@@ -20,6 +20,7 @@ results/*
 !results/aire_v1_pruebas.json
 !results/seguridad_calibracion.json
 !results/poblacion_validacion.json
+!results/validacion.json
 
 # LLM record/replay logs: commit only the ones needed for the demo
 llm-logs/*.jsonl
