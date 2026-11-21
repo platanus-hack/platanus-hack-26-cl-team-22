@@ -51,7 +51,7 @@ def main() -> None:
     in_sample = score(pops[-1] - pops[0], net_migration(fit))
 
     # Out-of-sample: 2019 origins, 2012->2017 parameters.
-    pops_test, flows_test = model.run(test.sum(axis=1), YEARS)
+    pops_test, _ = model.run(test.sum(axis=1), YEARS)
     predicted = pops_test[-1] - pops_test[0]
     observed = net_migration(test)
     repeat = net_migration(fit)
@@ -84,8 +84,8 @@ def main() -> None:
         },
         "supuestos": [
             "Tasa de salida anual constante: r = 1 - (1 - R5)^(1/5).",
-            "Destinos con las proporciones observadas en 2012-2017; el aire no cambia los "
-            "destinos (no identificable con el censo).",
+            ("Destinos con las proporciones observadas en 2012-2017; el aire no cambia los "
+             "destinos (no identificable con el censo)."),
             "Sistema cerrado: sin nacimientos, muertes ni mudanzas desde o hacia fuera de la RM.",
             "2019-2024 incluye el estallido y la pandemia: parte del error puede ser del período.",
         ],
