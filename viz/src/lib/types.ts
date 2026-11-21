@@ -123,6 +123,12 @@ export interface Impacto {
 export interface BloqueValidacion {
   id: string
   valores: { clave: string; valor: number }[]
+  /** Unidad de los errores del bloque (p. ej. «personas»). Sin ella, la de la variable del mapa. */
+  unidad?: string
+  /** Qué se mide, en una frase. */
+  metrica?: string
+  /** Advertencia honesta sobre la prueba. */
+  aviso?: string
 }
 
 export interface Validacion {

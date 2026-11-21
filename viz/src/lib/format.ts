@@ -50,3 +50,8 @@ export function slug(s: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
+
+/** Decimales para un error de validación: personas enteras, concentraciones con dos decimales. */
+export function decimalesValidacion(unidad: string): number {
+  return unidad === 'personas' ? 0 : 2
+}

@@ -270,6 +270,51 @@ def featured_communes(setup: Setup) -> list[str]:
     return [setup.communes.codes[i] for i in dict.fromkeys(int(i) for i in chosen)]
 
 
+def population_housing_validation() -> dict:
+    """Validation blocks for population (open model) and new housing, if their results exist.
+
+    Read from results/poblacion_validacion.json and results/vivienda_validacion.json, written by
+    experiments/validar_poblacion.py and experiments/validar_vivienda.py.
+    """
+    blocks: dict = {}
+    pop_file = ROOT / "results" / "poblacion_validacion.json"
+    if pop_file.exists():
+        pop = json.loads(pop_file.read_text(encoding="utf-8"))
+        err = pop["errores"]
+        blocks["poblacion"] = {
+            "fuente": "results/poblacion_validacion.json",
+            "comando": pop["comando"],
+            "metrica": "Población por comuna en 2024, proyectada desde el censo 2017 con tasas "
+                       "de 2012-2017",
+            "unidad": "personas",
+            "rmse_modelo": err["abierto"]["rmse_personas"],
+            "rmse_sin_cambio": err["sin_cambio"]["rmse_personas"],
+            "rmse_cerrado": err["cerrado"]["rmse_personas"],
+            "rmse_proyeccion_ine": err["ine_crecimiento"]["rmse_personas"],
+            "total_rm_modelo": err["abierto"]["total_rm_predicho"],
+            "total_rm_real": pop["real"]["total_rm_2024"],
+            "aviso": "Nadie le gana a «sin cambio» en 7 años, tampoco el INE: los nacimientos "
+                     "cayeron 31 % y las salidas a otras regiones subieron.",
+        }
+    housing_file = ROOT / "results" / "vivienda_validacion.json"
+    if housing_file.exists():
+        housing = json.loads(housing_file.read_text(encoding="utf-8"))
+        res = housing["resultados"]["lag_elegido_en_ajuste"]["fuera_de_muestra_2019_2024"]
+        blocks["vivienda"] = {
+            "fuente": "results/vivienda_validacion.json",
+            "comando": housing["comando"],
+            "metrica": "Migración neta por comuna 2019-2024 según a dónde van quienes se mudan",
+            "unidad": "personas",
+            "rmse_modelo": res["proporciones_2012_2017"]["rmse_personas"],
+            "rmse_pivote_permisos": res["pivote_permisos"]["rmse_personas"],
+            "rmse_gravedad_permisos": res["gravedad_permisos"]["rmse_personas"],
+            "rmse_radiacion": res["radiacion"]["rmse_personas"],
+            "aviso": "La vivienda nueva central la ocuparon llegadas desde el extranjero: los "
+                     "permisos no mejoran los destinos de las mudanzas internas.",
+        }
+    return blocks
+
+
 def main() -> None:
     setup = load_setup()
     communes, in_b, masks, air, state = (setup.communes, setup.in_b, setup.masks, setup.air,
@@ -554,8 +599,10 @@ def main() -> None:
                 "rmse_nadie_se_muda": oos["nadie_se_muda"]["rmse_personas"],
                 "rmse_repetir_2012_2017": oos["repetir_2012_2017"]["rmse_personas"],
                 "correlacion_modelo": oos["modelo"]["correlacion"],
+                "unidad": "personas",
                 "aviso": "2019-2024 incluye el estallido y la pandemia.",
             },
+            **population_housing_validation(),
         },
         # Separate comparison, not a toggle scenario: see docs/promesas.md.
         "promesas": {"fuente": f"results/{PROMISES.name}", **promises},

@@ -84,6 +84,7 @@ export function leerImpacto(raw: unknown, nAnios: number): Impacto | undefined {
 /**
  * Clave opcional validacion: bloques (objetos) de números con nombre. Solo se conservan números finitos;
  * un bloque sin ningún número se descarta. Las claves rmse_* son errores comparables dentro del bloque.
+ * Los textos `unidad`, `metrica` y `aviso` de cada bloque se conservan si vienen.
  */
 export function leerValidacion(raw: unknown): Validacion | undefined {
   if (!esObj(raw)) return undefined
@@ -93,7 +94,8 @@ export function leerValidacion(raw: unknown): Validacion | undefined {
     const valores = Object.entries(b)
       .filter((e): e is [string, number] => esNum(e[1]))
       .map(([clave, valor]) => ({ clave, valor }))
-    if (valores.length > 0) bloques.push({ id, valores })
+    const texto = (k: string) => (typeof b[k] === 'string' ? (b[k] as string) : undefined)
+    if (valores.length > 0) bloques.push({ id, valores, unidad: texto('unidad'), metrica: texto('metrica'), aviso: texto('aviso') })
   }
   if (bloques.length === 0) return undefined
   return { fuente: typeof raw.fuente === 'string' ? raw.fuente : undefined, bloques }
