@@ -18,7 +18,7 @@ import {
 } from '../viz/src/lib/caso.ts'
 import { limpiarGuia, type Guia, type PedidoGuia } from '../viz/src/lib/guia.ts'
 
-export const MODELO = 'claude-opus-5-5'
+export const MODELO = 'claude-sonnet-5-5'
 /** On a policy decline the API re-runs the request on a fallback model inside the same call. */
 const FALLBACK = { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }
 
@@ -57,7 +57,7 @@ function texto(r: { content: { type: string; text?: string }[] }): string {
 export async function interpretarCaso(cliente: ClienteClaude, pedido: PedidoCaso, signal?: AbortSignal): Promise<Interpretacion | null> {
   const r = await cliente.beta.messages.create({
     model: MODELO,
-    max_tokens: 4000,
+    max_tokens: 16000,  // adaptive thinking also spends from this cap; only used tokens are billed
     ...FALLBACK,
     // A classification: low effort is enough, and the schema keeps the output in the catalog.
     output_config: { effort: 'low', format: { type: 'json_schema', schema: ESQUEMA_INTERPRETACION } },
@@ -105,7 +105,7 @@ export function validarPedidoGuia(raw: unknown): PedidoGuia | null {
 export async function redactarGuia(cliente: ClienteClaude, pedido: PedidoGuia, signal?: AbortSignal): Promise<Guia | null> {
   const r = await cliente.beta.messages.create({
     model: MODELO,
-    max_tokens: 2000,
+    max_tokens: 16000,
     ...FALLBACK,
     output_config: { effort: 'low' },
     system: [{ type: 'text', text: INSTRUCCIONES_GUIA, cache_control: { type: 'ephemeral' } }],
