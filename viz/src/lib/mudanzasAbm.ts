@@ -331,7 +331,8 @@ export function serieOcupacion(corridas: readonly ResultadoAbm[], comuna: number
 
 /**
  * Map cuts for occupancy, percent of capacity. A comuna counts as full when less than one group
- * fits, so occupancy stays under 100 %; the runs span about 65–100 %.
+ * fits, so medians stay near or under 100 %; births can overfill a full comuna, so single runs
+ * reach about 110 %. The runs span about 65–110 %, and the top level (over 99) holds the overfull.
  */
 export const CORTES_OCUPACION: readonly number[] = [85, 90, 94, 97, 99]
 

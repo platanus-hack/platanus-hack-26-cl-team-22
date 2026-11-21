@@ -93,7 +93,7 @@ export function Leyenda(p: LeyendaProps) {
           </li>
           <li>
             <Muestra clase="nivel-4" />
-            <Muestra clase="nivel-5" /> Casi llena, más de 97
+            <Muestra clase="nivel-5" /> Llena o casi, más de 97
           </li>
           <li>
             <Muestra clase="sin-dato" /> Sin dato

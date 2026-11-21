@@ -262,7 +262,7 @@ describe('estadoOcupacion', () => {
   it('has room otherwise', () => {
     expect(estadoOcupacion(97, 0, 20)).toMatchObject({ estado: 'cumple', titulo: 'Con espacio' })
   })
-  it('uses map cuts inside the range the simulation produces (it never passes 100 %)', () => {
+  it('puts the map cuts where the medians fall, so full and overfull share the top level', () => {
     expect(CORTES_OCUPACION.at(-1)).toBeLessThan(100)
     expect(CORTES_OCUPACION).toContain(97)
   })
