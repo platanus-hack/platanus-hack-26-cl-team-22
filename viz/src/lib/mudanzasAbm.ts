@@ -315,3 +315,35 @@ export function frecuenciaSaturacion(corridas: readonly ResultadoAbm[], hasta: n
   }
   return [...veces].map(([comuna, k]) => ({ comuna, corridas: k })).sort((a, b) => b.corridas - a.corridas || a.comuna - b.comuna)
 }
+
+/** One comuna's occupancy band (percent of capacity) for every year of the runs. */
+export function serieOcupacion(corridas: readonly ResultadoAbm[], comuna: number): { p10: number[]; p50: number[]; p90: number[] } {
+  const out = { p10: [] as number[], p50: [] as number[], p90: [] as number[] }
+  const anios = corridas[0]?.ocupacion.length ?? 0
+  for (let t = 0; t < anios; t++) {
+    const b = bandaOcupacion(corridas, t)[comuna]
+    out.p10.push(b?.p10 ?? NaN)
+    out.p50.push(b?.p50 ?? NaN)
+    out.p90.push(b?.p90 ?? NaN)
+  }
+  return out
+}
+
+/**
+ * Map cuts for occupancy, percent of capacity. A comuna counts as full when less than one group
+ * fits, so occupancy stays under 100 %; the runs span about 65–100 %.
+ */
+export const CORTES_OCUPACION: readonly number[] = [85, 90, 94, 97, 99]
+
+/** Above this occupancy a comuna is close to full even if no run filled it yet. */
+const CASI_LLENA = 97
+
+/**
+ * Status of a comuna from its median occupancy and how many runs filled it by the chosen year:
+ * full when at least half of the runs did; may fill when some run did or it is above 97 %.
+ */
+export function estadoOcupacion(p50: number, vecesLlena: number, corridas: number): { estado: 'riesgo' | 'limite' | 'cumple'; titulo: string } {
+  if (corridas > 0 && vecesLlena * 2 >= corridas) return { estado: 'riesgo', titulo: 'Llena' }
+  if (vecesLlena > 0 || p50 > CASI_LLENA) return { estado: 'limite', titulo: 'Puede llenarse' }
+  return { estado: 'cumple', titulo: 'Con espacio' }
+}
