@@ -70,6 +70,16 @@ tiene. Cada río con nombre trae las comunas por donde pasa, de aguas arriba a a
 `caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el caso «Energía hidráulica» el resumen ofrece un botón directo a esta sección. El caudal no entra
 al índice de riesgo: solo 14 estaciones cumplen el filtro y no hay un valor por comuna.
 
+**«¿Y si sigue la megasequía?»** (`src/lib/aguaSim.ts`): la parte del agua que sí es simulación. Para cada
+escenario se sortean 500 décadas posibles de 2026 a 2036 por remuestreo en bloques de tres años seguidos de
+los años medidos: «Sigue la megasequía» sortea de 2010–2017, «Todo el registro» de 1980–2017 y «Vuelve lo
+normal» de 1980–2009. Los bloques conservan que a un año seco suele seguirle otro, y el mismo año real se usa
+en todas las estaciones de una década, así un año seco lo es en toda la cuenca. La hoja muestra una década
+concreta (se reproduce sola en el mapa con la línea de tiempo; «Otra década posible» cambia a la siguiente)
+sobre la banda p10–p90 de las 500, cuántos de los 11 años quedan en caudal crítico en promedio y en qué parte
+de las décadas hay tres años críticos seguidos. La semilla es fija: los números se repiten. No es un modelo
+climático: supone que la próxima década se parece al período elegido, y la hoja lo dice.
+
 **Unidad del índice** (`src/lib/riesgo.ts`): en cada variable, el riesgo de una comuna es el porcentaje de las
 otras comunas que están mejor que ella en ese año (0 = la mejor, 100 = la peor). El índice general es el promedio
 de esos riesgos, ponderado por la prioridad de 0 a 10 que se le da a cada variable (los perfiles de

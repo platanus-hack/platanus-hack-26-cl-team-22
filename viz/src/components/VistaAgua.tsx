@@ -1,5 +1,6 @@
 import {
   caudalEn,
+  CORTE_CRITICO,
   decimalesCaudal,
   estadoCaudal,
   fraccionNormal,
@@ -12,9 +13,24 @@ import {
   type CauceDato,
   type Estacion,
 } from '../lib/agua'
+import { ESCENARIOS_AGUA, type EscenarioAgua, type ResumenSim } from '../lib/aguaSim'
 import { fmt } from '../lib/format'
 import { Desplegable } from './Desplegable'
 import { IconoJugar } from './Papel'
+
+/** Simulación abierta: el escenario, la década concreta que se reproduce y lo que dicen las 500. */
+export interface SimAgua {
+  escenario: EscenarioAgua
+  /** número de la década mostrada, desde 0 */
+  replica: number
+  replicas: number
+  resumen: ResumenSim
+  /** caudal sobre lo normal de la década mostrada, por año */
+  decada: number[]
+  anios: number[]
+  /** año que se mira (el de la línea de tiempo) */
+  idx: number
+}
 
 interface Props {
   agua: Agua
@@ -22,13 +38,18 @@ interface Props {
   /** el río mapeado: por qué comunas pasa; null si no está en el archivo */
   cauce: CauceDato | null
   onComuna: (codigo: string) => void
-  /** qué se mira: el promedio (null), la megasequía o un año (índice de `agua.anios`) */
+  /** qué se mira de lo medido: el promedio (null), la megasequía o un año (índice de `agua.anios`) */
   anio: AnioAgua
   jugando: boolean
   onAnio: (a: AnioAgua) => void
   onJugar: (v: boolean) => void
   onEstacion: (codigo: string) => void
   nombreComuna: (codigo: string | null) => string | null
+  /** null = se mira lo medido */
+  sim: SimAgua | null
+  onSim: (e: EscenarioAgua | null) => void
+  onOtraDecada: () => void
+  onAnioSim: (i: number) => void
 }
 
 const W = 400
@@ -36,23 +57,18 @@ const H = 54
 const PIE = 14
 
 /**
- * Caudal real de un río: cuánta agua trae frente a lo normal, por dónde pasa, en qué meses llega y qué tan
- * parejo es. La cifra, el sello y las barras toman el color del estado del caudal (normal, bajo o crítico),
- * igual que el río y su punto en el mapa.
+ * Caudal de un río. Dos lecturas: lo medido (1980–2017) y «¿qué pasaría si…?», que sortea 500 décadas
+ * posibles para 2026–2036 según el escenario y reproduce una de ellas en el mapa. La cifra, el sello y las
+ * barras toman el color del estado del caudal (normal, bajo o crítico), igual que el río y su punto.
  */
-export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, onAnio, onJugar, onEstacion, nombreComuna }: Props) {
+export function VistaAgua(p: Props) {
+  const { agua, estacion: e, cauce, anio, sim } = p
   const anios = agua.anios
-  const valor = caudalEn(e, anio)
-  const fraccion = fraccionNormal(e, anio)
-  const estado = estadoCaudal(fraccion)
   const normal = e.base ?? e.medio
-  const reg = regimenDe(e.regimen)
-  const comuna = nombreComuna(e.comuna)
-  const max = Math.max(e.medio, ...e.anual.map((v) => v ?? 0)) || 1
-  const paso = W / anios.length
-  const y = (v: number) => (H - PIE) * (1 - v / max)
-  const iSequia = Math.max(0, anios.indexOf(agua.sequia[0]))
-  const maxMes = Math.max(...e.regimen) || 1
+  const fraccion = sim ? (sim.decada[sim.idx] ?? null) : fraccionNormal(e, anio)
+  const valor = sim ? (fraccion === null ? null : fraccion * normal) : caudalEn(e, anio)
+  const estado = estadoCaudal(fraccion)
+  const comuna = p.nombreComuna(e.comuna)
   const opciones = agua.estaciones.map((x) => ({
     id: x.codigo,
     titulo: x.nombre,
@@ -60,10 +76,18 @@ export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, o
   }))
   const rango = `${anios[0]}–${anios[anios.length - 1]}`
   const sequia = `${agua.sequia[0]}–${agua.sequia[1]}`
-  const cuando = anio === null ? `promedio ${rango}` : anio === 'sequia' ? `megasequía ${sequia}` : valor === null ? `sin dato en ${anios[anio]}` : `en ${anios[anio]}`
+  const cuando = sim
+    ? `en ${sim.anios[sim.idx]} · década ${sim.replica + 1} de ${sim.replicas}`
+    : anio === null
+      ? `promedio ${rango}`
+      : anio === 'sequia'
+        ? `megasequía ${sequia}`
+        : valor === null
+          ? `sin dato en ${anios[anio]}`
+          : `en ${anios[anio]}`
 
   return (
-    <div className="v-agua">
+    <div className={`v-agua${sim ? ' v-agua-sim' : ''}`}>
       <div className="agua-cabeza">
         <div className={`agua-cifra agua-estado-${estado}`}>
           <b>{valor === null ? '—' : fmt(valor, decimalesCaudal(valor))}</b>
@@ -72,7 +96,7 @@ export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, o
         </div>
         <div className="agua-titulo">
           <div className="agua-estacion">
-            <Desplegable etiqueta="Estación" opciones={opciones} valor={e.codigo} onCambiar={onEstacion} />
+            <Desplegable etiqueta="Estación" opciones={opciones} valor={e.codigo} onCambiar={p.onEstacion} />
           </div>
           <h3>{e.rio}</h3>
           <p className="agua-veredicto">
@@ -96,8 +120,8 @@ export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, o
             </li>
             {cauce.comunas.map((c) => (
               <li key={c} className={c === e.comuna ? 'agua-pasa-estacion' : undefined}>
-                <button type="button" onClick={() => onComuna(c)} title={c === e.comuna ? 'Aquí está la estación' : undefined}>
-                  {nombreComuna(c) ?? c}
+                <button type="button" onClick={() => p.onComuna(c)} title={c === e.comuna ? 'Aquí está la estación' : undefined}>
+                  {p.nombreComuna(c) ?? c}
                 </button>
               </li>
             ))}
@@ -105,6 +129,22 @@ export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, o
         </section>
       )}
 
+      {sim ? <Simulado {...p} sim={sim} normal={normal} /> : <Medido {...p} normal={normal} rango={rango} />}
+    </div>
+  )
+}
+
+/** Lo medido: una barra por año, el régimen y la variabilidad. */
+function Medido({ agua, estacion: e, anio, jugando, onAnio, onJugar, onSim, normal, rango }: Props & { normal: number; rango: string }) {
+  const anios = agua.anios
+  const reg = regimenDe(e.regimen)
+  const max = Math.max(e.medio, ...e.anual.map((v) => v ?? 0)) || 1
+  const paso = W / anios.length
+  const y = (v: number) => (H - PIE) * (1 - v / max)
+  const iSequia = Math.max(0, anios.indexOf(agua.sequia[0]))
+  const maxMes = Math.max(...e.regimen) || 1
+  return (
+    <>
       <section className="agua-serie" aria-label="Caudal de cada año">
         <div className="agua-serie-cabeza">
           <div className="agua-periodos" role="group" aria-label="Qué período se mira">
@@ -114,11 +154,13 @@ export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, o
             <button type="button" className="accion-ligera" aria-pressed={anio === null} onClick={() => onAnio(null)}>
               Promedio
             </button>
-            {typeof anio === 'number' && <span className="agua-anio-actual">{anios[anio]}</span>}
+            <button type="button" className="accion-ligera agua-anios" aria-pressed={jugando} onClick={() => onJugar(!jugando)}>
+              <IconoJugar jugando={jugando} />
+              {typeof anio === 'number' ? anios[anio] : 'Año por año'}
+            </button>
           </div>
-          <button type="button" className="agua-jugar" aria-pressed={jugando} onClick={() => onJugar(!jugando)}>
-            <IconoJugar jugando={jugando} />
-            {jugando ? 'Pausar' : 'Ver año por año'}
+          <button type="button" className="agua-jugar" onClick={() => onSim('megasequia')}>
+            ¿Y si sigue la megasequía?
           </button>
         </div>
         <svg className="agua-barras" viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Caudal medio anual de ${e.nombre}, ${rango}`}>
@@ -127,8 +169,7 @@ export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, o
             megasequía
           </text>
           {e.anual.map((v, i) => {
-            const elegido = i === anio
-            const clase = `agua-barra agua-estado-${estadoCaudal(fraccionNormal(e, i))}${elegido ? ' agua-barra-elegida' : ''}`
+            const clase = `agua-barra agua-estado-${estadoCaudal(fraccionNormal(e, i))}${i === anio ? ' agua-barra-elegida' : ''}`
             const alto = v === null ? 3 : Math.max(2, H - PIE - y(v))
             return (
               <g key={anios[i]} className={clase} onClick={() => onAnio(i)}>
@@ -183,6 +224,79 @@ export function VistaAgua({ agua, estacion: e, cauce, onComuna, anio, jugando, o
           </p>
         </section>
       </div>
-    </div>
+    </>
+  )
+}
+
+const HS = 66
+
+/** ¿Qué pasaría si…?: la década que se reproduce sobre la banda de las 500, y lo que dicen todas. */
+function Simulado({ sim, onSim, onOtraDecada, onAnioSim, normal }: Props & { sim: SimAgua; normal: number }) {
+  const n = sim.anios.length
+  const paso = W / n
+  const tope = Math.max(1.15, ...sim.resumen.p90, ...sim.decada) * 1.05
+  const x = (i: number) => i * paso + paso / 2
+  const y = (f: number) => (HS - PIE) * (1 - Math.min(f, tope) / tope)
+  const banda = [...sim.resumen.p90.map((v, i) => `${x(i)},${y(v)}`), ...sim.resumen.p10.map((v, i) => `${x(i)},${y(v)}`).reverse()].join(' ')
+  const linea = sim.decada.map((v, i) => `${x(i)},${y(v)}`).join(' ')
+  const prob = sim.resumen.probCritico[sim.idx] ?? 0
+  return (
+    <>
+      <section className="agua-serie" aria-label="Décadas posibles de caudal">
+        <div className="agua-serie-cabeza">
+          <div className="agua-periodos" role="radiogroup" aria-label="¿Qué pasaría si…?">
+            {ESCENARIOS_AGUA.map((s) => (
+              <button key={s.id} type="button" role="radio" aria-checked={s.id === sim.escenario} className="accion-ligera" title={s.detalle} onClick={() => onSim(s.id)}>
+                {s.titulo}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="accion-ligera" onClick={() => onSim(null)}>
+            Ver lo medido
+          </button>
+        </div>
+        <svg className="agua-barras agua-decada" viewBox={`0 0 ${W} ${HS}`} role="group" aria-label={`Caudal simulado ${sim.anios[0]}–${sim.anios[n - 1]}, sobre lo normal`}>
+          <rect className="agua-zona-critica" x={0} y={y(CORTE_CRITICO)} width={W} height={HS - PIE - y(CORTE_CRITICO)} />
+          <text className="agua-franja-texto" x={3} y={HS - PIE - 3}>
+            crítico
+          </text>
+          <polygon className="agua-banda" points={banda} />
+          <line className="agua-linea-base" x1={0} x2={W} y1={y(1)} y2={y(1)} />
+          <text className="agua-linea-texto" x={3} y={Math.max(9, y(1) - 3)}>
+            lo normal
+          </text>
+          <polyline className="agua-linea-decada" points={linea} />
+          {sim.decada.map((v, i) => (
+            <g key={sim.anios[i]} className={`agua-punto-anio agua-estado-${estadoCaudal(v)}${i === sim.idx ? ' agua-punto-elegido' : ''}`} onClick={() => onAnioSim(i)}>
+              <title>{`${sim.anios[i]}: ${fmt(v * normal, decimalesCaudal(v * normal))} m³/s, ${fmt(v * 100, 0)} % de lo normal`}</title>
+              <rect className="agua-barra-zona" x={i * paso} y={0} width={paso} height={HS - PIE} />
+              <circle cx={x(i)} cy={y(v)} r={i === sim.idx ? 5 : 3.2} />
+              <text className="agua-eje" x={x(i)} y={HS - 2} textAnchor="middle">
+                {sim.anios[i]}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </section>
+
+      <div className="agua-doble agua-resultado">
+        <p className="agua-dato">
+          <b>{fmt(sim.resumen.aniosCriticos, 1)}</b>
+          <span>
+            de {n} años con caudal crítico, en promedio. En {sim.anios[sim.idx]}: {fmt(prob * 100, 0)} % de las décadas.
+          </span>
+        </p>
+        <p className="agua-dato">
+          <b>{fmt(sim.resumen.racha3 * 100, 0)} %</b>
+          <span>de las {sim.replicas} décadas tienen tres años críticos seguidos.</span>
+        </p>
+      </div>
+      <div className="agua-sim-pie">
+        <button type="button" className="agua-jugar" onClick={onOtraDecada}>
+          Otra década posible
+        </button>
+        <span>Banda: 8 de cada 10 décadas. Sorteo de años medidos por la DGA; no es un pronóstico del clima.</span>
+      </div>
+    </>
   )
 }

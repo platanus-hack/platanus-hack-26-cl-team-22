@@ -4,7 +4,8 @@ import logoRoot from './assets/logo-root.png'
 import { Cargando } from './components/Cargando'
 import { Mapa } from './components/Mapa'
 import type { AguaMapa, Cinta, Encuadre } from './components/MapaPapel'
-import { VistaAgua } from './components/VistaAgua'
+import { VistaAgua, type SimAgua } from './components/VistaAgua'
+import { decadaDe, ESCENARIOS_AGUA, REPLICAS_AGUA, resumirSim, sortearDecadas, type EscenarioAgua } from './lib/aguaSim'
 import { cauceDe, caudalEn, decimalesCaudal, estacionDeComuna, estadoCaudal, fraccionNormal, leerAgua, TEXTO_ESTADO as TEXTO_CAUDAL, type AnioAgua, type Estacion } from './lib/agua'
 import { VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
 import { GENERAL, PERSONALIZADO, VistaRiesgo } from './components/VistaRiesgo'
@@ -109,6 +110,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   /** qué caudal se mira: la megasequía (lo primero que se ve), el promedio (null) o un año (índice de agua.anios) */
   const [aguaAnio, setAguaAnio] = useState<AnioAgua>('sequia')
   const [aguaJugando, setAguaJugando] = useState(false)
+  /** «¿qué pasaría si…?» del agua: escenario y década que se reproduce; null = se mira lo medido */
+  const [aguaSim, setAguaSim] = useState<{ escenario: EscenarioAgua; replica: number } | null>(null)
   /** pantalla de espera entre la entrada y el mapa */
   const [cargando, setCargando] = useState(false)
   const [mapaListo, setMapaListo] = useState(false)
@@ -733,6 +736,41 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   }, [comunaGeo, vista === 'agua'])
   const cauce = agua && estacion ? cauceDe(agua, estacion) : null
   const pasa = useMemo(() => new Set(cauce?.comunas ?? []), [cauce])
+  // Simulación del agua: 500 décadas por escenario para los años de la línea de tiempo; se reproduce una.
+  const decadas = useMemo(() => (agua && aguaSim ? sortearDecadas(agua, aguaSim.escenario, anios.length) : null), [agua, aguaSim?.escenario, anios.length])
+  const decadaPorEstacion = useMemo(() => {
+    const m = new Map<string, number[]>()
+    if (agua && decadas && aguaSim) for (const e of agua.estaciones) m.set(e.codigo, decadaDe(agua, e, decadas, aguaSim.replica))
+    return m
+  }, [agua, decadas, aguaSim])
+  const simVista = useMemo<SimAgua | null>(
+    () =>
+      agua && estacion && decadas && aguaSim
+        ? {
+            escenario: aguaSim.escenario,
+            replica: aguaSim.replica,
+            replicas: REPLICAS_AGUA,
+            resumen: resumirSim(agua, estacion, decadas),
+            decada: decadaPorEstacion.get(estacion.codigo) ?? [],
+            anios,
+            idx,
+          }
+        : null,
+    [agua, estacion, decadas, aguaSim, decadaPorEstacion, anios, idx],
+  )
+  const fraccionAgua = useCallback(
+    (e: Estacion) => (aguaSim ? (decadaPorEstacion.get(e.codigo)?.[idx] ?? null) : fraccionNormal(e, aguaAnio)),
+    [aguaSim, decadaPorEstacion, idx, aguaAnio],
+  )
+  const textoCuandoAgua = !agua
+    ? ''
+    : aguaSim
+      ? `${anio}, simulado: ${ESCENARIOS_AGUA.find((s) => s.id === aguaSim.escenario)?.titulo.toLowerCase()}`
+      : aguaAnio === null
+        ? `promedio ${agua.anios[0]}–${agua.anios[agua.anios.length - 1]}`
+        : aguaAnio === 'sequia'
+          ? `megasequía ${agua.sequia[0]}–${agua.sequia[1]}`
+          : String(agua.anios[aguaAnio])
   const aguaMapa = useMemo<AguaMapa | null>(
     () =>
       agua
@@ -742,13 +780,18 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             cauces: agua.cauces,
             pasa,
             porCodigo: agua.porCodigo,
-            anio: aguaAnio,
+            fraccionDe: fraccionAgua,
+            caudalDe: (e) => {
+              const f = fraccionAgua(e)
+              return aguaSim ? (f === null ? null : f * (e.base ?? e.medio)) : caudalEn(e, aguaAnio)
+            },
+            clave: aguaSim ? `sim-${aguaSim.escenario}-${aguaSim.replica}-${idx}` : `medido-${aguaAnio}`,
             elegida: estacion?.codigo ?? null,
             onElegir: setAguaEstacion,
             etiqueta: (e) => {
-              const v = caudalEn(e, aguaAnio)
-              const f = fraccionNormal(e, aguaAnio)
-              const cuando = aguaAnio === null ? 'promedio' : aguaAnio === 'sequia' ? 'megasequía' : String(agua.anios[aguaAnio])
+              const f = fraccionAgua(e)
+              const v = aguaSim ? (f === null ? null : f * (e.base ?? e.medio)) : caudalEn(e, aguaAnio)
+              const cuando = aguaSim ? `${anio}, simulado` : aguaAnio === null ? 'promedio' : aguaAnio === 'sequia' ? 'megasequía' : String(agua.anios[aguaAnio])
               return {
                 titulo: e.nombre,
                 valor: v === null ? '—' : fmt(v, decimalesCaudal(v)),
@@ -758,7 +801,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             },
           }
         : null,
-    [agua, aguaAnio, estacion?.codigo, pasa],
+    [agua, aguaAnio, aguaSim, fraccionAgua, anio, idx, estacion?.codigo, pasa],
   )
 
   let hoja: ReactNode = null
@@ -899,6 +942,26 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
         onJugar={jugarAgua}
         onEstacion={setAguaEstacion}
         nombreComuna={nombreGeo}
+        sim={simVista}
+        onSim={(esc) => {
+          setAguaJugando(false)
+          setAguaSim((s) => (esc ? { escenario: esc, replica: s?.replica ?? 0 } : null))
+          if (esc && !aguaSim) {
+            // al abrir la simulación la década se reproduce sola desde el primer año
+            setIdx(0)
+            setJugando(true)
+          }
+          if (!esc) setJugando(false)
+        }}
+        onOtraDecada={() => {
+          setAguaSim((s) => (s ? { ...s, replica: (s.replica + 1) % REPLICAS_AGUA } : s))
+          setIdx(0)
+          setJugando(true)
+        }}
+        onAnioSim={(i) => {
+          setJugando(false)
+          setIdx(i)
+        }}
       />
     )
   else if (vista === 'fuentes') hoja = <VistaFuentes politicas={data.politicas} />
@@ -967,7 +1030,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             agua={
               modoMapa === 'agua' && agua
                 ? {
-                    cuando: aguaAnio === null ? `promedio ${agua.anios[0]}–${agua.anios[agua.anios.length - 1]}` : aguaAnio === 'sequia' ? `megasequía ${agua.sequia[0]}–${agua.sequia[1]}` : String(agua.anios[aguaAnio]),
+                    cuando: textoCuandoAgua,
                     normal: `${agua.base[0]}–${agua.base[1]}`,
                   }
                 : null
@@ -1057,7 +1120,9 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             vista === 'lena'
               ? 'La leña: inventario 2023, no cambia con el año'
               : vista === 'agua'
-                ? 'Caudales: medición histórica, no cambia con el año'
+                ? aguaSim
+                  ? `Agua simulada: ${ESCENARIOS_AGUA.find((s) => s.id === aguaSim.escenario)?.titulo.toLowerCase()} · década ${aguaSim.replica + 1} de ${REPLICAS_AGUA}`
+                  : 'Caudales: medición histórica, no cambia con el año'
                 : `Escenario: ${escenario.nombre}`
           }
         />

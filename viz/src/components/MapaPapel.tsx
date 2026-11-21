@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { anchoRio, estadoCaudal, factorAnio, fraccionNormal, radioEstacion, type AnioAgua, type CauceDato, type EstadoCaudal, type Estacion, type Rio } from '../lib/agua'
+import { anchoRio, estadoCaudal, radioEstacion, type CauceDato, type EstadoCaudal, type Estacion, type Rio } from '../lib/agua'
 import type { AportePolitica } from '../lib/capas'
 import { apilarLabios, apilarNivel, PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
@@ -48,8 +48,11 @@ export interface AguaMapa {
   /** comunas por donde pasa el río elegido */
   pasa: ReadonlySet<string>
   porCodigo: ReadonlyMap<string, Estacion>
-  /** qué se mira: promedio (null), megasequía o un año */
-  anio: AnioAgua
+  /** caudal (m³/s) y caudal sobre lo normal de una estación en lo que se mira, medido o simulado; null = sin dato */
+  caudalDe: (e: Estacion) => number | null
+  fraccionDe: (e: Estacion) => number | null
+  /** cambia cuando cambia lo que se mira: los mapas vuelven a pintar */
+  clave: string
   elegida: string | null
   onElegir: (codigo: string) => void
   etiqueta: (e: Estacion) => Etiqueta
@@ -58,13 +61,13 @@ export interface AguaMapa {
 /** Caudal con que se dibuja un cauce en el año mostrado; null si ninguna estación lo mide. */
 export function caudalDeRio(r: Rio, a: AguaMapa): number | null {
   const e = r.estacion ? a.porCodigo.get(r.estacion) : undefined
-  return e ? e.medio * factorAnio(e, a.anio) : null
+  return e ? (a.caudalDe(e) ?? e.medio) : null
 }
 
 /** Estado del caudal de un cauce en lo que se mira; los que nadie mide se dibujan como normales. */
 export function estadoDeRio(r: Rio, a: AguaMapa): EstadoCaudal {
   const e = r.estacion ? a.porCodigo.get(r.estacion) : undefined
-  return e ? estadoCaudal(fraccionNormal(e, a.anio)) : 'normal'
+  return e ? estadoCaudal(a.fraccionDe(e)) : 'normal'
 }
 
 export interface PropsMapa {
@@ -443,7 +446,7 @@ export function MapaPapel(p: PropsMapa) {
                 {p.agua.estaciones.map((e) => {
                   const c = proj(e.lon, e.lat)
                   const elegida = e.codigo === p.agua!.elegida
-                  const estado = estadoCaudal(fraccionNormal(e, p.agua!.anio))
+                  const estado = estadoCaudal(p.agua!.fraccionDe(e))
                   return (
                     <circle
                       key={e.codigo}
