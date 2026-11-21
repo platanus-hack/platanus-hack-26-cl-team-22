@@ -1,0 +1,118 @@
+{
+ "comando": "python -m experiments.validar_vivienda",
+ "pregunta": "¿La vivienda nueva (permisos MINVU) mejora a dónde predice que se muda la gente?",
+ "metrica": "Migración neta por comuna 2019-2024, desde los orígenes de 2019, 5 pasos anuales con la tasa de salida 2012-2017 (igual que calibrar_hogares).",
+ "parametros_gravedad": {
+  "a_viviendas": 0.7671,
+  "b_distancia_km": 0.0647
+ },
+ "loglik_ajuste_por_lag": {
+  "0": -3191917.3,
+  "1": -3190543.5,
+  "2": -3187615.8,
+  "3": -3183302.1,
+  "5": -3187058.8
+ },
+ "resultados": {
+  "lag_elegido_en_ajuste": {
+   "lag_anios": 3,
+   "ventana_ajuste": "2009-2013",
+   "ventana_prueba": "2016-2020",
+   "parametros_gravedad_permisos": {
+    "a_viviendas": 0.7429,
+    "b_distancia_km": 0.0653,
+    "g_permisos": 2.7508
+   },
+   "fuera_de_muestra_2019_2024": {
+    "proporciones_2012_2017": {
+     "rmse_personas": 4334.8,
+     "mae_personas": 3012.6,
+     "correlacion": 0.829
+    },
+    "gravedad": {
+     "rmse_personas": 8100.5,
+     "mae_personas": 6251.9,
+     "correlacion": 0.288
+    },
+    "gravedad_permisos": {
+     "rmse_personas": 9572.2,
+     "mae_personas": 6636.1,
+     "correlacion": 0.41
+    },
+    "pivote_permisos": {
+     "rmse_personas": 5049.5,
+     "mae_personas": 3038.9,
+     "correlacion": 0.84
+    },
+    "radiacion": {
+     "rmse_personas": 14900.1,
+     "mae_personas": 11555.1,
+     "correlacion": 0.027
+    },
+    "nadie_se_muda": {
+     "rmse_personas": 7716.2,
+     "mae_personas": 5251.9,
+     "correlacion": 0.0
+    },
+    "repetir_2012_2017": {
+     "rmse_personas": 5054.0,
+     "mae_personas": 3011.9,
+     "correlacion": 0.757
+    }
+   }
+  },
+  "solo_permisos_conocidos_en_2019": {
+   "lag_anios": 5,
+   "ventana_ajuste": "2007-2011",
+   "ventana_prueba": "2014-2018",
+   "parametros_gravedad_permisos": {
+    "a_viviendas": 0.708,
+    "b_distancia_km": 0.0646,
+    "g_permisos": 1.9043
+   },
+   "fuera_de_muestra_2019_2024": {
+    "proporciones_2012_2017": {
+     "rmse_personas": 4334.8,
+     "mae_personas": 3012.6,
+     "correlacion": 0.829
+    },
+    "gravedad": {
+     "rmse_personas": 8100.5,
+     "mae_personas": 6251.9,
+     "correlacion": 0.288
+    },
+    "gravedad_permisos": {
+     "rmse_personas": 10128.4,
+     "mae_personas": 6520.7,
+     "correlacion": 0.305
+    },
+    "pivote_permisos": {
+     "rmse_personas": 5229.6,
+     "mae_personas": 2726.1,
+     "correlacion": 0.821
+    },
+    "radiacion": {
+     "rmse_personas": 14900.1,
+     "mae_personas": 11555.1,
+     "correlacion": 0.027
+    },
+    "nadie_se_muda": {
+     "rmse_personas": 7716.2,
+     "mae_personas": 5251.9,
+     "correlacion": 0.0
+    },
+    "repetir_2012_2017": {
+     "rmse_personas": 5054.0,
+     "mae_personas": 3011.9,
+     "correlacion": 0.757
+    }
+   }
+  }
+ },
+ "supuestos": [
+  "Solo cambian los destinos; la tasa de salida es la de 2012-2017 en todos.",
+  "Permisos en ventanas de 5 años, normalizados por las viviendas del censo 2017.",
+  "Un permiso no es una vivienda terminada (ver data/vivienda/README.md).",
+  "2019-2024 incluye el estallido y la pandemia."
+ ]
+}
