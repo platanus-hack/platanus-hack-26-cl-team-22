@@ -12,6 +12,7 @@ Never fills gaps: anything missing stays out and is reported in data/censo/READM
 
 from __future__ import annotations
 
+import hashlib
 import subprocess
 import sys
 import time
@@ -30,13 +31,24 @@ OUT = ROOT / "data" / "censo"
 INE17 = ("https://www.ine.gob.cl/docs/default-source/censo-de-poblacion-y-vivienda/bbdd/"
          "censo-2017/csv/")
 CENSO24 = "https://censo2024.ine.gob.cl/wp-content/uploads/2025/"
+# name -> (url, SHA-256 of the file downloaded on 2026-11-21). A digest mismatch stops the
+# build: the published tables in data/censo/ were checked against exactly these bytes.
 FUENTES = {
-    "D5_Migracion-interna.xlsx": CENSO24 + "04/D5_Migracion-interna.xlsx",
-    "V1_Viviendas-y-hogares-censados.xlsx": CENSO24 + "03/V1_Viviendas-y-hogares-censados.xlsx",
-    "Poblacion-censada-y-residentes-habituales-Censo-2017.xlsx":
+    "D5_Migracion-interna.xlsx": (
+        CENSO24 + "04/D5_Migracion-interna.xlsx",
+        "8c1054de17731b3f17d0bf75f961901318389eef77d1eda026b21173856a47d5"),
+    "V1_Viviendas-y-hogares-censados.xlsx": (
+        CENSO24 + "03/V1_Viviendas-y-hogares-censados.xlsx",
+        "19d5a5bb5b199c1b72714bfeade361e3493a76a350586d675d479a0564fe2b94"),
+    "Poblacion-censada-y-residentes-habituales-Censo-2017.xlsx": (
         CENSO24 + "04/Poblacion-censada-y-residentes-habituales-Censo-2017.xlsx",
-    "csv-personas-censo-2017.zip": INE17 + "csv-personas-censo-2017.zip",
-    "csv-viviendas-censo-2017.zip": INE17 + "csv-viviendas-censo-2017.zip",
+        "ea5aa0f3a1bad6acce93252e7f1e590f11dd721d1331eb71e6b84597f2bab297"),
+    "csv-personas-censo-2017.zip": (
+        INE17 + "csv-personas-censo-2017.zip",
+        "69869fbb04d11912f5e08235700f7ea1e7cb3ae753f12188e4cff041cdbcfcd5"),
+    "csv-viviendas-censo-2017.zip": (
+        INE17 + "csv-viviendas-censo-2017.zip",
+        "5c68e936aec3fceff15750118d701954c6f25fa3e85ce8720fabac44708b987b"),
 }
 HEADERS = {"User-Agent": "Mozilla/5.0 (research script; hackathon census data)"}
 
@@ -46,13 +58,26 @@ COLS_P17 = ["COMUNA", "P10", "P10COMUNA", "P11", "P11COMUNA"]
 P01_VIVIENDA = range(1, 9)
 
 
+def verificar(ruta: Path, esperado: str) -> Path:
+    digest = hashlib.sha256()
+    with ruta.open("rb") as fh:
+        for bloque in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(bloque)
+    if digest.hexdigest() != esperado:
+        sys.exit(f"{ruta} has SHA-256 {digest.hexdigest()}, expected {esperado}. INE may have "
+                 "republished it, or the cache is corrupt: delete it and rerun; if the new file "
+                 "is intended, update FUENTES and recheck the totals in data/censo/README.md")
+    return ruta
+
+
 def descargar(nombre: str) -> Path:
-    """Return the cached raw file, downloading it once with retries."""
+    """Return the cached raw file, downloading it once with retries; checks its SHA-256."""
     destino = RAW / nombre
+    url, sha = FUENTES[nombre]
     if destino.exists() and destino.stat().st_size > 0:
-        return destino
+        return verificar(destino, sha)
     destino.parent.mkdir(parents=True, exist_ok=True)
-    url, ultimo = FUENTES[nombre], None
+    ultimo = None
     for espera in (0, 5, 15, 45):
         time.sleep(espera)
         try:
@@ -63,7 +88,7 @@ def descargar(nombre: str) -> Path:
                         for bloque in r.iter_content(1 << 20):
                             fh.write(bloque)
                     parcial.rename(destino)
-                    return destino
+                    return verificar(destino, sha)
                 ultimo = f"HTTP {r.status_code}"
         except requests.RequestException as e:
             ultimo = repr(e)
@@ -88,9 +113,15 @@ def csv_2017(archivo: str, interno: str, csv: str, columnas: list[str]):
     lector = subprocess.Popen(["bsdtar", "-xOf", "-", csv], stdin=externo.stdout,
                               stdout=subprocess.PIPE)
     externo.stdout.close()
-    yield from pd.read_csv(lector.stdout, sep=";", usecols=columnas, dtype="int64",
-                           chunksize=1_000_000)
-    if lector.wait() or externo.wait():
+    try:
+        yield from pd.read_csv(lector.stdout, sep=";", usecols=columnas, dtype="int64",
+                               chunksize=1_000_000)
+    finally:
+        # Always reap both children, also when parsing fails mid-stream. Callers write
+        # nothing until the generator is exhausted, so a failed read leaves no output.
+        lector.stdout.close()
+        fallo = [lector.wait(), externo.wait()]
+    if any(fallo):
         sys.exit(f"bsdtar failed while reading {csv} from {archivo}")
 
 

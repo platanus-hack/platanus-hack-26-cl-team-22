@@ -95,6 +95,18 @@ def test_2024_refuses_a_sheet_whose_columns_do_not_follow_the_rows():
         matriz_2024(_hoja_d5(nombre_col_rm2="Recoleta"))
 
 
+def test_2024_refuses_a_sheet_with_more_comuna_rows_than_origin_columns():
+    hoja = _hoja_d5()
+    hoja.insert(-1, (13, "RM", 131, "Santiago", 13110, "La Florida", 5, 5, 0, 0, 0, 0, 0))
+    with pytest.raises(ValueError, match="layout changed"):
+        matriz_2024(hoja)
+
+
+def test_2024_refuses_a_sheet_without_its_header_row():
+    with pytest.raises(ValueError, match="layout changed"):
+        matriz_2024([f for f in _hoja_d5() if f[0] != "Código región"])
+
+
 # --- shared ----------------------------------------------------------------------------
 
 def test_completar_rm_lists_every_pair_with_zero_when_nobody_moved():
@@ -126,8 +138,8 @@ def test_population_and_dwellings_match_official_rm_totals():
     # INE: Censo 2024 RM 7.400.741 personas, 2.764.749 viviendas censadas.
     assert por_anio["2024"] == {"n": 52, "poblacion": 7_400_741, "viviendas": 2_764_749}
     # INE: Censo 2017 residentes habituales por comuna (suma de las 52 comunas).
-    assert por_anio["2017"]["n"] == 52
-    assert por_anio["2017"]["poblacion"] == 7_028_421
+    # INE (geoarchivos, RM 2017): 2.378.442 viviendas; built from microdata with P01 1-8.
+    assert por_anio["2017"] == {"n": 52, "poblacion": 7_028_421, "viviendas": 2_378_442}
 
 
 @pytest.mark.parametrize("nombre", ["mudanzas_2012_2017.csv", "mudanzas_2019_2024.csv"])
@@ -140,8 +152,15 @@ def test_move_matrices_cover_every_rm_pair_once(nombre):
     assert all(int(f["personas"]) >= 0 for f in filas)
 
 
-def test_2024_matrix_moves_match_the_ine_table_total():
-    filas = _leer("mudanzas_2019_2024.csv")
-    fuera_diagonal = sum(int(f["personas"]) for f in filas
-                         if f["codigo_origen"] != f["codigo_destino"])
-    assert fuera_diagonal == 993_528
+@pytest.mark.parametrize("nombre, mudanzas, permanecen", [
+    # 2019-2024 off-diagonal total equals the INE table D5; stayers come from its
+    # "No migrante interno comunal" column.
+    ("mudanzas_2019_2024.csv", 993_528, 5_471_843),
+    # 2012-2017 is rebuilt from microdata: pins the P10/P11 recoding (data/censo/README.md).
+    ("mudanzas_2012_2017.csv", 910_411, 4_975_480),
+])
+def test_matrix_control_totals(nombre, mudanzas, permanecen):
+    filas = _leer(nombre)
+    fuera = sum(int(f["personas"]) for f in filas if f["codigo_origen"] != f["codigo_destino"])
+    dentro = sum(int(f["personas"]) for f in filas if f["codigo_origen"] == f["codigo_destino"])
+    assert (fuera, dentro) == (mudanzas, permanecen)

@@ -74,10 +74,16 @@ def matriz_2024(filas: list[tuple]) -> pd.DataFrame:
     name and raises ValueError if they drift. The diagonal ("-") is taken from the
     "No migrante interno comunal" column.
     """
-    encabezado = next(f for f in filas if f and f[0] == "Código región")
+    encabezado = next((f for f in filas if f and f[0] == "Código región"), None)
+    if encabezado is None:
+        raise ValueError("D5 header row 'Código región' not found: the sheet layout changed")
     comunas = [f for f in filas
                if f and len(f) > D5_COL_CODIGO and isinstance(f[D5_COL_CODIGO], int)
                and f[D5_COL_CODIGO] > 0]
+    if len(encabezado) < D5_COLUMNAS_FIJAS + len(comunas):
+        raise ValueError(f"D5 has {len(comunas)} comuna rows but only "
+                         f"{len(encabezado) - D5_COLUMNAS_FIJAS} origin columns: "
+                         "the sheet layout changed")
 
     columna_de = {}
     for k, fila in enumerate(comunas):

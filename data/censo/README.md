@@ -101,6 +101,11 @@ crudos (~300 MB) se guardan en `data/raw/censo/`, que git ignora. El script no v
 descargar lo que ya está ahí. El CSV de personas de 2017 se lee en streaming, sin escribir los
 2,6 GB a disco.
 
+Cada archivo crudo se compara con el SHA-256 de la descarga del 2026-11-21, registrado en
+`FUENTES` dentro de `datos/censo/fetch_censo.py`. Si el INE vuelve a publicar un archivo, el
+script se detiene en vez de procesarlo en silencio. Hay que revisar los totales de arriba antes
+de actualizar el digest.
+
 ## Vacíos y advertencias conocidas
 
 - **Comparabilidad.** 2017 fue de hecho y 2024 de derecho (ver arriba). Además, 2024 combinó
