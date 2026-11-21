@@ -103,7 +103,7 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
       source: 'comunas',
       paint: {
         'fill-color': ['to-color', ['coalesce', ['feature-state', 'color'], c.papel]],
-        'fill-opacity': ['case', estado('dato'), 0.54, 0],
+        'fill-opacity': ['case', ['all', estado('dato'), estado('hover')], 0.86, estado('dato'), 0.54, 0],
         'fill-antialias': false,
       },
     },
@@ -156,7 +156,7 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
         'circle-stroke-width': 1.5,
       },
     },
-    { id: 'c-hover', type: 'line', source: 'comunas', paint: { 'line-color': c.tinta, 'line-width': ['case', estado('hover'), 1.8, 0] } },
+    { id: 'c-hover', type: 'line', source: 'comunas', paint: { 'line-color': c.tinta, 'line-width': ['case', estado('hover'), 2.6, 0] } },
     {
       id: 'c-elegida-filo',
       type: 'line',

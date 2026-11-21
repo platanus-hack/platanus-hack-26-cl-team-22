@@ -1174,3 +1174,186 @@ body:has(.estado) {
   font-family: var(--f);
   font-size: 10px;
 }
+
+/* ---------- Cifras clave, chips y clave del gráfico ---------- */
+.cifras {
+  display: grid;
+  gap: calc(var(--u) * 1.2);
+  margin: calc(var(--u) * 0.5) 0 calc(var(--u) * 0.7);
+}
+.cifra {
+  border-top: 2px solid var(--tinta);
+  padding-top: calc(var(--u) * 0.35);
+  min-width: 0;
+}
+.cifra dt {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--tinta-2);
+}
+.cifra dd {
+  margin: 0;
+  font-weight: 800;
+  font-size: var(--t-xl);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cifra dd small {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--tinta-2);
+}
+.cifra dd.cifra-nota {
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--tinta-2);
+  margin-top: calc(var(--u) * 0.15);
+}
+.cifra-mejora { color: var(--mejora-3); }
+.cifra-empeora { color: var(--nivel-4); }
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.35);
+}
+.cuenca-lectura p.chips {
+  margin-top: calc(var(--u) * 0.2);
+}
+.chip:not([class*='nivel-']) {
+  background: var(--papel-2);
+}
+.chip {
+  padding: calc(var(--u) * 0.25) calc(var(--u) * 0.6);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.clave-grafico {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 1.1);
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+  margin-bottom: calc(var(--u) * 0.2);
+}
+.clave-grafico span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+}
+.clave-grafico i {
+  display: block;
+  width: 1.6em;
+}
+.clave-linea { height: 3px; background: var(--tinta); }
+.clave-banda { height: 0.8em; }
+.clave-trazos { height: 0; border-top: 2px dashed var(--tinta-2); }
+.clave-politica {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: calc(var(--u) * 0.6);
+  align-items: center;
+  margin-top: calc(var(--u) * 0.5);
+  padding-top: calc(var(--u) * 0.45);
+  border-top: 1px solid var(--corte);
+  font-size: var(--t-s);
+}
+.clave-politica b {
+  font-weight: 800;
+  font-size: var(--t-m);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.tag-muestra {
+  display: inline-block;
+  flex: none;
+  width: 0.8em;
+  height: 0.8em;
+  box-shadow: 0 0 0 1.5px var(--hoja), 0 0 0 2.5px var(--corte);
+}
+
+/* ---------- Mi comuna: tres pasos ---------- */
+.v-comuna .paso + .paso {
+  margin-top: calc(var(--u) * 1.1);
+}
+.paso h3 {
+  font-weight: 800;
+  font-size: var(--t-l);
+  line-height: 1.1;
+  margin-bottom: calc(var(--u) * 0.45);
+}
+.v-comuna .perfiles {
+  margin-top: 0;
+}
+.paso-cabeza {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--u) * 0.8);
+}
+.lectura.ajustar {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+  font-size: var(--t-xs);
+  padding: calc(var(--u) * 0.25) calc(var(--u) * 0.6);
+  white-space: nowrap;
+}
+.v-comuna .ranking {
+  margin-top: 0;
+  max-height: calc(var(--u) * 8);
+  scrollbar-width: thin;
+  scrollbar-color: var(--tinta) var(--papel-2);
+}
+.v-comuna .ranking-fila {
+  grid-template-columns: 2em minmax(0, 10em) minmax(0, 1fr) 2.4em 4.2em;
+  padding: calc(var(--u) * 0.22) calc(var(--u) * 0.6);
+  font-variant-numeric: tabular-nums;
+}
+.ranking-fila:hover:not([aria-pressed='true']) {
+  background: var(--papel-2);
+}
+.ranking-valor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45em;
+  font-weight: 800;
+}
+
+/* ---------- Tarjeta del mapa ---------- */
+.tag-mapa {
+  min-width: calc(var(--u) * 13);
+  box-shadow: 0 6px 18px rgba(17, 17, 17, 0.22);
+  border-top: 3px solid var(--tinta);
+}
+.tag-valor {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  margin: 0.1em 0 0.15em;
+}
+.tag-valor .tag-muestra {
+  align-self: center;
+  width: 0.9em;
+  height: 0.9em;
+  font-size: var(--t-l);
+}
+.tag-valor strong {
+  font-weight: 800;
+  font-size: var(--t-xl);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.tag-valor small {
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.tag-linea {
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}

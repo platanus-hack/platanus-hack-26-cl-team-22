@@ -7,11 +7,13 @@ import type { AportePolitica } from './lib/capas'
 import { punto, serie, variablesConDato, type Punto } from './lib/data'
 import { diferenciasPorComuna, maxAbsDiferencia } from './lib/diferencia'
 import { calcularHallazgos } from './lib/findings'
-import { fmt, fmtBanda, fmtSigned } from './lib/format'
+import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, vistasDisponibles } from './lib/interaccion'
 import { leerLena, type Zona } from './lib/lena'
+import { claseFondo } from './lib/fondo'
 import { nivel, tablaPara } from './lib/niveles'
+import type { Etiqueta } from './components/Papel'
 import { seleccionarOrigenes } from './lib/origen'
 import { alternar, buscarEscenario, escenarioInicial, lecturasDisponibles, resolverSeleccion } from './lib/scenario'
 import { rankear, type FilaValores } from './lib/scoring'
@@ -335,33 +337,38 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   // ---- textos del mapa ----
   const u = variable.unidad
   const modoMapa = vista === 'lena' ? 'lena' : vista === 'plan' && modoDif && puedeDiferencia ? 'diferencia' : 'valor'
-  const textoComuna = (f: GeoFeature): { titulo: string; lineas: string[] } => {
+  const norma = data.impacto?.norma
+  const textoComuna = (f: GeoFeature): Etiqueta => {
     const titulo = f.properties.nombre
+    const sim = f.properties.simCodigo
+    const clase = claseFondo({ modo: modoMapa, cortes, puntos, difs, difMax, mejor: variable.mejor, lena }, f.properties.codigo, sim)
     if (modoMapa === 'lena') {
       const c = lena?.comunas.find((x) => x.codigo === f.properties.codigo)
       if (!c) return { titulo, lineas: ['Sin dato'] }
-      return { titulo, lineas: [`Zona ${c.zona}`, c.toneladas === null ? 'Leña: sin dato en el RETC' : `Leña: ${fmt(c.toneladas, 1)} t de MP2,5 al año`] }
+      if (c.toneladas === null) return { titulo, lineas: [`Zona ${c.zona}`, 'Sin dato en el RETC'] }
+      return { titulo, valor: fmt(c.toneladas, 0), unidad: 't de MP2,5 al año', clase, lineas: [`Zona ${c.zona}`] }
     }
-    const sim = f.properties.simCodigo
     if (!sim) return { titulo, lineas: ['Sin dato'] }
     if (modoMapa === 'diferencia') {
       const d = difs?.get(sim)
       if (!d) return { titulo, lineas: ['Sin dato'] }
       return {
         titulo,
-        lineas: [
-          `${fmtSigned(d.delta)} ${u} de diferencia de medianas, ${anio}`,
-          `${escenario.nombre}: ${fmtBanda(d.activo.p50, d.activo.p10, d.activo.p90, u)}`,
-          `${referencia.nombre}: ${fmtBanda(d.base.p50, d.base.p10, d.base.p90, u)}`,
-        ],
+        valor: fmtSigned(d.delta),
+        unidad: `${u} · ${anio}`,
+        clase,
+        lineas: [`${escenario.nombre}: ${fmt(d.activo.p50, 1)}`, `${referencia.nombre}: ${fmt(d.base.p50, 1)}`],
       }
     }
     const p = puntos.get(sim)
-    return { titulo, lineas: [p ? `${fmtBanda(p.p50, p.p10, p.p90, u)}, ${anio}` : 'Sin dato'] }
+    if (!p) return { titulo, lineas: ['Sin dato'] }
+    const lineas = [`Banda ${fmt(p.p10, 1)}–${fmt(p.p90, 1)} · ${anio}`]
+    if (norma !== undefined) lineas.push(p.p50 > norma ? `${fmtSigned(p.p50 - norma)} sobre la norma` : `${fmt(norma - p.p50, 1)} bajo la norma`)
+    return { titulo, valor: fmt(p.p50, 1), unidad: u, clase, lineas }
   }
   const nombreAccesible = (f: GeoFeature) => {
     const t = textoComuna(f)
-    return `${t.titulo}: ${t.lineas.join('; ')}`
+    return `${t.titulo}: ${[t.valor ? `${t.valor} ${t.unidad ?? ''}`.trim() : '', ...t.lineas].filter(Boolean).join('; ')}`
   }
 
   // ---- hoja activa ----
@@ -484,6 +491,10 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
         idxAnio={idx}
         variable={variable}
         referencia={referenciaNorma}
+        puntos={puntos}
+        cortes={cortes}
+        aportes={(seleccionada && data.aportes?.[escenario.id]?.[seleccionada]?.[variable.id]) || []}
+        politicas={data.politicas}
       />
     )
   else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />

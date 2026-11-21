@@ -1,4 +1,4 @@
-
+import { useEffect, useRef, useState } from 'react'
 import { PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
 import { fmt, fmtBanda, fmtPct, fmtSigned } from '../lib/format'
@@ -9,7 +9,7 @@ import type { ResumenOrigen } from '../lib/origen'
 import type { Ranking } from '../lib/scoring'
 import type { Aporte, Banda, Comuna, Escenario, Politica, TipoHogar, Validacion, Variable } from '../lib/types'
 import { GraficoBanda } from './GraficoBanda'
-import { Rodela } from './Papel'
+import { Cifras, ClaveGrafico, Rodela, type Cifra } from './Papel'
 import { TiraPolitica } from './TiraPolitica'
 
 const plural = (n: number, uno: string, varios: string) => `${fmt(n, 0)} ${n === 1 ? uno : varios}`
@@ -75,12 +75,22 @@ export function VistaCuenca(p: CuencaProps) {
               <p className="banda-grande">
                 {fmt(p.punto.p10, 1)}–{fmt(p.punto.p90, 1)} {u}
               </p>
-              <p>
-                {p.variable.nombre}, {p.anio}: mediana y banda p10 a p90{p.replicas ? ` de ${fmt(p.replicas, 0)} réplicas` : ''}.
+              <p className="chips">
+                <span className={`chip nivel-${papelNivel(n ?? 0, p.cortes)}`}>
+                  Nivel {(n ?? 0) + 1} de {p.cortes.length + 1}
+                </span>
+                {p.grafico?.referencia && (
+                  <span className="chip">
+                    {p.punto.p50 > p.grafico.referencia.valor
+                      ? `${fmtSigned(p.punto.p50 - p.grafico.referencia.valor)} sobre la norma`
+                      : `${fmt(p.grafico.referencia.valor - p.punto.p50, 1)} bajo la norma`}
+                  </span>
+                )}
+                {cruce && <span className="chip">puede llegar a {textoNivel(cruce.nivel, p.cortes)}</span>}
               </p>
-              <p>
-                Nivel {(n ?? 0) + 1} de {p.cortes.length + 1}: {textoNivel(n ?? 0, p.cortes)} {u}.
-                {cruce && ` La banda alcanza el nivel ${textoNivel(cruce.nivel, p.cortes)}: lo marca el borde festoneado.`}
+              <p className="nota">
+                Mediana y banda p10–p90, {p.anio}
+                {p.replicas ? ` · ${fmt(p.replicas, 0)} réplicas` : ''}
               </p>
             </>
           ) : (
@@ -127,10 +137,7 @@ export function VistaCuenca(p: CuencaProps) {
 
       {!p.origen && p.grafico && (
         <section className="bloque cuenca-grafico" aria-label={`Proyección de ${p.comuna.nombre}`}>
-          <p className="grafico-clave grafico-clave-sola">
-            {p.grafico.anios[0]}–{p.grafico.anios[p.grafico.anios.length - 1]}: papel, banda p10–p90; tinta, mediana
-            {p.grafico.comparacion ? `; trazos, «${p.grafico.comparacion.nombre}»` : ''}
-          </p>
+          <ClaveGrafico nivelBanda={n} comparacion={p.grafico.comparacion?.nombre} />
           <GraficoBanda
             anios={p.grafico.anios}
             serie={p.grafico.serie}
@@ -167,7 +174,7 @@ export function VistaCuenca(p: CuencaProps) {
               )
             })}
           </ul>
-          <p className="nota">Cambio de la mediana en {p.ultimoAnio} por política; el archivo no trae su banda.</p>
+          <p className="nota">Cambio de la mediana a {p.ultimoAnio}, por política.</p>
         </section>
       )}
     </div>
@@ -359,73 +366,150 @@ interface ComunaProps {
   idxAnio: number
   variable: Variable
   referencia?: { valor: number; texto: string }
+  puntos: ReadonlyMap<string, Punto>
+  cortes: readonly number[]
+  aportes: Aporte[]
+  politicas: Politica[]
 }
 
 export const PERSONALIZADO = '__personalizado'
 
 export function VistaComuna(p: ComunaProps) {
-  const { usadas, ignoradas } = p.ranking
+  const { ignoradas } = p.ranking
+  const [ajustar, setAjustar] = useState(false)
+  const lista = useRef<HTMLOListElement>(null)
+  const u = p.variable.unidad
+  const anio = p.anios[p.idxAnio]
+  const puesto = p.ranking.filas.findIndex((f) => f.codigo === p.seleccionada) + 1
+
+  // La comuna elegida (también desde el mapa) queda a la vista en la lista.
+  useEffect(() => {
+    lista.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest' })
+  }, [p.seleccionada, p.ranking])
+
+  const cifras: Cifra[] = []
+  let top: { nombre: string; indice: number; delta: number } | null = null
+  if (p.detalle) {
+    const s = p.detalle.serie
+    const n = p.anios.length
+    const v = s.p50[p.idxAnio]
+    if (v !== undefined) {
+      cifras.push({ etiqueta: `En ${anio}`, valor: fmt(v, 1), nota: `banda ${fmt(s.p10[p.idxAnio]!, 1)}–${fmt(s.p90[p.idxAnio]!, 1)}` })
+      if (p.referencia)
+        cifras.push({ etiqueta: `Norma ${fmt(p.referencia.valor, 0)}`, valor: fmtSigned(v - p.referencia.valor), nota: v > p.referencia.valor ? 'sobre la norma' : 'bajo la norma' })
+    }
+    if (n >= 2 && s.p50[0] !== undefined && s.p50[n - 1] !== undefined) {
+      const d = s.p50[n - 1]! - s.p50[0]!
+      const mejora = p.variable.mejor === 'menor' ? d < 0 : d > 0
+      const quieto = Math.abs(d) < 0.05
+      cifras.push({
+        etiqueta: `${p.anios[0]} → ${p.anios[n - 1]}`,
+        valor: fmtSigned(d),
+        nota: quieto ? 'sin cambio' : mejora ? 'mejora' : 'empeora',
+        tono: quieto ? undefined : mejora ? 'mejora' : 'empeora',
+      })
+    }
+    const a = [...p.aportes].sort((x, y) => Math.abs(y.delta_p50_final) - Math.abs(x.delta_p50_final))[0]
+    if (a && Math.abs(a.delta_p50_final) > 0) {
+      const i = p.politicas.findIndex((x) => x.id === a.politica_id)
+      top = { nombre: p.politicas[i]?.nombre ?? a.politica_id, indice: Math.max(0, i), delta: a.delta_p50_final }
+    }
+  }
+
   return (
     <div className="v-comuna">
-      <div className="perfiles" role="radiogroup" aria-label="Perfil del hogar">
-        {p.tipos.map((t) => (
-          <button key={t.id} type="button" role="radio" aria-checked={p.perfilId === t.id} className="lectura" onClick={() => p.onPerfil(t.id)}>
-            {t.nombre}
+      <section className="paso" aria-labelledby="h-prioridad">
+        <div className="paso-cabeza">
+          <h3 id="h-prioridad">Qué te importa</h3>
+          <button type="button" className="lectura ajustar" aria-expanded={ajustar} aria-controls="pesos" onClick={() => setAjustar((x) => !x)}>
+            {ajustar ? 'Ocultar pesos' : 'Ajustar pesos'}
           </button>
-        ))}
-      </div>
-      <div className="pesos">
-        {p.claves.map((k) => {
-          const hay = p.conDato.has(k)
-          return (
-            <label className={`peso${hay ? '' : ' sin-dato'}`} key={k}>
-              <span className="peso-nombre">{p.nombreVariable(k)}</span>
-              <input type="range" min={0} max={1} step={0.05} value={p.pesos[k] ?? 0} disabled={!hay} onChange={(e) => p.onPeso(k, Number(e.target.value))} />
-              <span className="peso-num">{hay ? fmt(p.pesos[k] ?? 0, 2) : 'sin dato'}</span>
-            </label>
-          )
-        })}
-      </div>
-      <p className="nota">
-        El orden usa {usadas.length > 0 ? usadas.map(p.nombreVariable).join(', ') : 'ninguna variable'}
-        {ignoradas.length > 0 ? `; ignora ${ignoradas.map(p.nombreVariable).join(', ')} por falta de datos.` : '.'}
-      </p>
-      <ol className="ranking">
-        {p.ranking.filas.map((f, i) => (
-          <li key={f.codigo}>
-            <button type="button" className="ranking-fila" aria-pressed={f.codigo === p.seleccionada} onClick={() => p.onSeleccionar(f.codigo)}>
-              <span className="ranking-pos">{i + 1}</span>
-              <span className="ranking-nombre">{p.nombre(f.codigo)}</span>
-              <span className="ranking-pista">
-                <span className="ranking-barra" style={{ width: `${f.puntaje ?? 0}%` }} />
-              </span>
-              <span className="ranking-num">{f.puntaje === null ? 'sin dato' : fmt(f.puntaje, 0)}</span>
+        </div>
+        <div className="perfiles" role="radiogroup" aria-label="Perfil del hogar">
+          {p.tipos.map((t) => (
+            <button key={t.id} type="button" role="radio" aria-checked={p.perfilId === t.id} className="lectura" onClick={() => p.onPerfil(t.id)}>
+              {t.nombre}
             </button>
-          </li>
-        ))}
-      </ol>
+          ))}
+        </div>
+        {ajustar && (
+          <div className="pesos" id="pesos">
+            {p.claves.map((k) => {
+              const hay = p.conDato.has(k)
+              return (
+                <label className={`peso${hay ? '' : ' sin-dato'}`} key={k}>
+                  <span className="peso-nombre">{p.nombreVariable(k)}</span>
+                  <input type="range" min={0} max={1} step={0.05} value={p.pesos[k] ?? 0} disabled={!hay} onChange={(e) => p.onPeso(k, Number(e.target.value))} />
+                  <span className="peso-num">{hay ? fmt(p.pesos[k] ?? 0, 2) : 'sin dato'}</span>
+                </label>
+              )
+            })}
+          </div>
+        )}
+        {ignoradas.length > 0 && <p className="nota">Sin datos para {ignoradas.map(p.nombreVariable).join(', ')}: no cuenta en el orden.</p>}
+      </section>
+
+      <section className="paso" aria-labelledby="h-ranking">
+        <h3 id="h-ranking">
+          Mejores comunas para ti
+          <span className="grafico-clave">
+            puntaje · PM2,5 {anio}
+          </span>
+        </h3>
+        <ol className="ranking" ref={lista}>
+          {p.ranking.filas.map((f, i) => {
+            const pt = p.puntos.get(f.codigo)
+            return (
+              <li key={f.codigo}>
+                <button type="button" className="ranking-fila" aria-pressed={f.codigo === p.seleccionada} onClick={() => p.onSeleccionar(f.codigo)}>
+                  <span className="ranking-pos">{i + 1}</span>
+                  <span className="ranking-nombre">{p.nombre(f.codigo)}</span>
+                  <span className="ranking-pista">
+                    <span className="ranking-barra" style={{ width: `${f.puntaje ?? 0}%` }} />
+                  </span>
+                  <span className="ranking-num">{f.puntaje === null ? '—' : fmt(f.puntaje, 0)}</span>
+                  <span className="ranking-valor">
+                    {pt && <i className={`tag-muestra nivel-${papelNivel(nivel(pt.p50, p.cortes), p.cortes)}`} />}
+                    {pt ? fmt(pt.p50, 1) : '—'}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+      </section>
+
       {p.detalle && (
-        <section className="bloque detalle" aria-labelledby="h-detalle">
+        <section className="paso detalle" aria-labelledby="h-detalle">
           <h3 id="h-detalle">
             {p.detalle.comuna.nombre}
-            <span className="grafico-clave">
-              papel: banda p10–p90 · tinta: mediana{p.detalle.comparacion ? ` · trazos: «${p.detalle.comparacion.nombre}»` : ''}
-            </span>
+            {puesto > 0 && (
+              <span className="grafico-clave">
+                puesto {puesto} de {p.ranking.filas.length} · {u}
+              </span>
+            )}
           </h3>
+          <Cifras items={cifras} />
+          <ClaveGrafico nivelBanda={p.detalle.nivelBanda} comparacion={p.detalle.comparacion?.nombre} />
           <GraficoBanda
             anios={p.anios}
             serie={p.detalle.serie}
             comparacion={p.detalle.comparacion}
             idxAnio={p.idxAnio}
-            unidad={p.variable.unidad}
+            unidad={u}
             referencia={p.referencia}
             nivelBanda={p.detalle.nivelBanda}
+            alto={122}
           />
-          <ul className="hallazgos">
-            {p.detalle.hallazgos.map((h, i) => (
-              <li key={i}>{h}</li>
-            ))}
-          </ul>
+          {top && (
+            <p className="clave-politica">
+              <i className={`tag-muestra pol-${top.indice % PAPELES_POLITICA}`} />
+              <span>Lo que más la mueve: {top.nombre}</span>
+              <b>
+                {fmtSigned(top.delta)} {u}
+              </b>
+            </p>
+          )}
         </section>
       )}
     </div>

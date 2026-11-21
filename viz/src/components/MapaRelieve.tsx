@@ -8,6 +8,7 @@ import { poligonoMayor, proyectarGeometria, puntoInterior, type Pt } from '../li
 import { aRgb, CAPAS, curva, estiloRelieve, mezclar, textoRgb, type RGB } from '../lib/relieve'
 import { esGranSantiago, limitesDe, type Limites } from '../lib/vista'
 import type { PropsMapa } from './MapaPapel'
+import { TarjetaMapa } from './Papel'
 
 interface Props extends PropsMapa {
   /** estilo base ya leído (en línea o del paquete local) */
@@ -305,18 +306,7 @@ export default function MapaRelieve(p: Props) {
   return (
     <div className="mapa mapa-relieve" ref={caja}>
       <div className="mapa-gl" ref={lienzo} role="application" aria-label="Mapa en relieve de las comunas de la Región Metropolitana" />
-      {hover && tag && (
-        <div
-          className="tag-mapa"
-          role="tooltip"
-          style={{ left: hover.x + 18, top: hover.y + 18, transform: hover.x > ancho * 0.62 ? 'translateX(calc(-100% - 36px))' : undefined }}
-        >
-          <b>{tag.titulo}</b>
-          {tag.lineas.map((l, i) => (
-            <span key={i}>{l}</span>
-          ))}
-        </div>
-      )}
+      {hover && tag && <TarjetaMapa e={tag} x={hover.x} y={hover.y} ancho={ancho} />}
       {p.children}
     </div>
   )

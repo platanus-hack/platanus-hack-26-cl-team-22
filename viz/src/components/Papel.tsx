@@ -70,3 +70,80 @@ export function IconoJugar({ jugando }: { jugando: boolean }) {
     </svg>
   )
 }
+
+export interface Cifra {
+  etiqueta: string
+  valor: string
+  /** línea corta bajo el valor (banda, sentido) */
+  nota?: string
+  /** 'mejora' o 'empeora' tiñen el valor */
+  tono?: 'mejora' | 'empeora'
+}
+
+/** Fila de cifras clave: el dato grande, su etiqueta arriba y una nota corta abajo. */
+export function Cifras({ items, unidad }: { items: Cifra[]; unidad?: string }) {
+  return (
+    <dl className="cifras" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+      {items.map((c) => (
+        <div className="cifra" key={c.etiqueta}>
+          <dt>{c.etiqueta}</dt>
+          <dd className={c.tono ? `cifra-${c.tono}` : undefined}>
+            {c.valor}
+            {unidad && <small> {unidad}</small>}
+          </dd>
+          {c.nota && <dd className="cifra-nota">{c.nota}</dd>}
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/** Clave del gráfico con muestras en vez de frases. */
+export function ClaveGrafico({ nivelBanda, comparacion }: { nivelBanda: number | null; comparacion?: string }) {
+  return (
+    <p className="clave-grafico" aria-hidden="true">
+      <span>
+        <i className="clave-linea" /> mediana
+      </span>
+      <span>
+        <i className={`clave-banda ${nivelBanda !== null && nivelBanda >= 2 ? 'nivel-1' : 'nivel-0'}`} /> banda p10–p90
+      </span>
+      {comparacion && (
+        <span>
+          <i className="clave-trazos" /> {comparacion}
+        </span>
+      )}
+    </p>
+  )
+}
+
+export interface Etiqueta {
+  titulo: string
+  /** dato principal de la comuna, ya formateado */
+  valor?: string
+  unidad?: string
+  /** clase de papel del dato (nivel-3, mejora-2, zona-a…) */
+  clase?: string
+  lineas: string[]
+}
+
+/** Tarjeta que sigue al puntero sobre el mapa: nombre, dato grande con su color y hasta dos líneas. */
+export function TarjetaMapa({ e, x, y, ancho }: { e: Etiqueta; x: number; y: number; ancho: number }) {
+  return (
+    <div className="tag-mapa" role="tooltip" style={{ left: x + 18, top: y + 18, transform: x > ancho * 0.62 ? 'translateX(calc(-100% - 36px))' : undefined }}>
+      <b>{e.titulo}</b>
+      {e.valor && (
+        <span className="tag-valor">
+          {e.clase && <i className={`tag-muestra ${e.clase}`} />}
+          <strong>{e.valor}</strong>
+          {e.unidad && <small>{e.unidad}</small>}
+        </span>
+      )}
+      {e.lineas.map((l, i) => (
+        <span className="tag-linea" key={i}>
+          {l}
+        </span>
+      ))}
+    </div>
+  )
+}

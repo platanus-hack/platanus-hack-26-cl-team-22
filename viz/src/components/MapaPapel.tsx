@@ -27,6 +27,7 @@ import {
   type Vista,
 } from '../lib/proyeccion'
 import type { Mejor } from '../lib/types'
+import { TarjetaMapa, type Etiqueta } from './Papel'
 import { esGranSantiago, limitesDe } from '../lib/vista'
 
 export type { ModoMapa }
@@ -54,7 +55,7 @@ export interface PropsMapa {
   reencuadre: number
   reducido: boolean
   onSeleccionar: (codigo: string) => void
-  etiqueta: (f: GeoFeature) => { titulo: string; lineas: string[] }
+  etiqueta: (f: GeoFeature) => Etiqueta
   nombreAccesible: (f: GeoFeature) => string
   children?: ReactNode
 }
@@ -403,20 +404,12 @@ export function MapaPapel(p: PropsMapa) {
         )}
       </svg>
       {hov && tag && hover && (
-        <div
-          className="tag-mapa"
-          role="tooltip"
-          style={{
-            left: hover.x - (caja.current?.getBoundingClientRect().left ?? 0) + 18,
-            top: hover.y - (caja.current?.getBoundingClientRect().top ?? 0) + 18,
-            transform: hover.x - (caja.current?.getBoundingClientRect().left ?? 0) > tam.w * 0.62 ? 'translateX(calc(-100% - 36px))' : undefined,
-          }}
-        >
-          <b>{tag.titulo}</b>
-          {tag.lineas.map((l, i) => (
-            <span key={i}>{l}</span>
-          ))}
-        </div>
+        <TarjetaMapa
+          e={tag}
+          x={hover.x - (caja.current?.getBoundingClientRect().left ?? 0)}
+          y={hover.y - (caja.current?.getBoundingClientRect().top ?? 0)}
+          ancho={tam.w}
+        />
       )}
       {p.children}
     </div>
