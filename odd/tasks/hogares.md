@@ -22,9 +22,9 @@ emissions and air. Branch `feat/datos-aire`. Delivery: work-unit commits. Runner
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
 | T1 | S1 | inline | done: data merged, reference figures verified | 43eb369 |
-| T2 | S1, S3, S5 | inline | pending: `core/hogares.py` + tests | |
-| T3 | S2, S6 | inline | pending: calibration and test, `docs/modelo-hogares.md` | |
-| T4 | S4, S7 | inline | pending: heating feedback in the cycle, population variable, flows in `simulacion.json` | |
+| T2 | S1, S3, S5 | inline | done: `core/hogares.py`, 13 tests (conservation, capacity) | 2845953 |
+| T3 | S2, S6 | inline | done: RMSE 4,335 vs 5,054 (repeat) vs 7,716 (no moves) | 07c192b, 887a6d2 |
+| T4 | S4, S7 | inline | done: heating_scale in the cycle; population variable, flows and net migration in `simulacion.json` | 7a548dc + this unit |
 
 ## Log
 
@@ -37,3 +37,11 @@ emissions and air. Branch `feat/datos-aire`. Delivery: work-unit commits. Runner
   identifiable from cross-section (confounded by income/housing), default 0. Heating feedback
   has two readings (per-capita upper bound, fixed lower bound). RETC residential leña is
   top-down (dwellings × penetration × consumption × factor).
+- L4: Out-of-sample errors correlate 0.36 with new dwellings 2017-2024 (Ñuñoa +32 %); not
+  added as a term (2024 dwellings belong to the test period). Santiago lost 30k despite +24 %
+  dwellings: period effect.
+- L5: Zona B grows from 1,140,547 to 1,350,891 by 2036 (+18 %); housing cap never binds.
+  With heating following people: no policy 24.7, base 23.2 (plan progress cancelled), Zona B
+  ban worth -3.4 vs -2.9 µg/m³ with fixed heating (interaction). Toggles use `fija`.
+- L6: Process slip: the census merge commit and one lint failure were committed before checks
+  (pipe hid ruff's exit code); fixed with a follow-up commit, checks now run with pipefail.

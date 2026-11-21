@@ -75,6 +75,9 @@ Qué significa:
 
 ## Límites
 
+- La comparación no incluye el mecanismo de hogares: la población queda fija, para aislar el
+  efecto de cómo se promete y se ejecuta.
+
 - Usa el modelo de aire v0: todas las comunas se mueven casi igual, así que el resultado es
   regional. No dice qué comunas ganan más con cada paquete.
 - La credibilidad alta (0,8) es hipotética. La conclusión 2 no depende de ella; las

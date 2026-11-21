@@ -39,9 +39,10 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `escenarios` | Id, nombre y lista de políticas activas |
 | `trayectorias` | Por escenario, comuna y variable: tres listas (p10, p50, p90), una posición por año |
 | `aportes` | Por escenario, comuna y variable: cuánto mueve cada política el valor final |
-| `flujos` | Por escenario: hogares que se mudan entre dos comunas en un año |
+| `flujos` | Por escenario: personas que se mudan entre dos comunas en un año (`anio`, `origen`, `destino`, `personas`; las 15 mayores por año) |
 | `impacto` | Por escenario: personas que viven en comunas sobre la norma anual de PM2,5 (p10, p50, p90 por año) |
 | `validacion` | Error del modelo contra datos reales y contra alternativas simples |
+| `migracion_neta` | Por comuna: personas que llegan menos las que salen, una posición por año |
 | `promesas` | Comparación aparte (no es un interruptor): muchas promesas con poca ejecución contra pocas con mucha ejecución. Por paquete: valor de planilla, bandas, probabilidad de cumplir la norma por año. Ver `docs/promesas.md` |
 
 Reglas del contrato:
@@ -49,9 +50,10 @@ Reglas del contrato:
 - Solo se agregan claves; no se renombran ni se quitan sin avisar a quien hace la interfaz.
 - Falta la variable `seguridad`, que se sumará cuando exista.
 
-### Archivo real (v0, 21 nov)
+### Archivo real (v1, 21 nov: aire + hogares)
 
-`viz/datos/simulacion.json`, generado con `make simulate` (calibración, promesas y simulación, en ese orden; determinista: la
+`viz/datos/simulacion.json`, generado con `make simulate` (calibración de aire y de hogares, promesas y simulación, en ese
+orden; determinista: la
 misma corrida da el mismo archivo). Diferencias con el ejemplo que la interfaz debe saber:
 
 - **La variable es `pm25_anual`, no `pm25_invierno`.** El modelo v0 es anual. La interfaz
@@ -59,12 +61,19 @@ misma corrida da el mismo archivo). Diferencias con el ejemplo que la interfaz d
 - Los códigos de comuna son los oficiales de cinco dígitos (`"13101"` es Santiago).
 - Claves nuevas: `comunas[].zona_ppda` (A o B), `politicas[].tipo` (vigente o propuesta),
   `politicas[].procedencia`, `cita` y `efecto`, y `escenarios[].lectura`.
-- **Los interruptores** son los escenarios con `lectura: "conservadora"`. Los escenarios
-  `base-lectura-optimista` y `base-plan-escrito` son la misma combinación de políticas con
-  otra lectura de la credibilidad; no son un interruptor.
+- **Segunda variable: `crecimiento_poblacion`** (% desde 2024, mayor es mejor). Sale del
+  mecanismo de hogares y no tiene banda (p10 = p50 = p90). `tipos_hogar` ahora pesa
+  `pm25_anual` y `crecimiento_poblacion`; el perfil «prioriza seguridad» se reemplazó por
+  «prefiere comunas que crecen» hasta que exista `seguridad`.
+- **Los interruptores** son los escenarios con `lectura: "conservadora"` y
+  `hogares: "fija"`. Los escenarios `base-lectura-optimista` y `base-plan-escrito` cambian la
+  lectura de la credibilidad; los `…-lena-sigue-a-la-gente` usan `hogares: "proporcional"`
+  (la leña sigue a quienes se mudan, cota superior). Ninguno de ellos es un interruptor.
 - **Apagar una política vigente** significa que no avanza más desde 2023, no que la leña
   vuelva (`meta.significado_sin`).
-- `flujos` viene vacío hasta que exista el mecanismo de hogares.
+- **`flujos` cuenta personas, no hogares** (el censo cuenta personas): el campo se llama
+  `personas`, no `hogares` como en el ejemplo. Son iguales en todos los escenarios, porque ni
+  las políticas ni el aire cambian a dónde se muda la gente.
 - Los códigos de comuna del ejemplo son nombres en minúsculas. El archivo real usará el
   código oficial de comuna; la interfaz no debe depender del formato del código.
 
@@ -80,7 +89,7 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 | 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Hecho | Massiel |
 | 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Libre |  |
 | 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario hecho (`docs/politicas-aire.md`); falta catálogo y credibilidad |  |
-| 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Aire v0 hecho y escribe `simulacion.json`; falta v1 de aire y hogares | Jesús |
+| 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Aire v0 y hogares hechos, escriben `simulacion.json`; falta v1 de aire | Jesús |
 | 7. Validación y experimentos | Ajuste y prueba separados, comparación con alternativas simples, réplicas | `results/`, y escribe `simulacion.json` real | 6 | Por empezar |  |
 | 8. Interfaz | Mapa de la región, control de tiempo, interruptores de políticas, ficha de comuna | `viz/` | Solo el contrato | Puede empezar hoy | Gabriel |
 | 9. Spec, README y pitch | `sim-spec.md` completo, guion de demo, textos de entrega | `docs/`, `README.md` | Avanza con todos | Por empezar |  |

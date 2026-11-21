@@ -16,8 +16,9 @@ lint:             ## static checks
 experiments:      ## replicas for the reference model -> results/*.csv
 	$(PY) -m experiments.replicate
 
-simulate:         ## air model: calibrate -> promises comparison -> viz/datos/simulacion.json
+simulate:         ## calibrate air and households -> promises -> viz/datos/simulacion.json
 	$(PY) -m experiments.calibrar_aire
+	$(PY) -m experiments.calibrar_hogares
 	$(PY) -m experiments.promesas
 	$(PY) -m experiments.simular
 

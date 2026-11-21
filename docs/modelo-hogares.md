@@ -85,6 +85,37 @@ Dos lecturas, y se publican las dos:
 Transporte, industria y otras no se escalan: el transporte del RETC no se asigna por lugar de
 residencia, y la industria y los incendios no siguen a los residentes.
 
+## En la simulación 2026–2036
+
+`make simulate` parte de la población del censo 2024 y aplica las mudanzas cada año, con los
+parámetros 2012→2017 (los validados). El tope de viviendas crece al ritmo de las viviendas de
+cada comuna entre 2017 y 2024; no se alcanza en ninguna comuna.
+
+- **La ciudad se muda hacia la Zona B**: pasa de 1.140.547 a 1.350.891 habitantes en 2036
+  (+18 %), sobre todo en Lampa, Colina y Buin.
+- La población de cada comuna se publica como la variable `crecimiento_poblacion` (% desde
+  2024). No tiene banda: las mudanzas son flujos esperados, no se sortean.
+
+PM2,5 en 2036, promedio ponderado por la población de 2036 (nivel 2023: 23,4 µg/m³):
+
+| Escenario | Leña fija | Leña sigue a la gente |
+|---|---|---|
+| Ninguna política avanza | 23,2 | **24,7** |
+| Planes vigentes, cumplimiento real | 21,7 (20,5–22,7) | **23,2** (22,0–24,2) |
+| Planes vigentes + prohibición en la Zona B | 18,8 (15,8–21,4) | 19,8 (16,4–22,7) |
+
+Qué significa:
+
+- **Si la leña sigue a la gente, la migración a la Zona B anula el avance del plan.** Con el
+  cumplimiento real, el plan vigente deja la región en 23,2: prácticamente el nivel de hoy.
+  Es la cota superior; la inferior (leña fija) es 21,7.
+- **La prohibición en la Zona B vale más cuanta más gente se muda allí**: −3,4 µg/m³ con la
+  leña siguiendo a la gente contra −2,9 sin ella (18 % más), porque también cubre la leña de
+  quienes llegan. Es una interacción entre dos mecanismos, no una suma.
+- Los interruptores de la interfaz usan la lectura `fija` (no exagera). Los tres escenarios
+  `…-lena-sigue-a-la-gente` muestran la cota superior. Cambiar la lectura por defecto es una
+  constante en `experiments/simular.py` (`DEFAULT_HOUSEHOLDS`).
+
 ## Siguientes versiones
 
 1. Vivienda nueva como atractor, ajustada con 2012→2017 y probada con 2019→2024 (hoy no hay

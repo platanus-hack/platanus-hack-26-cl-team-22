@@ -83,21 +83,23 @@ Políticas con efecto citado:
 - −30 % de la industria (arts. 57-58, vigente, aplicado como cota superior);
 - extender la prohibición de leña a la Zona B (propuesta).
 
-PM2,5 en 2036, promedio ponderado por población (base 2023: 23,4 µg/m³):
+PM2,5 en 2036, promedio ponderado por la población de 2036, con la leña fija (base 2023:
+23,4 µg/m³). Con la leña siguiendo a quienes se mudan, ver
+[`modelo-hogares.md`](./modelo-hogares.md):
 
 | Escenario | p10 | p50 | p90 |
 |---|---|---|---|
-| Ninguna política avanza | 23,4 | 23,4 | 23,4 |
-| Planes vigentes, con el historial real (lectura conservadora) | 20,6 | **21,8** | 22,9 |
-| Planes vigentes, lectura optimista | 19,2 | 19,7 | 20,9 |
-| Planes vigentes, cumplidos al 100 % | 19,2 | **19,2** | 19,2 |
-| Planes vigentes + leña prohibida en la Zona B (conservadora) | 16,0 | **18,9** | 21,6 |
+| Ninguna política avanza | 23,2 | 23,2 | 23,2 |
+| Planes vigentes, con el historial real (lectura conservadora) | 20,5 | **21,7** | 22,7 |
+| Planes vigentes, lectura optimista | 19,1 | 19,6 | 20,7 |
+| Planes vigentes, cumplidos al 100 % | 19,1 | **19,1** | 19,1 |
+| Planes vigentes + leña prohibida en la Zona B (conservadora) | 15,8 | **18,8** | 21,4 |
 
 Qué significa:
 
 - **El plan escrito y el historial real dan regiones distintas.** Cumplido al 100 %, el plan
   deja la región bajo la norma anual (20 µg/m³). Con la tasa de cumplimiento observada queda
-  en 21,8: el incumplimiento como cifra.
+  en 21,7: el incumplimiento como cifra.
 - **La Zona B es la palanca.** Extender la prohibición, aun con la misma credibilidad baja,
   logra en la mediana algo mejor que cumplir al 100 % los planes vigentes, pero con una banda
   ancha (16,0 a 21,6). En Santiago centro, que no está en la Zona B, aporta −3,2 µg/m³: el
