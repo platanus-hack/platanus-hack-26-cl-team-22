@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from scipy import stats
 
 from core.credibilidad import BetaCredibility, Measure, draw_execution, draw_theta
 
@@ -68,10 +69,24 @@ def test_measure_order_does_not_change_draws():
     assert np.array_equal(t_ab, t_ba[::-1])
 
 
-def test_theta_is_drawn_from_the_beta():
-    ms = [measure(f"m{i}", a=8.0, b=2.0) for i in range(4000)]
-    theta = draw_theta(ms, seed=8, replica=0)
-    assert abs(theta.mean() - 0.8) < 0.01
+def thetas_over_replicas(ms, replicas=3000, **kwargs):
+    return np.array([draw_theta(ms, seed=8, replica=r, **kwargs) for r in range(replicas)])
+
+
+@pytest.mark.parametrize("rho_theta", [0.0, 0.5])
+def test_theta_keeps_its_beta_marginal(rho_theta):
+    ms = [measure("a", "muni1", a=8.0, b=2.0), measure("b", "muni1", a=8.0, b=2.0)]
+    theta = thetas_over_replicas(ms, rho_theta=rho_theta)[:, 0]
+    assert stats.kstest(theta, stats.beta(8.0, 2.0).cdf).pvalue > 0.01
+
+
+def test_credibility_is_shared_within_an_executor_only():
+    ms = [measure("a", "muni1"), measure("b", "muni1"), measure("c", "muni2")]
+    shared = np.corrcoef(thetas_over_replicas(ms, rho_theta=0.5).T)
+    assert shared[0, 1] > 0.3
+    assert abs(shared[0, 2]) < 0.06
+    independent = np.corrcoef(thetas_over_replicas(ms, rho_theta=0.0).T)
+    assert abs(independent[0, 1]) < 0.06
 
 
 def test_beta_binomial_update_and_summary():
@@ -101,6 +116,7 @@ def test_more_history_narrows_the_band():
         lambda: draw_execution(np.array([0.5, 0.5]), [measure("a")], n_years=1, seed=0,
                                replica=0),
         lambda: draw_theta([measure("a"), measure("a")], seed=0, replica=0),
+        lambda: draw_theta([measure("a")], seed=0, replica=0, rho_theta=1.0),
     ],
 )
 def test_invalid_inputs_are_rejected(call):

@@ -86,6 +86,26 @@ la medida se ejecuta si  latente[i, t] < Φ⁻¹(θ_i)
 - `ρ = 0` equivale a sorteos independientes. θ = 0 nunca se ejecuta y θ = 1 siempre.
 - **Supuesto:** `ρ = 0,3` por defecto, hasta poder estimarlo con el historial.
 
+### La credibilidad también es compartida
+
+Lo que no sabemos de un ejecutor (¿es una SEREMI con recursos o sin ellos?) afecta a **todas**
+sus medidas. «Credibilidad por medida» fija la media de cada medida, no que sean independientes.
+Si cada medida sorteara su θ por separado, 18 medidas del mismo ejecutor «diversificarían» una
+incertidumbre que en realidad es una sola.
+
+El sorteo de θ (una vez por réplica) usa la misma cópula:
+
+```
+latente_i = √ρθ · z[e] + √(1 − ρθ) · ε_i
+θ_i = F⁻¹_Beta(Φ(latente_i); α_i, β_i)
+```
+
+- Cada θ conserva **exactamente** su Beta: cambia con quién se mueve, no su distribución.
+- `z[e]` sale de un flujo con la clave del ejecutor y `ε_i` de uno con la clave de la medida:
+  quitar una medida sigue sin cambiar los sorteos de las demás.
+- **Supuesto:** `ρθ = 0,5` por defecto. Se fijó antes de correr la comparación de promesas
+  (`docs/promesas.md`), que se publica también con `ρθ = 0`.
+
 Pendiente: un shock común a todos los ejecutores para años atípicos (2019, 2020 y 2021).
 
 ## Atribución con números aleatorios comunes

@@ -3,7 +3,8 @@
 Design and sources: docs/credibilidad.md.
 
 Two random levels, kept on separate streams:
-- theta (credibility): drawn once per replica from Beta(alpha, beta). Epistemic uncertainty.
+- theta (credibility): drawn once per replica from Beta(alpha, beta), correlated within an
+  executor (shared uncertainty about the executor). Epistemic uncertainty.
 - execution: drawn once per year with theta fixed, correlated within an executor through a
   one-factor Gaussian copula. Aleatoric uncertainty.
 
@@ -25,6 +26,9 @@ Provenance = Literal["medida", "tasa_base", "supuesto"]
 # Assumption (docs/credibilidad.md): within-executor failure correlation until history allows
 # estimating it.
 DEFAULT_RHO = 0.3
+# Assumption (docs/credibilidad.md): share of the uncertainty about a measure's credibility that
+# belongs to its executor. Chosen before running the promises comparison, which reports 0 too.
+DEFAULT_RHO_THETA = 0.5
 
 
 @dataclass(frozen=True)
@@ -69,15 +73,34 @@ def _stream(seed: int, replica: int, *labels: str) -> np.random.Generator:
     return np.random.default_rng(np.random.SeedSequence([seed, replica, key]))
 
 
-def draw_theta(measures: Sequence[Measure], *, seed: int, replica: int) -> np.ndarray:
-    """One credibility value per measure for this replica."""
+def draw_theta(
+    measures: Sequence[Measure],
+    *,
+    seed: int,
+    replica: int,
+    rho_theta: float = DEFAULT_RHO_THETA,
+) -> np.ndarray:
+    """One credibility value per measure for this replica.
+
+    Each theta keeps its own Beta marginal exactly; rho_theta makes the measures of one executor
+    share part of the uncertainty about that executor (one-factor Gaussian copula):
+
+        latent_i = sqrt(rho_theta) * z[executor] + sqrt(1 - rho_theta) * eps_i
+        theta_i  = BetaPPF(Phi(latent_i); alpha_i, beta_i)
+    """
     _check_unique(measures)
-    return np.array(
-        [
-            _stream(seed, replica, "theta", m.id).beta(m.credibility.alpha, m.credibility.beta)
-            for m in measures
-        ]
-    )
+    if not 0 <= rho_theta < 1:
+        raise ValueError("rho_theta must lie in [0, 1)")
+    shocks: dict[str, float] = {}
+    theta = np.empty(len(measures))
+    for i, m in enumerate(measures):
+        if m.executor not in shocks:
+            shocks[m.executor] = float(
+                _stream(seed, replica, "theta-shock", m.executor).standard_normal())
+        own = float(_stream(seed, replica, "theta", m.id).standard_normal())
+        latent = np.sqrt(rho_theta) * shocks[m.executor] + np.sqrt(1 - rho_theta) * own
+        theta[i] = stats.beta.ppf(special.ndtr(latent), m.credibility.alpha, m.credibility.beta)
+    return theta
 
 
 def draw_execution(
