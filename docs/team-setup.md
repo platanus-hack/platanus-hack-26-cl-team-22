@@ -52,7 +52,22 @@ Si usas el proxy de LLM del hackatón, configura tu propia URL con tu token en `
 - Ese archivo está pensado para quedar fuera de git. Verifica con `git check-ignore -v .claude/settings.local.json`; si no aparece ignorado, agrégalo a tu `.gitignore` global o local.
 - No compartas tu URL ni tu token en el repo, issues ni chats.
 
-## 5. Documentación de referencia
+## 5. Entorno de desarrollo (Python)
+
+Requiere Python 3.11 o superior.
+
+```bash
+make setup         # crea .venv e instala dependencias
+make test          # suite de validación (kernel, estadísticas, M/M/1, gateway LLM)
+make lint          # ruff
+make experiments   # réplicas del modelo de referencia -> results/mm1.csv
+```
+
+- `core/` es el modelo puro (sin UI): kernel de eventos discretos, estadísticas ponderadas en el tiempo, intervalos de confianza y un gateway LLM con record/replay.
+- `core/mm1.py` es el modelo de referencia M/M/1: sirve para validar el kernel y como plantilla del modelo real. Resultado esperado: Wq ≈ 3.94 ± 0.19 y L ≈ 3.95 ± 0.16 (teórico 4.0).
+- El plan de trabajo, los roles y el checklist de entrega están en [`work-plan.md`](./work-plan.md). La plantilla de spec, en [`sim-spec.md`](./sim-spec.md).
+
+## 6. Documentación de referencia
 
 - [`track-simulations.md`](./track-simulations.md): criterios oficiales del track.
 - [`evaluation-rubric.md`](./evaluation-rubric.md): rúbrica de evaluación y pesos.
