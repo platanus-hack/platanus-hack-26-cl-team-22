@@ -174,7 +174,23 @@ export interface BloqueValidacion {
   aviso?: string
 }
 
+/** One out-of-sample test from make validate (results/validacion.json, field `filas`). */
+export interface PruebaValidacion {
+  variable: string
+  prueba: string
+  metrica: string
+  modelo: number
+  sin_cambio: number | null
+  tendencia: number | null
+  /** lowest error as decided by make validate: 'modelo', 'sin_cambio', 'tendencia' or 'empate' */
+  gana: string
+}
+
 export interface Validacion {
   fuente?: string
   bloques: BloqueValidacion[]
+  /** unified tests; when present they are the whole scoreboard */
+  pruebas?: PruebaValidacion[]
+  /** errors within this fraction of each other count as a tie (make validate's rule) */
+  tolerancia?: number
 }

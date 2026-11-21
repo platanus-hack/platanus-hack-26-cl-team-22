@@ -1,4 +1,4 @@
-import type { Validacion } from './types'
+import type { PruebaValidacion, Validacion } from './types'
 
 /**
  * Marcador de la validación: cada prueba fuera de muestra enfrenta el error del modelo con la mejor
@@ -59,7 +59,37 @@ const SEGURIDAD: { id: string; titulo: string; modelo: string; rivales: string[]
   { id: 'seguridad-1', titulo: 'Delitos: 2024 visto desde 2023', modelo: 'modelo_1_anio', rivales: ['persistencia_2023'] },
 ]
 
+const ALTERNATIVAS: Record<string, string> = { sin_cambio: 'sin cambio', tendencia: 'tendencia' }
+
+/** How an error is shown, from the metric text of make validate. */
+function formatoDe(metrica: string): FilaPrueba['formato'] {
+  if (/personas/i.test(metrica)) return 'personas'
+  if (/log/i.test(metrica)) return 'pct'
+  return 'aire'
+}
+
+/** Rows of make validate: the winner is the one it computed, so the app and the README agree. */
+function desdePruebas(pruebas: readonly PruebaValidacion[]): FilaPrueba[] {
+  return pruebas.flatMap((p, i) => {
+    const alternativas = (['sin_cambio', 'tendencia'] as const)
+      .map((k) => ({ clave: k, valor: p[k] }))
+      .filter((x): x is { clave: 'sin_cambio' | 'tendencia'; valor: number } => x.valor !== null)
+    if (alternativas.length === 0) return []
+    const mejor = alternativas.reduce((m, e) => (e.valor < m.valor ? e : m))
+    const resultado: Resultado = p.gana === 'modelo' ? 'gana' : p.gana === 'empate' ? 'empata' : 'pierde'
+    return [{
+      id: `prueba-${i}`,
+      titulo: `${p.variable}: ${p.prueba}`,
+      modelo: p.modelo,
+      rival: { nombre: ALTERNATIVAS[mejor.clave]!, valor: mejor.valor },
+      resultado,
+      formato: formatoDe(p.metrica),
+    }]
+  })
+}
+
 export function resumirPruebas(v: Validacion): FilaPrueba[] {
+  if (v.pruebas && v.pruebas.length > 0) return desdePruebas(v.pruebas)
   const out: FilaPrueba[] = []
   const mejor = (cands: { clave: string; valor: number }[]) => (cands.length > 0 ? cands.reduce((m, e) => (e.valor < m.valor ? e : m)) : null)
   for (const b of v.bloques) {

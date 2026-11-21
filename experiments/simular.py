@@ -302,6 +302,19 @@ def featured_communes(setup: Setup) -> list[str]:
     return [setup.communes.codes[i] for i in dict.fromkeys(int(i) for i in chosen)]
 
 
+def unified_validation() -> dict:
+    """The out-of-sample tests of make validate (results/validacion.json), as the app shows them.
+
+    The interface builds its scoreboard only from these rows when they exist, so it and the README
+    table say the same thing. Run make validate before make simulate to refresh them.
+    """
+    report_file = ROOT / "results" / "validacion.json"
+    if not report_file.exists():
+        return {}
+    report = json.loads(report_file.read_text(encoding="utf-8"))
+    return {"pruebas": report["filas"], "tolerancia": report["protocolo_empate"]}
+
+
 def population_housing_validation() -> dict:
     """Validation blocks for population (open model) and new housing, if their results exist.
 
@@ -691,6 +704,7 @@ def main() -> None:
                 "aviso": "2019-2024 incluye el estallido y la pandemia.",
             },
             **population_housing_validation(),
+            **unified_validation(),
         },
         # Separate comparison, not a toggle scenario: see docs/promesas.md.
         "promesas": {"fuente": f"results/{PROMISES.name}", **promises},
