@@ -50,9 +50,9 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
             <p>Proyectamos el aire y la seguridad de cada comuna a 5, 10 y 30 años, según los planes públicos que la afectan y la probabilidad real de que se cumplan.</p>
             {/* El motor escucha este mismo botón y vuela a la región; al llegar se abre el simulador real. */}
             <button className="cta" id="cta" onClick={entrarAlSimulador}>
-              Entrar a Santiago
+              Entrar al simulador
             </button>
-            <small>Arrastra para girar el mundo. Usa la rueda o pellizca para acercarte hasta ver las calles.</small>
+            <small>O sigue bajando.</small>
           </div>
 
           <div className="zoom" aria-label="Zoom">

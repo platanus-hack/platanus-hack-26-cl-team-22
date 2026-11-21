@@ -192,3 +192,7 @@ body.saliendo .sim .panel{transform:translateX(calc(100% + 24px)); opacity:0; po
 body.saliendo .sim .intro, body.saliendo .sim .crumbs, body.saliendo .sim .brand{opacity:0; pointer-events:none}
 .panel .abrir{display:block; margin-top:16px; background:var(--ink); color:var(--page); padding:13px 20px; border-radius:999px; font-weight:600; font-size:15px; text-align:center; text-decoration:none}
 .panel .abrir:hover{background:var(--accent); color:var(--accent-ink)}
+
+/* La landing ya no se queda en el simulador de ejemplo: del globo pasa directo al simulador real.
+   Sus controles y su panel no se muestran; quedan el globo, la introducción con su botón y el crédito del mapa. */
+.sim .panel, .sim .crumbs, .sim .zoom, .sim .legend, .sim .brand{display:none}
