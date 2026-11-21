@@ -39,15 +39,20 @@ Cada política es una hoja de papel frío pegada bajo las comunas donde aporta: 
 derecha, más ancha cuanto más aporta, y varias se apilan en orden. Apagar una política la desliza fuera de la pila
 y el papel cálido del nivel cambia en el mismo gesto. Un borde festoneado marca la incertidumbre.
 
-### La hoja Riesgo: una dimensión o una variable en detalle
+### Pestañas por tipo de riesgo
 
-La primera hoja tiene un selector que manda sobre el panel y sobre el mapa:
+Cinco pestañas (`src/lib/pestanas.ts`); todas menos el resumen abren con un título y un subtítulo, y las que
+tienen varias secciones las muestran como acordeón con una sola abierta, que también manda sobre el mapa:
 
-| Capa | Qué muestra el panel | Qué pinta el mapa |
+| Pestaña | Secciones | Qué pinta el mapa |
 |---|---|---|
-| General | El índice de riesgo de la comuna (0 a 100), su veredicto, las tres de menor riesgo y una fila por variable | El índice |
-| Aire | Valor, veredicto frente a la norma anual, proyección con banda y la política que más lo mueve | PM2,5 frente a la norma |
-| Seguridad, Crecimiento | Valor, veredicto por posición y proyección con banda | La posición de riesgo en esa variable |
+| Resumen | El índice de riesgo de 0 a 100, las tres de menor riesgo y una fila por variable | El índice |
+| Climático | Calidad del aire · La leña, su fuente principal | PM2,5 frente a la norma · zonas y emisiones de leña |
+| Legal | Los planes públicos, su probabilidad de cumplirse y el efecto de encender o apagar cada uno | Valor o diferencia |
+| Social | Seguridad ciudadana · Crecimiento poblacional · Desarrollo urbano (la simulación de mudanzas) | Posición de riesgo · flujos |
+| Referencias | Fuentes de datos y normas · El modelo contra datos que no vio | Sin cambio |
+
+En el resumen, cada fila de variable lleva a su pestaña y sección.
 
 **Unidad del índice** (`src/lib/riesgo.ts`): en cada variable, el riesgo de una comuna es el porcentaje de las
 otras comunas que están mejor que ella en ese año (0 = la mejor, 100 = la peor). El índice general es el promedio
@@ -110,7 +115,7 @@ Pensada para escritorio 16:9 y 16:10 (1920×1080, 1440×900, 1280×720), sin des
 
 | Tecla | Qué hace |
 |---|---|
-| `1` … `3` (`4`, `5`) | Vistas: Riesgo, El plan, La leña y, si el archivo trae `validacion`, La prueba; si existe `datos/demografia.json`, Las mudanzas |
+| `1` … `5` | Pestañas: Resumen, Climático, Legal, Social y Referencias |
 | `Q` `W` `E` `R` … | Enciende o apaga el plan de esa fila en El plan (la letra está impresa en cada fila) |
 | `←` `→` | Año anterior o siguiente |
 | `Espacio` | Reproduce o pausa los años |

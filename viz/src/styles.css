@@ -2641,3 +2641,110 @@ body:has(.estado) {
   gap: calc(var(--u) * 0.4);
   flex: none;
 }
+
+/* ---------- Pestañas por tipo de riesgo: más ancho para leer, cabecera y acordeón ---------- */
+.escena {
+  grid-template-columns: 56fr 44fr;
+}
+.pestana {
+  white-space: nowrap;
+}
+.hoja-cabeza {
+  margin-bottom: calc(var(--u) * 0.9);
+}
+.hoja-cabeza h2 {
+  font-weight: 800;
+  font-size: var(--t-xl);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.hoja-cabeza p {
+  margin-top: calc(var(--u) * 0.3);
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.acordeon {
+  display: grid;
+  gap: 2px;
+}
+.pliegue h3 button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 1);
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  background: var(--papel-2);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 0.9);
+  font-size: var(--t-m);
+  font-weight: 800;
+  color: var(--tinta);
+  transition:
+    background-color var(--t-capa) var(--ease),
+    color var(--t-capa) var(--ease);
+}
+.pliegue h3 button:hover {
+  background: var(--corte);
+}
+.pliegue h3 button:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 1px;
+}
+.pliegue h3 svg {
+  flex: none;
+  width: 0.8em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: transform var(--t-capa) var(--ease);
+}
+.pliegue-abierto h3 button {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.pliegue-abierto h3 button:hover {
+  background: var(--tinta);
+}
+.pliegue-abierto h3 svg {
+  transform: rotate(180deg);
+}
+.pliegue-cuerpo {
+  padding: calc(var(--u) * 1) 0 calc(var(--u) * 0.8);
+  animation: guia-entra 420ms var(--ease) both;
+}
+.pliegue-cuerpo .etiqueta-real {
+  margin-top: 0;
+}
+.pliegue-cuerpo .lena-titular {
+  font-size: var(--t-l);
+  max-width: none;
+  margin: calc(var(--u) * 0.6) 0;
+}
+.v-fuentes h4 {
+  font-weight: 800;
+  font-size: var(--t-m);
+  margin: calc(var(--u) * 1.1) 0 calc(var(--u) * 0.4);
+}
+.fuentes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.fuentes li {
+  display: grid;
+  grid-template-columns: minmax(0, 15em) minmax(0, 1fr);
+  gap: calc(var(--u) * 1);
+  background: var(--papel);
+  padding: calc(var(--u) * 0.45) calc(var(--u) * 0.8);
+  font-size: var(--t-s);
+}
+.fuentes b {
+  font-weight: 800;
+}
+.fuentes span,
+.fuentes a {
+  color: var(--tinta-2);
+}

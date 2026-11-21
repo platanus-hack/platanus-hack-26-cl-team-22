@@ -68,16 +68,6 @@ export function VistaRiesgo(p: Props) {
   const general = p.capa === GENERAL
   return (
     <div className="v-riesgo">
-      <div className="capas" role="radiogroup" aria-label="Qué muestra el mapa y esta hoja">
-        <button type="button" role="radio" aria-checked={general} className="capa" onClick={() => p.onCapa(GENERAL)}>
-          General
-        </button>
-        {p.variables.map((v) => (
-          <button key={v.id} type="button" role="radio" aria-checked={p.capa === v.id} className="capa" onClick={() => p.onCapa(v.id)}>
-            {v.nombre}
-          </button>
-        ))}
-      </div>
       {general ? <General {...p} /> : <Detalle {...p} />}
     </div>
   )
@@ -260,7 +250,7 @@ function Detalle(p: Props) {
 
       <section className="tramo" aria-label={`Proyección de ${v.nombre.toLowerCase()} en ${p.comuna.nombre}`}>
         <ClaveGrafico nivelBanda={banda ? 0 : null} comparacion={d.comparacion?.nombre} />
-        <GraficoBanda anios={p.anios} serie={d.serie} comparacion={d.comparacion} idxAnio={p.idxAnio} unidad={v.unidad} referencia={d.referencia} nivelBanda={0} alto={132} />
+        <GraficoBanda anios={p.anios} serie={d.serie} comparacion={d.comparacion} idxAnio={p.idxAnio} unidad={v.unidad} referencia={d.referencia} nivelBanda={0} alto={112} />
       </section>
 
       {aporte && Math.abs(aporte.delta_p50_final) > 0 && (
