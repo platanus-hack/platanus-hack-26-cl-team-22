@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import ipaddress
 import json
 import logging
 import math
@@ -48,6 +47,8 @@ _HTML_CSP = (
     "frame-ancestors 'none'"
 )
 _ALLOWED_HOSTNAMES: frozenset[str] = frozenset({"localhost", "127.0.0.1", "[::1]"})
+_ACCEPTED_LOOPBACK_HOSTS: frozenset[str] = frozenset({"localhost", "127.0.0.1", "::1"})
+MAX_TARGET_BYTES: int = 2048
 
 _DEVICE_CHOICES: tuple[str, ...] = ("esim-only", "physical-only", "dual")
 _REQUIRED_SIMULATE_FIELDS: tuple[str, ...] = (
@@ -82,20 +83,42 @@ class _LocalThreadingHTTPServer(ThreadingHTTPServer):
 
 
 def is_loopback_host(host: str) -> bool:
-    """Return True when host names a loopback address (127.0.0.1, ::1, localhost)."""
+    """Return True when host names exactly localhost, 127.0.0.1, or ::1."""
     if not isinstance(host, str):
         return False
     normalized = host.strip().lower()
     if not normalized:
         return False
-    if normalized == "localhost":
-        return True
     if normalized.startswith("[") and normalized.endswith("]"):
         normalized = normalized[1:-1]
-    try:
-        return ipaddress.ip_address(normalized).is_loopback
-    except ValueError:
-        return False
+    return normalized in _ACCEPTED_LOOPBACK_HOSTS
+
+
+def _validate_request_target(target: str) -> tuple[int, str] | None:
+    """Validate HTTP request target, rejecting non-origin forms, controls, or excessive length."""
+    if not isinstance(target, str):
+        return 400, "Bad Request: invalid request target."
+
+    if len(target.encode("utf-8", errors="replace")) > MAX_TARGET_BYTES:
+        return 414, f"URI Too Long: request target exceeds limit of {MAX_TARGET_BYTES} bytes."
+
+    if not target.startswith("/") or target.startswith("//"):
+        return 400, "Bad Request: request target must start with a single '/'."
+
+    if "\\" in target:
+        return 400, "Bad Request: request target must not contain backslashes."
+
+    if "\x00" in target:
+        return 400, "Bad Request: request target must not contain null bytes."
+
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in target):
+        return 400, "Bad Request: request target must not contain control characters."
+
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc:
+        return 400, "Bad Request: request target must not contain scheme or netloc."
+
+    return None
 
 
 def _invalid_field(field: str, message: str) -> tuple[int, dict[str, Any]]:
@@ -106,8 +129,12 @@ def _reject_non_finite_json_constant(token: str) -> Any:
     raise ValueError(f"Non-finite JSON constant {token!r} is not allowed.")
 
 
-def _parse_host_header(raw_host: str) -> tuple[str, int | None] | None:
-    """Validate and parse a Host header against allowed loopback hostnames."""
+def _parse_host_header(
+    raw_host: str,
+    allowed_hostnames: frozenset[str] | None = None,
+) -> tuple[str, int | None] | None:
+    """Validate and parse a Host header against allowed hostnames."""
+    valid_hostnames = _ALLOWED_HOSTNAMES if allowed_hostnames is None else allowed_hostnames
     value = raw_host.strip()
     if not value or any(ord(ch) <= 0x20 or ch in "@/?#\\" for ch in value):
         return None
@@ -118,13 +145,19 @@ def _parse_host_header(raw_host: str) -> tuple[str, int | None] | None:
             return None
         host_part = value[: bracket_end + 1].lower()
         rest = value[bracket_end + 1 :]
-        if host_part != "[::1]":
+        if host_part not in valid_hostnames:
             return None
         if not rest:
             return host_part, None
         if not rest.startswith(":"):
             return None
         port_str = rest[1:]
+        if not port_str or not port_str.isascii() or not port_str.isdigit():
+            return None
+        port = int(port_str)
+        if not (1 <= port <= 65535):
+            return None
+        return host_part, port
     elif ":" in value:
         if value.count(":") != 1:
             return None
@@ -134,7 +167,7 @@ def _parse_host_header(raw_host: str) -> tuple[str, int | None] | None:
         host_part = value.lower()
         port_str = ""
 
-    if host_part not in _ALLOWED_HOSTNAMES:
+    if host_part not in valid_hostnames:
         return None
 
     if ":" in value and not port_str:
@@ -465,11 +498,15 @@ def resolve_static_file(
         if part in ("", ".", "..") or part.startswith("."):
             return None
 
-    base_dir = static_dir.resolve()
-    candidate = (base_dir / rel_name).resolve()
-    if not candidate.is_relative_to(base_dir):
-        return None
-    if not candidate.is_file():
+    try:
+        base_dir = static_dir.resolve()
+        candidate = (base_dir / rel_name).resolve()
+        if not candidate.is_relative_to(base_dir):
+            return None
+        if not candidate.is_file():
+            return None
+    except (OSError, ValueError):
+        # e.g. a path component longer than the filesystem allows: not found, never a 500
         return None
     return candidate
 
@@ -505,6 +542,7 @@ class TravelSimRequestHandler(BaseHTTPRequestHandler):
     max_body_bytes: int = MAX_REQUEST_BODY_BYTES
     reference_time: datetime | None = None
     clock: Callable[[], datetime] | None = None
+    allowed_hostnames: frozenset[str] = _ALLOWED_HOSTNAMES
 
     def version_string(self) -> str:
         """Return minimal Server header without Python or BaseHTTP version strings."""
@@ -600,7 +638,9 @@ class TravelSimRequestHandler(BaseHTTPRequestHandler):
         if parsed.username is not None or parsed.password is not None or "@" in parsed.netloc:
             return False
 
-        parsed_origin_host = _parse_host_header(parsed.netloc)
+        parsed_origin_host = _parse_host_header(
+            parsed.netloc, allowed_hostnames=self.allowed_hostnames
+        )
         if parsed_origin_host is None:
             return False
         origin_host, origin_port = parsed_origin_host
@@ -704,12 +744,21 @@ class TravelSimRequestHandler(BaseHTTPRequestHandler):
 
     def _dispatch_request(self) -> None:
         try:
+            target_err = _validate_request_target(getattr(self, "path", ""))
+            if target_err is not None:
+                err_status, err_msg = target_err
+                self.close_connection = True
+                self._send_json(err_status, {"error": err_msg})
+                return
+
             host_headers = self.headers.get_all("Host") or []
             if len(host_headers) != 1:
                 self.close_connection = True
                 self._send_json(403, {"error": "Forbidden: invalid Host header."})
                 return
-            parsed_host = _parse_host_header(host_headers[0])
+            parsed_host = _parse_host_header(
+                host_headers[0], allowed_hostnames=self.allowed_hostnames
+            )
             if parsed_host is None:
                 self.close_connection = True
                 self._send_json(403, {"error": "Forbidden: invalid Host header."})
@@ -852,6 +901,16 @@ def create_server(
     class ConfiguredHandler(TravelSimRequestHandler):
         pass
 
+    allowed_hosts = set(_ALLOWED_HOSTNAMES)
+    if allow_remote:
+        clean_host = bind_host.lower()
+        if clean_host:
+            if ":" in clean_host:
+                allowed_hosts.add(f"[{clean_host}]")
+            else:
+                allowed_hosts.add(clean_host)
+    ConfiguredHandler.allowed_hostnames = frozenset(allowed_hosts)
+
     ConfiguredHandler.repository = repo
     ConfiguredHandler.data_dir = data_dir
     ConfiguredHandler.static_dir = static_dir
@@ -962,6 +1021,7 @@ __all__ = [
     "MAX_DATA_GB",
     "MAX_DAYS",
     "MAX_REQUEST_BODY_BYTES",
+    "MAX_TARGET_BYTES",
     "MIN_DATA_GB",
     "MIN_DAYS",
     "STATIC_DIR",

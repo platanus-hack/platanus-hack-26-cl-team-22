@@ -103,7 +103,16 @@ def _hermetic_environment(monkeypatch: pytest.MonkeyPatch):
     for name in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL"):
         monkeypatch.delenv(name, raising=False)
 
-    loopback = {"127.0.0.1", "::1", "localhost"}
+    import ipaddress
+
+    def is_loopback(host: object) -> bool:
+        if host == "localhost":
+            return True
+        try:
+            return ipaddress.ip_address(str(host)).is_loopback
+        except ValueError:
+            return False
+
     real_connect = socket.socket.connect
     real_connect_ex = socket.socket.connect_ex
     real_sendto = socket.socket.sendto
@@ -113,7 +122,7 @@ def _hermetic_environment(monkeypatch: pytest.MonkeyPatch):
         if sock.family == socket.AF_UNIX:
             return
         host = address[0] if isinstance(address, tuple) else address
-        if host not in loopback:
+        if not is_loopback(host):
             raise AssertionError(f"network access to {host!r} is disabled in tests")
 
     def guarded_connect(self, address):  # type: ignore[no-untyped-def]
@@ -130,7 +139,7 @@ def _hermetic_environment(monkeypatch: pytest.MonkeyPatch):
         return real_sendto(self, data, *args)
 
     def guarded_getaddrinfo(host, *args, **kwargs):  # type: ignore[no-untyped-def]
-        if host not in loopback and host not in (None, ""):
+        if host not in (None, "") and not is_loopback(host):
             raise AssertionError(f"DNS lookup of {host!r} is disabled in tests")
         return real_getaddrinfo(host, *args, **kwargs)
 

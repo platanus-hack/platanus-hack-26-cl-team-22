@@ -9,83 +9,175 @@
 <body>
   <header class="site-header">
     <div class="container">
-      <p class="eyebrow">Motor determinista sin sesgo de afiliados</p>
+      <p class="eyebrow">Simulador determinista local</p>
       <h1>Viaje Real: Simulador de Costos vs. Fricción</h1>
       <p class="subtitle">
-        Compara cuánto ahorras y cuánta fricción operativa asumes en cada categoría de tu viaje.
+        Describe cómo será tu viaje y compara cuánto gastas, cuánto ahorras y cuánta fricción asumes en cada etapa.
       </p>
     </div>
   </header>
 
   <main class="container main-layout">
     <section class="panel form-panel" aria-labelledby="form-heading">
-      <h2 id="form-heading">Parámetros del viaje</h2>
+      <h2 id="form-heading">Describe tu viaje</h2>
       <form id="simulation-form" novalidate>
-        <div class="field-grid">
-          <div class="field">
-            <label for="city-select">Ciudad de destino</label>
-            <select id="city-select" name="city" required>
-              <option value="scl">Santiago (CL)</option>
-            </select>
-          </div>
+        <fieldset class="trip-section">
+          <legend class="section-legend">Tu viaje</legend>
+          <p class="section-helper">
+            Elige tu ciudad de destino y la cantidad de días de tu estadía.
+          </p>
+          <div class="field-grid two-col">
+            <div class="field">
+              <label for="city-select">Ciudad de destino</label>
+              <select id="city-select" name="city" required>
+                <option value="scl">Santiago (CL)</option>
+              </select>
+            </div>
 
-          <div class="field">
-            <label for="days-input">Duración del viaje (días)</label>
-            <input
-              id="days-input"
-              name="days"
-              type="number"
-              min="1"
-              max="365"
-              step="1"
-              value="7"
-              required
-            >
+            <div class="field">
+              <label for="days-input">Duración del viaje (días)</label>
+              <input
+                id="days-input"
+                name="days"
+                type="number"
+                min="1"
+                max="365"
+                step="1"
+                value="7"
+                required
+              >
+            </div>
           </div>
+        </fieldset>
 
-          <div class="field">
-            <label for="data-gb-input">Datos móviles estimados (GB)</label>
-            <input
-              id="data-gb-input"
-              name="data_gb"
-              type="number"
-              min="0"
-              max="1000"
-              step="0.5"
-              value="10"
-              required
-            >
-          </div>
-
-          <div class="field">
-            <label for="device-select">Capacidad SIM del teléfono</label>
-            <select id="device-select" name="device" required>
-              <option value="esim-only">Solo eSIM (sin ranura física)</option>
-              <option value="physical-only">Solo chip físico (sin soporte eSIM)</option>
-              <option value="dual" selected>Dual (eSIM + chip físico)</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="tolerance-select">Tolerancia a la fricción</label>
-            <select id="tolerance-select" name="tolerance" required>
-              <option value="LOW">Baja — Priorizar comodidad</option>
-              <option value="MEDIUM" selected>Media — Equilibrio costo y tiempo</option>
-              <option value="HIGH">Alta — Priorizar máximo ahorro</option>
-            </select>
-          </div>
+        <fieldset class="trip-section">
+          <legend class="section-legend">Quién viaja</legend>
+          <p class="section-helper">
+            Indica si tienes documento local y qué tanto prefieres evitar trámites o demoras.
+          </p>
 
           <div class="field checkbox-field">
             <input id="has-local-id-input" name="has_local_id" type="checkbox">
-            <label for="has-local-id-input">
-              Cuento con documento de identidad local (RUT / DNI local)
-            </label>
+            <label for="has-local-id-input">Tengo RUT o cédula chilena</label>
           </div>
-        </div>
+
+          <div class="choice-group" role="group" aria-labelledby="tolerance-group-label">
+            <span id="tolerance-group-label" class="choice-group-label">
+              Tolerancia a trámites y esfuerzo operativo
+            </span>
+            <div class="choice-cards three-col">
+              <div class="choice-option">
+                <input id="tolerance-low" name="tolerance" type="radio" value="LOW">
+                <label for="tolerance-low" class="choice-card">
+                  <span class="choice-title">Prefiero lo simple</span>
+                  <span class="choice-desc">Prioriza comodidad y resolución inmediata</span>
+                </label>
+              </div>
+              <div class="choice-option">
+                <input id="tolerance-medium" name="tolerance" type="radio" value="MEDIUM" checked>
+                <label for="tolerance-medium" class="choice-card">
+                  <span class="choice-title">Equilibrio</span>
+                  <span class="choice-desc">Cambia solo cuando el ahorro compensa la demora</span>
+                </label>
+              </div>
+              <div class="choice-option">
+                <input id="tolerance-high" name="tolerance" type="radio" value="HIGH">
+                <label for="tolerance-high" class="choice-card">
+                  <span class="choice-title">Me da igual el esfuerzo</span>
+                  <span class="choice-desc">Prioriza el menor costo total</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="trip-section">
+          <legend class="section-legend">Tu teléfono y datos</legend>
+          <p class="section-helper">
+            Solo usamos esto para filtrar opciones de conectividad compatibles con tu equipo y tu ritmo de uso.
+          </p>
+
+          <div class="choice-group" role="group" aria-labelledby="device-group-label">
+            <span id="device-group-label" class="choice-group-label">
+              Tipo de SIM que acepta tu teléfono
+            </span>
+            <div class="choice-cards three-col">
+              <div class="choice-option">
+                <input id="device-esim" name="device" type="radio" value="esim-only">
+                <label for="device-esim" class="choice-card">
+                  <span class="choice-title">Solo eSIM</span>
+                  <span class="choice-desc">Sin ranura para chip físico</span>
+                </label>
+              </div>
+              <div class="choice-option">
+                <input id="device-physical" name="device" type="radio" value="physical-only">
+                <label for="device-physical" class="choice-card">
+                  <span class="choice-title">Solo SIM física</span>
+                  <span class="choice-desc">Solo chip tradicional</span>
+                </label>
+              </div>
+              <div class="choice-option">
+                <input id="device-dual" name="device" type="radio" value="dual" checked>
+                <label for="device-dual" class="choice-card">
+                  <span class="choice-title">Ambas</span>
+                  <span class="choice-desc">Acepta eSIM y chip físico</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="choice-group" role="group" aria-labelledby="data-usage-group-label">
+            <span id="data-usage-group-label" class="choice-group-label">
+              Uso estimado de datos móviles (referencia aproximada)
+            </span>
+            <div class="choice-cards three-col">
+              <div class="choice-option">
+                <input id="data-preset-light" name="data_preset" type="radio" value="LIGHT">
+                <label for="data-preset-light" class="choice-card">
+                  <span class="choice-title">Ligero (mapas y mensajes)</span>
+                  <small class="choice-preset-gb" data-preset-gb="LIGHT">Referencia aproximada</small>
+                </label>
+              </div>
+              <div class="choice-option">
+                <input id="data-preset-normal" name="data_preset" type="radio" value="NORMAL" checked>
+                <label for="data-preset-normal" class="choice-card">
+                  <span class="choice-title">Normal (redes y mapas)</span>
+                  <small class="choice-preset-gb" data-preset-gb="NORMAL">Referencia aproximada</small>
+                </label>
+              </div>
+              <div class="choice-option">
+                <input id="data-preset-intense" name="data_preset" type="radio" value="INTENSE">
+                <label for="data-preset-intense" class="choice-card">
+                  <span class="choice-title">Intenso (video y hotspot)</span>
+                  <small class="choice-preset-gb" data-preset-gb="INTENSE">Referencia aproximada</small>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <details id="manual-data-details" class="manual-details">
+            <summary class="details-summary">Ajustar a mano</summary>
+            <div class="field manual-field">
+              <label for="data-gb-input">Datos móviles estimados (GB, opcional)</label>
+              <input
+                id="data-gb-input"
+                name="data_gb"
+                type="number"
+                min="0"
+                max="1000"
+                step="0.5"
+                placeholder="Vacío = usar nivel aproximado"
+              >
+              <p class="field-hint">
+                Si escribes un número entre 0 y 1000 GB, reemplazará el nivel aproximado elegido arriba.
+              </p>
+            </div>
+          </details>
+        </fieldset>
 
         <div class="form-actions">
           <button type="submit" id="simulate-button" class="primary-button">
-            Calcular escenarios
+            Simular mi viaje
           </button>
           <span id="status-indicator" class="status-text" aria-live="polite"></span>
         </div>
@@ -96,41 +188,53 @@
 
     <div id="warning-banner" class="alert-box alert-warning" role="status" aria-live="polite" hidden></div>
 
-    <section id="scenarios-section" aria-labelledby="scenarios-heading" hidden>
+    <section id="summary-section" class="panel summary-panel" aria-labelledby="summary-heading" hidden>
       <div class="section-header">
-        <h2 id="scenarios-heading">Escenarios comparativos</h2>
-        <p id="profile-summary" class="profile-summary"></p>
+        <div>
+          <h2 id="summary-heading">Resumen del viaje</h2>
+          <p id="profile-summary" class="profile-summary"></p>
+        </div>
       </div>
-      <div id="scenarios-grid" class="scenarios-grid"></div>
+      <div id="summary-scenarios-grid" class="summary-grid"></div>
     </section>
 
-    <section id="missing-section" class="panel" aria-labelledby="missing-heading" hidden>
-      <h2 id="missing-heading">Categorías sin datos o sin opciones compatibles</h2>
-      <p class="section-note">
-        Estas categorías del catálogo aún no tienen opciones cargadas o compatibles para tu perfil:
-      </p>
-      <ul id="missing-list" class="tag-list"></ul>
+    <section id="categories-section" aria-labelledby="categories-heading" hidden>
+      <div class="section-header">
+        <div>
+          <h2 id="categories-heading">Opciones por categoría del viaje</h2>
+          <p class="section-subtitle">
+            Compara lado a lado qué elige cada estrategia en conectividad, transporte, escapadas, comida y pagos.
+          </p>
+        </div>
+      </div>
+      <div id="categories-container" class="categories-stack"></div>
     </section>
 
     <section id="rejected-section" class="panel" aria-labelledby="rejected-heading" hidden>
-      <h2 id="rejected-heading">Opciones descartadas por filtros duros</h2>
-      <p id="rejected-empty" class="section-note" hidden>
-        Ninguna opción del catálogo fue descartada para este perfil.
-      </p>
-      <div class="table-wrapper" id="rejected-table-wrapper">
-        <table class="data-table" aria-labelledby="rejected-heading">
-          <thead>
-            <tr>
-              <th scope="col">Categoría</th>
-              <th scope="col">Opción</th>
-              <th scope="col">Proveedor</th>
-              <th scope="col">Tipo de SIM</th>
-              <th scope="col">Motivos de descarte</th>
-            </tr>
-          </thead>
-          <tbody id="rejected-tbody"></tbody>
-        </table>
-      </div>
+      <details id="rejected-details" class="rejected-details">
+        <summary id="rejected-heading" class="details-summary">
+          Opciones descartadas por filtros duros (<span id="rejected-count">0</span>)
+        </summary>
+        <div class="details-body">
+          <p id="rejected-empty" class="section-note" hidden>
+            Ninguna opción del catálogo fue descartada para este perfil.
+          </p>
+          <div class="table-wrapper" id="rejected-table-wrapper">
+            <table class="data-table" aria-labelledby="rejected-heading">
+              <thead>
+                <tr>
+                  <th scope="col">Categoría</th>
+                  <th scope="col">Opción</th>
+                  <th scope="col">Proveedor</th>
+                  <th scope="col">Tipo de SIM</th>
+                  <th scope="col">Motivos de descarte</th>
+                </tr>
+              </thead>
+              <tbody id="rejected-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
     </section>
   </main>
 

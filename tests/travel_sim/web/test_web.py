@@ -26,6 +26,7 @@ from travel_sim.web import (
     DEFAULT_PORT,
     DEFAULT_REQUEST_TIMEOUT,
     MAX_REQUEST_BODY_BYTES,
+    MAX_TARGET_BYTES,
     STATIC_DIR,
     build_parser,
     create_server,
@@ -33,6 +34,7 @@ from travel_sim.web import (
     handle_simulate,
     handle_simulate_bytes,
     handle_static,
+    is_loopback_host,
     main,
     resolve_static_file,
 )
@@ -103,8 +105,8 @@ def _build_verified_repo() -> JsonOptionRepository:
     return repo
 
 
-def _start_server(**kwargs: Any) -> tuple[Any, str, int, threading.Thread]:
-    server = create_server(host="127.0.0.1", port=0, **kwargs)
+def _start_server(host: str = "127.0.0.1", **kwargs: Any) -> tuple[Any, str, int, threading.Thread]:
+    server = create_server(host=host, port=0, **kwargs)
     bound_host, bound_port = server.server_address[:2]
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -548,7 +550,15 @@ def test_socket_blocks_path_traversal_variants(
     _server, host, port = live_server
     raw = _build_request("GET", traversal_path, host_header=f"{host}:{port}")
     status, headers, _hlist, body = _raw_http_exchange(host, port, raw)
-    assert status == 404
+    if traversal_path.startswith("//"):
+        # The standard library collapses a leading '//' to '/' before our check runs, so the
+        # request is either refused (400) or simply not found (404); never served.
+        allowed = {400, 404}
+    elif "\\" in traversal_path or "\x00" in traversal_path:
+        allowed = {400}
+    else:
+        allowed = {404}
+    assert status in allowed
     _assert_security_headers(headers)
     assert b"def " not in body
     assert b"pyproject" not in body
@@ -1046,3 +1056,286 @@ def test_ui_assets_enforce_bounds_accessibility_and_error_handling() -> None:
     assert "JSON.parse(rawText)" in js
     assert "los metadatos de la ciudad superaron la ventana" in js
     assert "los metadatos de la ciudad se encuentran en la ventana" in js
+
+
+# --- Tests for FIX 1: Request target validation (400 / 414) ---
+
+
+@pytest.mark.parametrize(
+    ("method", "target"),
+    [
+        ("GET", "http://evil.com/api/cities"),
+        ("POST", "http://evil.com/api/simulate"),
+        ("GET", "//evil.com/api/cities"),
+        ("POST", "//evil.com/api/simulate"),
+        ("GET", "*"),
+        ("OPTIONS", "*"),
+        ("GET", "/api/cities\\extra"),
+        ("POST", "/api/simulate\\extra"),
+        ("GET", "/api/cities\x00"),
+        ("POST", "/api/simulate\x00"),
+        ("GET", "/api/cities\x07"),
+        ("GET", "/api/cities\x01"),
+        ("GET", "/api/cities\x7f"),
+        ("POST", "/api/simulate\x01"),
+    ],
+)
+def test_socket_rejects_malformed_request_targets_with_400(
+    live_server: tuple[Any, str, int],
+    method: str,
+    target: str,
+) -> None:
+    _server, host, port = live_server
+    valid_body = json.dumps(_valid_payload()).encode("utf-8") if method == "POST" else b""
+    headers: list[tuple[str, str]] = []
+    if method == "POST":
+        headers.extend(
+            [
+                ("Content-Type", "application/json"),
+                ("Origin", f"http://127.0.0.1:{port}"),
+                ("Content-Length", str(len(valid_body))),
+            ]
+        )
+    raw = _build_request(
+        method,
+        target,
+        host_header=f"{host}:{port}",
+        headers=headers,
+        body=valid_body,
+    )
+    status, res_headers, _hl, body = _raw_http_exchange(host, port, raw)
+    # A leading '//' is collapsed by the standard library, so it may surface as 404.
+    assert status in ({400, 404} if target.startswith("//") else {400})
+    _assert_security_headers(res_headers)
+    assert json.loads(body)["error"]
+
+
+def test_socket_rejects_oversized_request_target_with_414(
+    live_server: tuple[Any, str, int],
+) -> None:
+    _server, host, port = live_server
+    oversized_target = "/" + "a" * MAX_TARGET_BYTES  # MAX_TARGET_BYTES + 1 bytes total
+    assert len(oversized_target.encode("utf-8")) == MAX_TARGET_BYTES + 1
+
+    raw_get = _build_request("GET", oversized_target, host_header=f"{host}:{port}")
+    status, res_headers, _hl, body = _raw_http_exchange(host, port, raw_get)
+    assert status == 414
+    _assert_security_headers(res_headers)
+    assert json.loads(body)["error"]
+
+    valid_body = json.dumps(_valid_payload()).encode("utf-8")
+    raw_post = _build_request(
+        "POST",
+        oversized_target,
+        host_header=f"{host}:{port}",
+        headers=[
+            ("Content-Type", "application/json"),
+            ("Origin", f"http://127.0.0.1:{port}"),
+            ("Content-Length", str(len(valid_body))),
+        ],
+        body=valid_body,
+    )
+    status_post, post_headers, _hl, post_body = _raw_http_exchange(host, port, raw_post)
+    assert status_post == 414
+    _assert_security_headers(post_headers)
+    assert json.loads(post_body)["error"]
+
+    # Target of exactly MAX_TARGET_BYTES is not rejected with 414; it routes to static and gets 404
+    exact_target = "/" + "a" * (MAX_TARGET_BYTES - 1)
+    assert len(exact_target.encode("utf-8")) == MAX_TARGET_BYTES
+    raw_exact = _build_request("GET", exact_target, host_header=f"{host}:{port}")
+    status_exact, exact_headers, _hl, _b = _raw_http_exchange(host, port, raw_exact)
+    assert status_exact == 404
+    _assert_security_headers(exact_headers)
+
+
+# --- Tests for FIX 2: Restrict loopback bind hosts and allow_remote Host header ---
+
+
+def test_is_loopback_host_strictly_restricts_hosts() -> None:
+    assert is_loopback_host("localhost") is True
+    assert is_loopback_host("127.0.0.1") is True
+    assert is_loopback_host("::1") is True
+    assert is_loopback_host("[::1]") is True
+    assert is_loopback_host(" 127.0.0.1 ") is True
+    assert is_loopback_host("LOCALHOST") is True
+
+    # Other loopback addresses or long IPv6 forms must be False
+    assert is_loopback_host("127.0.0.2") is False
+    assert is_loopback_host("127.0.1.1") is False
+    assert is_loopback_host("0:0:0:0:0:0:0:1") is False
+    assert is_loopback_host("0000:0000:0000:0000:0000:0000:0000:0001") is False
+    assert is_loopback_host("0.0.0.0") is False
+    assert is_loopback_host("::") is False
+    assert is_loopback_host("192.168.1.50") is False
+    assert is_loopback_host("example.com") is False
+    assert is_loopback_host("") is False
+    assert is_loopback_host(None) is False  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "forbidden_host",
+    [
+        "127.0.0.2",
+        "127.0.1.1",
+        "0:0:0:0:0:0:0:1",
+        "0000:0000:0000:0000:0000:0000:0000:0001",
+    ],
+)
+def test_create_server_refuses_non_canonical_loopback_without_allow_remote(
+    forbidden_host: str,
+) -> None:
+    with pytest.raises(ValueError, match="non-loopback"):
+        create_server(host=forbidden_host, port=0)
+
+
+def test_allow_remote_accepts_bound_host_and_loopback_names_on_real_socket() -> None:
+    # 127.0.0.2 is a real loopback address on Linux
+    server, host, port, thread = _start_server(host="127.0.0.2", allow_remote=True)
+    try:
+        # Bound host header is accepted
+        raw_bound = _build_request("GET", "/api/cities", host_header=f"127.0.0.2:{port}")
+        s_bound, h_bound, _hl, _b = _raw_http_exchange(host, port, raw_bound)
+        assert s_bound == 200
+        _assert_security_headers(h_bound)
+
+        # Loopback names (localhost, 127.0.0.1, [::1]) are also accepted
+        for allowed_host in (f"localhost:{port}", f"127.0.0.1:{port}", f"[::1]:{port}"):
+            raw_loopback = _build_request("GET", "/api/cities", host_header=allowed_host)
+            s_lb, h_lb, _hl, _b = _raw_http_exchange(host, port, raw_loopback)
+            assert s_lb == 200
+            _assert_security_headers(h_lb)
+
+        # Unknown remote host header is rejected with 403
+        for forbidden_host in (f"evil.com:{port}", f"192.168.1.99:{port}"):
+            raw_evil = _build_request("GET", "/api/cities", host_header=forbidden_host)
+            s_evil, h_evil, _hl, _b = _raw_http_exchange(host, port, raw_evil)
+            assert s_evil == 403
+            _assert_security_headers(h_evil)
+
+        # POST with bound host and matching Origin succeeds
+        valid_body = json.dumps(_valid_payload()).encode("utf-8")
+        status_post, h_post, _hl, _b = _post_json(
+            host,
+            port,
+            "/api/simulate",
+            valid_body,
+            host_header=f"127.0.0.2:{port}",
+            origin=f"http://127.0.0.2:{port}",
+        )
+        assert status_post == 200
+        _assert_security_headers(h_post)
+    finally:
+        _stop_server(server, thread)
+
+
+# --- Tests for FIX 3: Duplicate Origin and duplicate / conflicting Content-Type guards ---
+
+
+def test_socket_rejects_duplicate_origin_headers(
+    live_server: tuple[Any, str, int],
+) -> None:
+    _server, host, port = live_server
+    valid_body = json.dumps(_valid_payload()).encode("utf-8")
+
+    # Duplicate identical Origin headers rejected with 403
+    raw_dup = _build_request(
+        "POST",
+        "/api/simulate",
+        host_header=f"{host}:{port}",
+        headers=[
+            ("Content-Type", "application/json"),
+            ("Origin", f"http://127.0.0.1:{port}"),
+            ("Origin", f"http://127.0.0.1:{port}"),
+            ("Content-Length", str(len(valid_body))),
+        ],
+        body=valid_body,
+    )
+    status_dup, hdr_dup, _hl, body_dup = _raw_http_exchange(host, port, raw_dup)
+    assert status_dup == 403
+    _assert_security_headers(hdr_dup)
+    assert "Origin" in json.loads(body_dup)["error"]
+
+    # Duplicate conflicting Origin headers rejected with 403
+    raw_conflict = _build_request(
+        "POST",
+        "/api/simulate",
+        host_header=f"{host}:{port}",
+        headers=[
+            ("Content-Type", "application/json"),
+            ("Origin", f"http://127.0.0.1:{port}"),
+            ("Origin", "http://evil.com"),
+            ("Content-Length", str(len(valid_body))),
+        ],
+        body=valid_body,
+    )
+    status_conflict, hdr_conflict, _hl, body_conflict = _raw_http_exchange(
+        host, port, raw_conflict
+    )
+    assert status_conflict == 403
+    _assert_security_headers(hdr_conflict)
+    assert "Origin" in json.loads(body_conflict)["error"]
+
+
+def test_socket_rejects_duplicate_and_conflicting_content_type_headers(
+    live_server: tuple[Any, str, int],
+) -> None:
+    _server, host, port = live_server
+    valid_body = json.dumps(_valid_payload()).encode("utf-8")
+
+    # Duplicate identical Content-Type headers rejected with 415
+    raw_dup_ct = _build_request(
+        "POST",
+        "/api/simulate",
+        host_header=f"{host}:{port}",
+        headers=[
+            ("Content-Type", "application/json"),
+            ("Content-Type", "application/json"),
+            ("Origin", f"http://127.0.0.1:{port}"),
+            ("Content-Length", str(len(valid_body))),
+        ],
+        body=valid_body,
+    )
+    status_dup, hdr_dup, _hl, body_dup = _raw_http_exchange(host, port, raw_dup_ct)
+    assert status_dup == 415
+    _assert_security_headers(hdr_dup)
+    assert "Content-Type" in json.loads(body_dup)["error"]
+
+    # Conflicting Content-Type headers (application/json + text/plain) rejected with 415
+    raw_conflict_ct = _build_request(
+        "POST",
+        "/api/simulate",
+        host_header=f"{host}:{port}",
+        headers=[
+            ("Content-Type", "application/json"),
+            ("Content-Type", "text/plain"),
+            ("Origin", f"http://127.0.0.1:{port}"),
+            ("Content-Length", str(len(valid_body))),
+        ],
+        body=valid_body,
+    )
+    status_conflict, hdr_conflict, _hl, body_conflict = _raw_http_exchange(
+        host, port, raw_conflict_ct
+    )
+    assert status_conflict == 415
+    _assert_security_headers(hdr_conflict)
+    assert "Content-Type" in json.loads(body_conflict)["error"]
+
+    # Single conflicting Content-Type header with multiple comma-separated media types rejected with 415
+    raw_comma_ct = _build_request(
+        "POST",
+        "/api/simulate",
+        host_header=f"{host}:{port}",
+        headers=[
+            ("Content-Type", "application/json, text/plain"),
+            ("Origin", f"http://127.0.0.1:{port}"),
+            ("Content-Length", str(len(valid_body))),
+        ],
+        body=valid_body,
+    )
+    status_comma, hdr_comma, _hl, body_comma = _raw_http_exchange(
+        host, port, raw_comma_ct
+    )
+    assert status_comma == 415
+    _assert_security_headers(hdr_comma)
+    assert "Content-Type" in json.loads(body_comma)["error"]

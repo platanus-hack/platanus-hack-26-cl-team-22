@@ -1,34 +1,100 @@
 "use strict";
 
 (function () {
-  const CATEGORY_LABELS = {
-    CONNECTIVITY: "Conectividad móvil",
-    AIRPORT_TRANSFER: "Traslado aeropuerto",
-    URBAN_TRANSIT: "Transporte urbano",
-    DAY_TRIP: "Escapadas del día",
-    DINING: "Comida y gastronomía",
-    CURRENCY_EXCHANGE: "Divisas y pagos"
-  };
+  const DATA_USAGE_PRESETS = Object.freeze({
+    LIGHT: 3,
+    NORMAL: 10,
+    INTENSE: 30
+  });
 
-  const SCENARIO_DESCRIPTIONS = {
-    ZERO_FRICTION: "Prioriza mínima fricción operativa y máxima inmediatez.",
-    BALANCED: "Sustituye opciones solo cuando el ahorro justifica la fricción extra.",
-    LOCAL_OPTIMIZED: "Prioriza el menor costo total usando alternativas locales."
-  };
+  const DATA_PRESET_LABELS = Object.freeze({
+    LIGHT: "Ligero",
+    NORMAL: "Normal",
+    INTENSE: "Intenso"
+  });
 
-  const DEVICE_LABELS = {
+  const SCENARIO_ORDER = Object.freeze([
+    "ZERO_FRICTION",
+    "BALANCED",
+    "LOCAL_OPTIMIZED"
+  ]);
+
+  const SCENARIO_LABELS = Object.freeze({
+    ZERO_FRICTION: "Cero Fricción",
+    BALANCED: "Balanceado",
+    LOCAL_OPTIMIZED: "Optimizado Local"
+  });
+
+  const SCENARIO_DESCRIPTIONS = Object.freeze({
+    ZERO_FRICTION: "Mínima fricción operativa e inmediatez total.",
+    BALANCED: "Cambia de opción solo cuando el ahorro justifica la fricción.",
+    LOCAL_OPTIMIZED: "Menor costo total usando alternativas locales."
+  });
+
+  const CATEGORY_SECTIONS = Object.freeze([
+    {
+      key: "connectivity",
+      title: "Conectividad",
+      subtitle: "Planes móviles, eSIM de viaje y chips locales.",
+      categories: [{ code: "CONNECTIVITY", label: null }]
+    },
+    {
+      key: "transport",
+      title: "Transporte",
+      subtitle: "Traslado desde el aeropuerto y movilidad urbana diaria.",
+      categories: [
+        { code: "AIRPORT_TRANSFER", label: "Aeropuerto" },
+        { code: "URBAN_TRANSIT", label: "Transporte urbano" }
+      ]
+    },
+    {
+      key: "day_trips",
+      title: "Escapadas",
+      subtitle: "Excursiones de un día y recorridos cercanos.",
+      categories: [{ code: "DAY_TRIP", label: null }]
+    },
+    {
+      key: "dining",
+      title: "Comida",
+      subtitle: "Opciones diarias de alimentación según estilo de consumo.",
+      categories: [{ code: "DINING", label: null }]
+    },
+    {
+      key: "payments",
+      title: "Pagos y divisas",
+      subtitle: "Cambio de moneda y uso de tarjetas o efectivo.",
+      categories: [{ code: "CURRENCY_EXCHANGE", label: null }]
+    }
+  ]);
+
+  const CATEGORY_LABELS = Object.freeze({
+    CONNECTIVITY: "Conectividad",
+    AIRPORT_TRANSFER: "Transporte — Aeropuerto",
+    URBAN_TRANSIT: "Transporte — Urbano",
+    DAY_TRIP: "Escapadas",
+    DINING: "Comida",
+    CURRENCY_EXCHANGE: "Pagos y divisas"
+  });
+
+  const DEVICE_LABELS = Object.freeze({
     "esim-only": "Solo eSIM",
-    "physical-only": "Solo chip físico",
-    "dual": "Dual (eSIM + chip físico)"
-  };
+    "physical-only": "Solo SIM física",
+    "dual": "Ambas"
+  });
 
-  const SIM_TYPE_LABELS = {
+  const TOLERANCE_LABELS = Object.freeze({
+    LOW: "Prefiero lo simple",
+    MEDIUM: "Equilibrio",
+    HIGH: "Me da igual el esfuerzo"
+  });
+
+  const SIM_TYPE_LABELS = Object.freeze({
     ESIM: "eSIM",
     PHYSICAL_SIM: "Chip físico",
     NOT_APPLICABLE: "No aplica"
-  };
+  });
 
-  const REJECTION_REASON_LABELS = {
+  const REJECTION_REASON_LABELS = Object.freeze({
     CITY_MISMATCH: "No corresponde a la ciudad seleccionada",
     UNSUPPORTED_PHYSICAL_SIM: "El teléfono no tiene ranura para chip físico",
     UNSUPPORTED_ESIM: "El teléfono no soporta eSIM",
@@ -37,21 +103,21 @@
     PAYMENT_METHOD_INCOMPATIBLE: "Método de pago incompatible",
     INSUFFICIENT_DATA_QUOTA: "Cuota de datos insuficiente para el viaje",
     INCOMPATIBLE_WITH_SELECTED: "Incompatible con otra opción seleccionada"
-  };
+  });
 
-  const FRESHNESS_LABELS = {
+  const FRESHNESS_LABELS = Object.freeze({
     STALE: "Dato desactualizado (61–180 días)",
     EXPIRED: "Dato vencido (>180 días)"
-  };
+  });
 
-  const FIELD_INPUT_IDS = {
-    city: "city-select",
-    days: "days-input",
-    data_gb: "data-gb-input",
-    device: "device-select",
-    tolerance: "tolerance-select",
-    has_local_id: "has-local-id-input"
-  };
+  const FIELD_SELECTORS = Object.freeze({
+    city: "#city-select",
+    days: "#days-input",
+    data_gb: "#data-gb-input",
+    has_local_id: "#has-local-id-input",
+    device: 'input[name="device"]',
+    tolerance: 'input[name="tolerance"]'
+  });
 
   function clearChildren(node) {
     while (node.firstChild) {
@@ -103,13 +169,45 @@
     return SIM_TYPE_LABELS[code] || code;
   }
 
+  function scenarioLabel(scenario) {
+    if (!scenario) {
+      return "";
+    }
+    return SCENARIO_LABELS[scenario.scenario_type] || scenario.label || scenario.scenario_type;
+  }
+
+  function getCheckedRadioValue(name) {
+    const checked = document.querySelector('input[name="' + name + '"]:checked');
+    return checked ? checked.value : "";
+  }
+
   function clearFieldErrors() {
-    Object.keys(FIELD_INPUT_IDS).forEach(function (fieldKey) {
-      const el = document.getElementById(FIELD_INPUT_IDS[fieldKey]);
-      if (el) {
+    Object.keys(FIELD_SELECTORS).forEach(function (fieldKey) {
+      const nodes = document.querySelectorAll(FIELD_SELECTORS[fieldKey]);
+      nodes.forEach(function (el) {
         el.removeAttribute("aria-invalid");
-      }
+      });
     });
+  }
+
+  function focusInvalidField(fieldName) {
+    if (!fieldName || !FIELD_SELECTORS[fieldName]) {
+      return;
+    }
+    if (fieldName === "data_gb") {
+      const details = document.getElementById("manual-data-details");
+      if (details) {
+        details.open = true;
+      }
+    }
+    const selector = FIELD_SELECTORS[fieldName];
+    const target =
+      document.querySelector(selector + ":checked") ||
+      document.querySelector(selector);
+    if (target) {
+      target.setAttribute("aria-invalid", "true");
+      target.focus();
+    }
   }
 
   function clearPreviousResults() {
@@ -119,34 +217,38 @@
       warningBanner.hidden = true;
     }
 
-    const scenariosSection = document.getElementById("scenarios-section");
-    const scenariosGrid = document.getElementById("scenarios-grid");
+    const summarySection = document.getElementById("summary-section");
+    const summaryGrid = document.getElementById("summary-scenarios-grid");
     const profileSummary = document.getElementById("profile-summary");
-    if (scenariosGrid) {
-      clearChildren(scenariosGrid);
+    if (summaryGrid) {
+      clearChildren(summaryGrid);
     }
     if (profileSummary) {
       profileSummary.textContent = "";
     }
-    if (scenariosSection) {
-      scenariosSection.hidden = true;
+    if (summarySection) {
+      summarySection.hidden = true;
     }
 
-    const missingSection = document.getElementById("missing-section");
-    const missingList = document.getElementById("missing-list");
-    if (missingList) {
-      clearChildren(missingList);
+    const categoriesSection = document.getElementById("categories-section");
+    const categoriesContainer = document.getElementById("categories-container");
+    if (categoriesContainer) {
+      clearChildren(categoriesContainer);
     }
-    if (missingSection) {
-      missingSection.hidden = true;
+    if (categoriesSection) {
+      categoriesSection.hidden = true;
     }
 
     const rejectedSection = document.getElementById("rejected-section");
     const rejectedTbody = document.getElementById("rejected-tbody");
+    const rejectedCount = document.getElementById("rejected-count");
     const rejectedEmpty = document.getElementById("rejected-empty");
     const rejectedTableWrapper = document.getElementById("rejected-table-wrapper");
     if (rejectedTbody) {
       clearChildren(rejectedTbody);
+    }
+    if (rejectedCount) {
+      rejectedCount.textContent = "0";
     }
     if (rejectedEmpty) {
       rejectedEmpty.hidden = true;
@@ -171,13 +273,7 @@
     banner.appendChild(detail);
     banner.hidden = false;
 
-    if (fieldName && FIELD_INPUT_IDS[fieldName]) {
-      const target = document.getElementById(FIELD_INPUT_IDS[fieldName]);
-      if (target) {
-        target.setAttribute("aria-invalid", "true");
-        target.focus();
-      }
-    }
+    focusInvalidField(fieldName);
   }
 
   function hideError() {
@@ -303,39 +399,47 @@
     return item;
   }
 
-  function renderScenarioCard(scenario, data) {
-    const currency = (data.city && data.city.local_currency) || "CLP";
-    const freshnessMap = data.option_freshness || {};
-    const allCategories = Array.isArray(data.categories) ? data.categories : [];
+  function indexScenariosByType(scenarios) {
+    const map = {};
+    if (Array.isArray(scenarios)) {
+      scenarios.forEach(function (scenario) {
+        if (scenario && scenario.scenario_type) {
+          map[scenario.scenario_type] = scenario;
+        }
+      });
+    }
+    return map;
+  }
 
-    const card = createElement("article", "scenario-card");
+  function renderSummaryCard(scenario, currency) {
+    const card = createElement("article", "summary-card");
     card.setAttribute("data-scenario-type", scenario.scenario_type);
 
-    const header = createElement("div", "scenario-header");
-    const titleBox = createElement("div", null);
-    titleBox.appendChild(createElement("h3", "scenario-title", scenario.label));
-    titleBox.appendChild(
+    const header = createElement("div", "summary-card-header");
+    const titleWrap = createElement("div", null);
+    titleWrap.appendChild(createElement("h3", "summary-card-title", scenarioLabel(scenario)));
+    titleWrap.appendChild(
       createElement(
         "p",
-        "scenario-subtitle",
+        "summary-card-subtitle",
         SCENARIO_DESCRIPTIONS[scenario.scenario_type] || ""
       )
     );
-    header.appendChild(titleBox);
+    header.appendChild(titleWrap);
 
     if (scenario.unverified) {
       header.appendChild(
-        createElement("span", "badge badge-warning", "Incluye datos sin verificar")
+        createElement("span", "badge badge-warning", "estimado / sin verificar")
       );
     } else {
       header.appendChild(createElement("span", "badge badge-success", "Verificado"));
     }
     card.appendChild(header);
 
-    const metrics = createElement("div", "metrics-grid");
+    const metrics = createElement("div", "summary-metrics");
     metrics.appendChild(
       createMetricItem(
-        "Costo total",
+        "Total del viaje",
         formatUsd(scenario.total_cost_usd),
         formatLocal(scenario.total_cost_clp, currency)
       )
@@ -343,158 +447,238 @@
 
     const savings = scenario.savings_vs_zero_friction || {};
     const savingsPct = Number(savings.savings_percentage || 0).toFixed(1) + "%";
+    const savingsPrimary =
+      scenario.scenario_type === "ZERO_FRICTION"
+        ? "Referencia base (0.0%)"
+        : formatUsd(savings.savings_usd) + " (" + savingsPct + ")";
+    const savingsSub =
+      scenario.scenario_type === "ZERO_FRICTION"
+        ? "Punto de comparación"
+        : formatLocal(savings.savings_clp, currency);
     metrics.appendChild(
-      createMetricItem(
-        "Ahorro vs. Cero Fricción",
-        formatUsd(savings.savings_usd) + " (" + savingsPct + ")",
-        formatLocal(savings.savings_clp, currency)
-      )
+      createMetricItem("Ahorro vs. Cero Fricción", savingsPrimary, savingsSub)
     );
 
     metrics.appendChild(
       createMetricItem(
-        "Puntaje de fricción",
-        Number(scenario.friction_score || 0).toFixed(2) + " / 100",
-        "Total acumulado: " + Number(scenario.total_friction_score || 0).toFixed(2)
-      )
-    );
-
-    metrics.appendChild(
-      createMetricItem(
-        "Tiempo extra",
+        "Tiempo extra total",
         "+" + String(scenario.extra_time_minutes || 0) + " min",
-        "Instalación total: " + String(scenario.total_setup_time_minutes || 0) + " min"
+        "Fricción promedio: " + Number(scenario.friction_score || 0).toFixed(2) + " / 100"
       )
     );
+
     card.appendChild(metrics);
-
-    card.appendChild(createElement("h4", "choices-heading", "Elección por categoría"));
-
-    const choicesByCategory = {};
-    if (Array.isArray(scenario.choices)) {
-      scenario.choices.forEach(function (choice) {
-        choicesByCategory[choice.category] = choice;
-      });
-    }
-
-    const choicesList = createElement("ul", "choices-list");
-    allCategories.forEach(function (cat) {
-      const choice = choicesByCategory[cat];
-      const item = createElement("li", "choice-item");
-
-      const topRow = createElement("div", "choice-top");
-      topRow.appendChild(createElement("span", "choice-category", categoryLabel(cat)));
-
-      if (!choice) {
-        topRow.appendChild(createElement("span", "badge", "Sin datos"));
-        item.appendChild(topRow);
-        item.appendChild(
-          createElement(
-            "p",
-            "choice-name",
-            "Sin opción disponible en el catálogo para esta categoría"
-          )
-        );
-        choicesList.appendChild(item);
-        return;
-      }
-
-      topRow.appendChild(
-        createElement(
-          "span",
-          "choice-cost",
-          formatUsd(choice.total_cost_usd) +
-            " / " +
-            formatLocal(choice.total_cost_clp, currency)
-        )
-      );
-      item.appendChild(topRow);
-
-      item.appendChild(
-        createElement(
-          "p",
-          "choice-name",
-          choice.name + " (" + choice.provider + ")"
-        )
-      );
-
-      const meta = createElement("div", "choice-meta");
-      meta.appendChild(
-        createElement(
-          "span",
-          null,
-          "Fricción: " + Number(choice.friction_score || 0).toFixed(2)
-        )
-      );
-      meta.appendChild(
-        createElement(
-          "span",
-          null,
-          "Tiempo extra: +" + String(choice.extra_time_minutes || 0) + " min"
-        )
-      );
-      if (choice.sim_type && choice.sim_type !== "NOT_APPLICABLE") {
-        meta.appendChild(
-          createElement("span", "badge", "SIM: " + simTypeLabel(choice.sim_type))
-        );
-      }
-      if (choice.unverified) {
-        meta.appendChild(
-          createElement("span", "badge badge-warning", "Sin verificar")
-        );
-      } else if (
-        freshnessMap[choice.option_id] === "STALE" ||
-        freshnessMap[choice.option_id] === "EXPIRED"
-      ) {
-        meta.appendChild(
-          createElement(
-            "span",
-            "badge badge-warning",
-            FRESHNESS_LABELS[freshnessMap[choice.option_id]]
-          )
-        );
-      }
-
-      item.appendChild(meta);
-      choicesList.appendChild(item);
-    });
-
-    card.appendChild(choicesList);
     return card;
   }
 
-  function renderMissingCategories(data) {
-    const section = document.getElementById("missing-section");
-    const list = document.getElementById("missing-list");
-    clearChildren(list);
+  function renderTripSummary(data) {
+    const summarySection = document.getElementById("summary-section");
+    const summaryGrid = document.getElementById("summary-scenarios-grid");
+    const profileSummary = document.getElementById("profile-summary");
+    clearChildren(summaryGrid);
 
-    const missing = Array.isArray(data.missing_categories) ? data.missing_categories : [];
-    if (missing.length === 0) {
-      list.appendChild(
-        createElement("li", "badge badge-success", "Todas las categorías tienen opciones")
-      );
-    } else {
-      missing.forEach(function (cat) {
-        list.appendChild(
-          createElement(
-            "li",
-            "badge badge-warning",
-            categoryLabel(cat) + " (" + cat + ")"
-          )
-        );
-      });
+    const traveler = data.traveler || {};
+    const deviceMode =
+      (traveler.device_profile && traveler.device_profile.mode) || "dual";
+    const cityName = (data.city && data.city.name) || "Santiago";
+    const currency = (data.city && data.city.local_currency) || "CLP";
+    const toleranceCode = String(traveler.friction_tolerance || "MEDIUM");
+
+    const manualInput = document.getElementById("data-gb-input");
+    const manualRaw = manualInput ? manualInput.value.trim() : "";
+    const presetKey = getCheckedRadioValue("data_preset");
+    const dataText = manualRaw
+      ? String(traveler.target_data_gb || 0) + " GB (manual)"
+      : (DATA_PRESET_LABELS[presetKey] || "Normal") +
+        " (~" +
+        String(traveler.target_data_gb || 0) +
+        " GB aprox.)";
+
+    profileSummary.textContent =
+      cityName +
+      " · " +
+      String(traveler.trip_duration_days || 7) +
+      " días · Datos: " +
+      dataText +
+      " · Teléfono: " +
+      (DEVICE_LABELS[deviceMode] || deviceMode) +
+      " · " +
+      (traveler.has_local_id ? "Con RUT/cédula" : "Sin RUT/cédula") +
+      " · " +
+      (TOLERANCE_LABELS[toleranceCode] || toleranceCode);
+
+    const scenariosByType = indexScenariosByType(data.scenarios);
+    SCENARIO_ORDER.forEach(function (scenarioType) {
+      const scenario = scenariosByType[scenarioType];
+      if (scenario) {
+        summaryGrid.appendChild(renderSummaryCard(scenario, currency));
+      }
+    });
+
+    summarySection.hidden = false;
+  }
+
+  function findChoiceForCategory(scenario, categoryCode) {
+    if (!scenario || !Array.isArray(scenario.choices)) {
+      return null;
     }
-    section.hidden = false;
+    for (let i = 0; i < scenario.choices.length; i += 1) {
+      if (scenario.choices[i] && scenario.choices[i].category === categoryCode) {
+        return scenario.choices[i];
+      }
+    }
+    return null;
+  }
+
+  function renderCategoryScenarioPick(scenarioType, choice, data) {
+    const currency = (data.city && data.city.local_currency) || "CLP";
+    const freshnessMap = data.option_freshness || {};
+
+    const card = createElement("div", "pick-card");
+    card.setAttribute("data-scenario-type", scenarioType);
+
+    const top = createElement("div", "pick-card-top");
+    top.appendChild(createElement("span", "pick-scenario-name", SCENARIO_LABELS[scenarioType]));
+
+    if (choice && choice.unverified) {
+      top.appendChild(
+        createElement("span", "badge badge-warning", "estimado / sin verificar")
+      );
+    } else if (
+      choice &&
+      (freshnessMap[choice.option_id] === "STALE" ||
+        freshnessMap[choice.option_id] === "EXPIRED")
+    ) {
+      top.appendChild(
+        createElement(
+          "span",
+          "badge badge-warning",
+          FRESHNESS_LABELS[freshnessMap[choice.option_id]]
+        )
+      );
+    }
+    card.appendChild(top);
+
+    if (!choice) {
+      card.classList.add("pick-card-empty");
+      card.appendChild(createElement("p", "pick-empty-text", "Sin datos todavía"));
+      return card;
+    }
+
+    card.appendChild(createElement("p", "pick-option-name", choice.name));
+    if (choice.provider) {
+      card.appendChild(createElement("p", "pick-provider", choice.provider));
+    }
+
+    const priceRow = createElement("div", "pick-price-row");
+    priceRow.appendChild(createElement("span", "pick-price-usd", formatUsd(choice.total_cost_usd)));
+    priceRow.appendChild(
+      createElement("span", "pick-price-clp", formatLocal(choice.total_cost_clp, currency))
+    );
+    card.appendChild(priceRow);
+
+    const meta = createElement("div", "pick-meta");
+    meta.appendChild(
+      createElement(
+        "span",
+        "meta-pill",
+        "Fricción: " + Number(choice.friction_score || 0).toFixed(2)
+      )
+    );
+    meta.appendChild(
+      createElement(
+        "span",
+        "meta-pill",
+        "Extra: +" + String(choice.extra_time_minutes || 0) + " min"
+      )
+    );
+    if (choice.sim_type && choice.sim_type !== "NOT_APPLICABLE") {
+      meta.appendChild(
+        createElement("span", "badge", "SIM: " + simTypeLabel(choice.sim_type))
+      );
+    }
+    card.appendChild(meta);
+
+    return card;
+  }
+
+  function renderCategoryBlock(container, categoryDef, scenariosByType, data) {
+    const block = createElement("div", "subcategory-block");
+    if (categoryDef.label) {
+      block.appendChild(createElement("h4", "subcategory-heading", categoryDef.label));
+    }
+
+    const anyChoice = SCENARIO_ORDER.some(function (scenarioType) {
+      return findChoiceForCategory(scenariosByType[scenarioType], categoryDef.code) !== null;
+    });
+
+    if (!anyChoice) {
+      const emptyBox = createElement("div", "empty-category-box");
+      emptyBox.appendChild(createElement("span", "badge", "Sin datos todavía"));
+      emptyBox.appendChild(
+        createElement(
+          "p",
+          "empty-category-note",
+          "No hay opciones cargadas o compatibles para tu perfil en esta categoría."
+        )
+      );
+      block.appendChild(emptyBox);
+      container.appendChild(block);
+      return;
+    }
+
+    const grid = createElement("div", "category-picks-grid");
+    SCENARIO_ORDER.forEach(function (scenarioType) {
+      const choice = findChoiceForCategory(scenariosByType[scenarioType], categoryDef.code);
+      grid.appendChild(renderCategoryScenarioPick(scenarioType, choice, data));
+    });
+    block.appendChild(grid);
+    container.appendChild(block);
+  }
+
+  function renderCategoriesSection(data) {
+    const categoriesSection = document.getElementById("categories-section");
+    const container = document.getElementById("categories-container");
+    clearChildren(container);
+
+    const scenariosByType = indexScenariosByType(data.scenarios);
+
+    CATEGORY_SECTIONS.forEach(function (sectionDef) {
+      const sectionCard = createElement("article", "panel category-panel");
+      sectionCard.setAttribute("data-category-group", sectionDef.key);
+
+      const header = createElement("div", "category-panel-header");
+      header.appendChild(createElement("h3", "category-panel-title", sectionDef.title));
+      header.appendChild(createElement("p", "category-panel-subtitle", sectionDef.subtitle));
+      sectionCard.appendChild(header);
+
+      sectionDef.categories.forEach(function (categoryDef) {
+        renderCategoryBlock(sectionCard, categoryDef, scenariosByType, data);
+      });
+
+      container.appendChild(sectionCard);
+    });
+
+    categoriesSection.hidden = false;
   }
 
   function renderRejectedOptions(data) {
     const section = document.getElementById("rejected-section");
+    const details = document.getElementById("rejected-details");
     const tbody = document.getElementById("rejected-tbody");
+    const countSpan = document.getElementById("rejected-count");
     const emptyMsg = document.getElementById("rejected-empty");
     const tableWrapper = document.getElementById("rejected-table-wrapper");
     clearChildren(tbody);
 
     const rejected = Array.isArray(data.rejected_options) ? data.rejected_options : [];
+    if (countSpan) {
+      countSpan.textContent = String(rejected.length);
+    }
+    if (details) {
+      details.open = false;
+    }
+
     if (rejected.length === 0) {
       emptyMsg.hidden = false;
       tableWrapper.hidden = true;
@@ -531,38 +715,19 @@
   function renderSimulationResult(data) {
     hideError();
     renderWarnings(data);
-
-    const scenariosSection = document.getElementById("scenarios-section");
-    const scenariosGrid = document.getElementById("scenarios-grid");
-    const profileSummary = document.getElementById("profile-summary");
-    clearChildren(scenariosGrid);
-
-    const traveler = data.traveler || {};
-    const deviceMode =
-      (traveler.device_profile && traveler.device_profile.mode) || "dual";
-    const cityName = (data.city && data.city.name) || "Santiago";
-
-    profileSummary.textContent =
-      cityName +
-      " · " +
-      String(traveler.trip_duration_days || 7) +
-      " días · " +
-      String(traveler.target_data_gb || 0) +
-      " GB · Dispositivo: " +
-      (DEVICE_LABELS[deviceMode] || deviceMode) +
-      " · ID local: " +
-      (traveler.has_local_id ? "Sí" : "No") +
-      " · Tolerancia: " +
-      String(traveler.friction_tolerance || "MEDIUM");
-
-    const scenarios = Array.isArray(data.scenarios) ? data.scenarios : [];
-    scenarios.forEach(function (scenario) {
-      scenariosGrid.appendChild(renderScenarioCard(scenario, data));
-    });
-    scenariosSection.hidden = false;
-
-    renderMissingCategories(data);
+    renderTripSummary(data);
+    renderCategoriesSection(data);
     renderRejectedOptions(data);
+  }
+
+  function populatePresetHints() {
+    const hints = document.querySelectorAll("[data-preset-gb]");
+    hints.forEach(function (el) {
+      const key = el.getAttribute("data-preset-gb");
+      if (key && Object.prototype.hasOwnProperty.call(DATA_USAGE_PRESETS, key)) {
+        el.textContent = "Aprox. " + String(DATA_USAGE_PRESETS[key]) + " GB";
+      }
+    });
   }
 
   async function loadCities() {
@@ -602,15 +767,15 @@
   function readFormPayload() {
     const city = document.getElementById("city-select").value.trim();
     const daysRaw = document.getElementById("days-input").value.trim();
-    const dataGbRaw = document.getElementById("data-gb-input").value.trim();
-    const device = document.getElementById("device-select").value;
-    const tolerance = document.getElementById("tolerance-select").value;
+    const manualGbRaw = document.getElementById("data-gb-input").value.trim();
+    const presetKey = getCheckedRadioValue("data_preset");
+    const device = getCheckedRadioValue("device");
+    const tolerance = getCheckedRadioValue("tolerance");
     const hasLocalId = Boolean(
       document.getElementById("has-local-id-input").checked
     );
 
     const days = Number(daysRaw);
-    const dataGb = Number(dataGbRaw);
 
     if (!city) {
       throw createValidationError("city", "Selecciona una ciudad válida.");
@@ -621,19 +786,35 @@
         "La duración del viaje debe ser un número entero entre 1 y 365 días."
       );
     }
-    if (!dataGbRaw || !Number.isFinite(dataGb) || dataGb < 0 || dataGb > 1000) {
+
+    let dataGb;
+    if (manualGbRaw !== "") {
+      dataGb = Number(manualGbRaw);
+      if (!Number.isFinite(dataGb) || dataGb < 0 || dataGb > 1000) {
+        throw createValidationError(
+          "data_gb",
+          "El consumo manual de datos debe ser un número finito entre 0 y 1000 GB."
+        );
+      }
+    } else if (
+      presetKey &&
+      Object.prototype.hasOwnProperty.call(DATA_USAGE_PRESETS, presetKey)
+    ) {
+      dataGb = DATA_USAGE_PRESETS[presetKey];
+    } else {
       throw createValidationError(
         "data_gb",
-        "El consumo de datos debe ser un número finito entre 0 y 1000 GB."
+        "Selecciona un nivel de datos o ingresa un valor manual válido."
       );
     }
+
     if (!device) {
       throw createValidationError("device", "Selecciona una capacidad SIM válida.");
     }
     if (!tolerance) {
       throw createValidationError(
         "tolerance",
-        "Selecciona un nivel de tolerancia a la fricción válido."
+        "Selecciona una preferencia de tolerancia a la fricción."
       );
     }
 
@@ -725,6 +906,8 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    populatePresetHints();
+
     const form = document.getElementById("simulation-form");
     if (form) {
       form.addEventListener("submit", submitSimulation);
@@ -737,8 +920,16 @@
         if (event.target && event.target.hasAttribute("aria-invalid")) {
           event.target.removeAttribute("aria-invalid");
         }
+        if (event.target && event.target.name === "data_preset") {
+          const manualInput = document.getElementById("data-gb-input");
+          if (manualInput) {
+            manualInput.value = "";
+            manualInput.removeAttribute("aria-invalid");
+          }
+        }
       });
     }
+
     loadCities().then(function () {
       submitSimulation(null);
     });
