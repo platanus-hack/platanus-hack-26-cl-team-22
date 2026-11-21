@@ -39,6 +39,24 @@ Cada política es una hoja de papel frío pegada bajo las comunas donde aporta: 
 derecha, más ancha cuanto más aporta, y varias se apilan en orden. Apagar una política la desliza fuera de la pila
 y el papel cálido del nivel cambia en el mismo gesto. Un borde festoneado marca la incertidumbre.
 
+### La hoja Riesgo: una dimensión o una variable en detalle
+
+La primera hoja tiene un selector que manda sobre el panel y sobre el mapa:
+
+| Capa | Qué muestra el panel | Qué pinta el mapa |
+|---|---|---|
+| General | El índice de riesgo de la comuna (0 a 100), su veredicto, las tres de menor riesgo y una fila por variable | El índice |
+| Aire | Valor, veredicto frente a la norma anual, proyección con banda y la política que más lo mueve | PM2,5 frente a la norma |
+| Seguridad, Crecimiento | Valor, veredicto por posición y proyección con banda | La posición de riesgo en esa variable |
+
+**Unidad del índice** (`src/lib/riesgo.ts`): en cada variable, el riesgo de una comuna es el porcentaje de las
+otras comunas que están mejor que ella en ese año (0 = la mejor, 100 = la peor). El índice general es el promedio
+de esos riesgos, ponderado por la prioridad de 0 a 10 que se le da a cada variable (los perfiles de
+`tipos_hogar` son prioridades ya puestas). Hasta 33 es riesgo bajo; hasta 66, medio; más, alto. Se usa la
+posición y no el valor porque las unidades son distintas y hay comunas muy alejadas del resto.
+Es un índice relativo a la región: no dice si el valor es bueno en términos absolutos; para el aire, eso lo dice
+la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición sea buena.
+
 ### Cómo correrla
 
 ```bash
@@ -58,7 +76,7 @@ Pensada para escritorio 16:9 y 16:10 (1920×1080, 1440×900, 1280×720), sin des
 
 | Tecla | Qué hace |
 |---|---|
-| `1` … `4` (`5`) | Vistas: La cuenca, El plan, La leña, Mi comuna y, si el archivo trae `validacion`, La prueba |
+| `1` … `3` (`4`) | Vistas: Riesgo, El plan, La leña y, si el archivo trae `validacion`, La prueba |
 | `Q` `W` `E` `R` … | Pega o despega la política de esa tira (la letra está impresa en cada tira) |
 | `←` `→` | Año anterior o siguiente |
 | `Espacio` | Reproduce o pausa los años |
