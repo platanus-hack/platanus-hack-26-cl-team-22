@@ -234,3 +234,23 @@ def sumar_proyeccion(filas: list[tuple], anios: list[int]) -> dict[tuple[int, in
         for a, j in col.items():
             suma[(codigo, a)] = suma.get((codigo, a), 0.0) + float(fila[j])
     return {k: round(v) for k, v in suma.items()}
+
+
+# --- Foreign-born stock ------------------------------------------------------------------
+# P12: place of birth; 3-8 = another country (Perú, Argentina, Bolivia, Ecuador, Colombia,
+# Otro). P12A_LLEGADA: year of arrival in Chile (9998 not applicable, 9999 missing).
+P12_OTRO_PAIS = range(3, 9)
+ANIO_CORTE_REDES = 2012
+
+
+def stock_extranjero_2017(personas: pd.DataFrame) -> dict[int, tuple[int, int]]:
+    """{RM comuna of usual residence: (born abroad, born abroad and arrived before 2012)}."""
+    p10 = personas["P10"]
+    destino = personas["COMUNA"].where(p10.isin(P10_EN_ESTA_COMUNA))
+    destino = destino.mask(p10 == P10_OTRA_COMUNA, personas["P10COMUNA"]).fillna(0).astype(int)
+    extranjero = personas["P12"].isin(P12_OTRO_PAIS) & es_comuna_rm(destino)
+    llegada = personas["P12A_LLEGADA"]
+    antes = extranjero & (llegada < ANIO_CORTE_REDES) & (llegada > 1900)
+    total = destino[extranjero].value_counts()
+    previo = destino[antes].value_counts()
+    return {int(c): (int(total[c]), int(previo.get(c, 0))) for c in total.index}

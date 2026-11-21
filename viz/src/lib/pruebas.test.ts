@@ -40,3 +40,21 @@ describe('resumirPruebas', () => {
     expect(contarPruebas(filas)).toEqual({ gana: 2, empata: 1, pierde: 2 })
   })
 })
+
+describe('resumirPruebas: population and housing blocks', () => {
+  const filas = resumirPruebas({
+    bloques: [
+      { ...b('poblacion', { rmse_modelo: 18471.9, rmse_sin_cambio: 15046.3, rmse_cerrado: 16903.6, rmse_proyeccion_ine: 18391.1 }), unidad: 'personas' },
+      { ...b('vivienda', { rmse_modelo: 4334.8, rmse_pivote_permisos: 5049.5, rmse_radiacion: 14900 }), unidad: 'personas' },
+    ],
+  })
+  it('shows them in persons, with readable titles and rivals', () => {
+    expect(filas.map((f) => [f.id, f.formato, f.resultado])).toEqual([
+      ['poblacion', 'personas', 'pierde'],
+      ['vivienda', 'personas', 'gana'],
+    ])
+    expect(filas[0]!.titulo).toBe('Población por comuna, 2017 a 2024')
+    expect(filas[0]!.rival.nombre).toBe('suponer que nada cambia')
+    expect(filas[1]!.rival.nombre).toBe('destinos ajustados por permisos')
+  })
+})

@@ -11,6 +11,9 @@ import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, vistasDisponibles } from './lib/interaccion'
 import { leerLena, type Zona } from './lib/lena'
+import { bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
+import { useSimulacionAbm } from './lib/useSimulacionAbm'
+import { VistaMudanzas, type OpcionesMudanzas } from './components/VistaMudanzas'
 import { estadoAire, TEXTO_ESTADO, veredictoComuna } from './lib/estado'
 import { claseFondo } from './lib/fondo'
 import { nivel, papelNivel, tablaPara } from './lib/niveles'
@@ -46,7 +49,12 @@ interface Props {
   data: Simulacion
   geoRaw: unknown
   lenaRaw: unknown
+  demografiaRaw?: unknown
 }
+
+/** Ocupación de la vivienda (población / capacidad, %): cortes del mapa en la vista de mudanzas. */
+const CORTES_OCUPACION: readonly number[] = [85, 90, 95, 100, 105]
+const VARIABLE_OCUPACION = { id: 'ocupacion_vivienda', nombre: 'Ocupación de la vivienda', unidad: '% de la capacidad', mejor: 'menor' as const }
 
 const ESPERA_DEMO_MS = 45_000
 const PASO_DEMO_MS = 3_200
@@ -63,7 +71,7 @@ function useMovimientoReducido(): boolean {
   return r
 }
 
-export function Simulador({ data, geoRaw, lenaRaw }: Props) {
+export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const anios = data.meta.anios
   const conDato = useMemo(() => variablesConDato(data), [data])
   // El aire es la variable con norma, planes y validación; las demás hojas (plan, leña, prueba) hablan de ella.
@@ -71,7 +79,16 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   const tabla = useMemo(() => tablaPara(varAire, data.impacto?.norma), [varAire, data.impacto?.norma])
   const cortas = useMemo(() => data.variables.filter((v) => conDato.has(v.id)).map(variableCorta), [data.variables, conDato])
   const cortes = tabla.cortes
-  const vistas = useMemo(() => vistasDisponibles(!!data.validacion), [data.validacion])
+  const demografia = useMemo(() => {
+    if (!demografiaRaw) return null
+    try {
+      return leerParametrosAbm(demografiaRaw)
+    } catch (e) {
+      console.warn('demografia.json no se usa:', e)
+      return null
+    }
+  }, [demografiaRaw])
+  const vistas = useMemo(() => vistasDisponibles(!!data.validacion, !!demografia), [data.validacion, demografia])
   const reducido = useMovimientoReducido()
 
   const inicial = useMemo(() => escenarioInicial(data.escenarios), [data.escenarios])
@@ -126,6 +143,20 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   /** el mapa pinta posición de riesgo (0 a 100) en vez del valor de la variable */
   const mapaRiesgo = vista === 'riesgo' && (general || !esAire)
   const anio = anios[idx] ?? anios[0]!
+
+  // Simulación de mudanzas (vista 5): corre en un Web Worker solo mientras la vista está abierta.
+  const [opcionesAbm, setOpcionesAbm] = useState<OpcionesMudanzas>({ semilla: 22, modoExtranjero: 'redes', eventos: [] })
+  const { resultado: abm, calculando: calculandoAbm } = useSimulacionAbm(vista === 'mudanzas' ? demografia : null, opcionesAbm)
+  const mapaMudanzas = vista === 'mudanzas' && !!demografia && !!abm
+  const puntosMudanzas = useMemo(() => {
+    const m = new Map<string, Punto>()
+    if (!demografia || !abm) return m
+    const t = Math.max(0, demografia.anios.indexOf(anio))
+    bandaOcupacion(abm.corridas, t).forEach((b, i) => {
+      if (b) m.set(demografia.comunas[i]!.codigo, b)
+    })
+    return m
+  }, [demografia, abm, anio])
 
   // Referencia de la diferencia: la combinación del escenario de partida, en la misma lectura.
   const referencia = useMemo(
@@ -217,6 +248,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   const riesgoFin = useMemo(() => calcularRiesgo(filasDe(anios.length - 1), data.variables, pesos), [filasDe, anios.length, data.variables, pesos])
 
   const puntosMapa = useMemo(() => {
+    if (mapaMudanzas) return puntosMudanzas
     if (!mapaRiesgo) return puntos
     const m = new Map<string, Punto>()
     for (const f of riesgo.filas) {
@@ -224,8 +256,8 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
       if (r !== null && r !== undefined) m.set(f.codigo, { p10: r, p50: r, p90: r })
     }
     return m
-  }, [mapaRiesgo, general, puntos, riesgo, variable.id])
-  const cortesMapa = mapaRiesgo ? CORTES_RIESGO : cortes
+  }, [mapaMudanzas, puntosMudanzas, mapaRiesgo, general, puntos, riesgo, variable.id])
+  const cortesMapa = mapaMudanzas ? CORTES_OCUPACION : mapaRiesgo ? CORTES_RIESGO : cortes
   const sinAportes = useMemo(() => new Map<string, AportePolitica[]>(), [])
 
   // ---- acciones ----
@@ -392,7 +424,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     const titulo = f.properties.nombre
     const sim = f.properties.simCodigo
     const clase = claseFondo(
-      { modo: modoMapa, cortes: cortesMapa, puntos: puntosMapa, difs, difMax, mejor: mapaRiesgo ? 'menor' : variable.mejor, lena },
+      { modo: modoMapa, cortes: cortesMapa, puntos: puntosMapa, difs, difMax, mejor: mapaRiesgo || mapaMudanzas ? 'menor' : variable.mejor, lena },
       f.properties.codigo,
       sim,
     )
@@ -623,6 +655,18 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     )
   else if (vista === 'lena') hoja = <VistaLena lena={lena} />
   else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
+  else if (vista === 'mudanzas' && demografia)
+    hoja = (
+      <VistaMudanzas
+        datos={demografia}
+        resultado={abm}
+        calculando={calculandoAbm}
+        opciones={opcionesAbm}
+        onOpciones={setOpcionesAbm}
+        anio={anio}
+        seleccionada={seleccionada ? demografia.comunas.findIndex((c) => c.codigo === seleccionada) : -1}
+      />
+    )
 
   const elegirAnio = (i: number) => {
     setJugando(false)
@@ -643,8 +687,8 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
           puntos={puntosMapa}
           difs={difs}
           difMax={difMax}
-          mejor={mapaRiesgo ? 'menor' : variable.mejor}
-          aportes={mapaRiesgo ? sinAportes : aportesMapa}
+          mejor={mapaRiesgo || mapaMudanzas ? 'menor' : variable.mejor}
+          aportes={mapaRiesgo || mapaMudanzas ? sinAportes : aportesMapa}
           activas={activas}
           lena={lena}
           seleccionada={seleccionada}
@@ -664,9 +708,9 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
           />
           <Leyenda
             modo={modoMapa}
-            variable={variable}
-            cortes={cortes}
-            norma={tabla.norma}
+            variable={mapaMudanzas ? VARIABLE_OCUPACION : variable}
+            cortes={mapaMudanzas ? cortesMapa : cortes}
+            norma={mapaMudanzas ? null : tabla.norma}
             difMax={difMax}
             baseNombre={referencia.nombre}
             lena={lena}
