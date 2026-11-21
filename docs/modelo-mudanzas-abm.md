@@ -109,3 +109,29 @@ modelo determinista (`experiments/validar_poblacion.py`). Esa es la prueba de pa
   `docs/modelo-hogares.md`).
 - La capacidad es vivienda física. Los permisos se cuentan como viviendas habitables, con rezago 0
   en la proyección.
+
+## Implementación y primeros resultados
+
+Motor: `viz/src/lib/mudanzasAbm.ts`, con PRNG con semilla en `viz/src/lib/prng.ts`. Pruebas:
+`viz/src/lib/mudanzasAbm.test.ts` (paridad, reproducibilidad, contabilidad, capacidad, redes y
+eventos). Parámetros: `abm` en `viz/public/datos/demografia.json`
+(`python -m experiments.exportar_demografia`). Una corrida de 12 años con grupos de 250
+personas tarda unos 50 ms.
+
+Con los parámetros reales, modo `redes` (φ = 1,086) y 20 réplicas:
+
+| Escenario | RM 2036 (p10–p50–p90) | Comunas saturadas por corrida | Grupos derramados | Demanda no atendida |
+|---|---|---|---|---|
+| Base | 8,02 – 8,06 – 8,11 millones | ~10 | 91 | 0 |
+| Ola migratoria ×3 en 2026–2028 | 8,48 – 8,52 – 8,55 millones | ~21 | 311 | 0 |
+| Permisos congelados desde 2025 | 7,93 millones | 52 | 3.722 | 1.664 grupos (~416 mil personas) |
+
+- **Escenario base:** casi siempre se saturan comunas de la periferia (Lampa, Pirque, María
+  Pinto, Curacaví, Paine, Talagante). La demanda que reciben supera la vivienda que autorizan.
+- **Con la ola migratoria** se suman Colina e Independencia. Independencia es un foco de llegadas
+  desde el extranjero, y el efecto de redes concentra ahí la demanda nueva.
+- **Sin permisos nuevos**, la región entera se llena y cerca de 416 mil personas no encuentran
+  dónde instalarse en 12 años.
+
+Son resultados del modelo con sus supuestos. La capacidad cuenta vivienda física, no precios ni
+hacinamiento.
