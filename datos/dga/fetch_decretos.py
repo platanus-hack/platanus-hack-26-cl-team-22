@@ -33,6 +33,9 @@ PROVINCE = re.compile(r"[Pp]rovincias? (?:de |del )?(Santiago|Cordillera|Chacabu
 MONTHS = {m: i for i, m in enumerate(
     ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
      "octubre", "noviembre", "diciembre"), start=1)}
+# Abbreviations seen in the decree list ("17 feb de 2011"): the first three letters, plus the
+# two usual forms of September.
+MONTHS |= {m[:3]: i for m, i in list(MONTHS.items())} | {"sept": 9, "set": 9}
 DATE = re.compile(r"(\d{1,2})\W+(?:de )?([a-záéíóú]+)\W+(?:de |del )?(\d{4})", re.IGNORECASE)
 
 

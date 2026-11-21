@@ -71,8 +71,8 @@ transparenciachc.blob.core.windows.net/lic-da/{year}-{month}.zip
 ## Checklist de verificación
 
 - [x] `make licitaciones` descargó los 12 ZIPs de 2024 en `data/raw/licitaciones/` (versionados con Git LFS) y generó `resumen_comuna_anio.csv`, `resumen_sector_comuna.csv` y `manifest.json`.
-- [x] `manifest.json` registra `outliers_monto_filtrados` (5), `filas_sin_comuna_rm` (1.830.458) y SHA-256 por archivo.
-- [x] `make simulate` reporta `meta.licitaciones.disponible: true` y `comunas_con_datos: 52` en `viz/datos/simulacion.json`.
+- [x] `manifest.json` registra `outliers_monto_filtrados` (5), `filas_sin_comuna_rm` (2.275.710), `filas_moneda_no_clp` (938) y SHA-256 por archivo.
+- [ ] `make simulate` reporta `meta.licitaciones.disponible: true` y `comunas_con_datos: 52` en `viz/datos/simulacion.json`. Pendiente: `simulacion.json` no trae `meta.licitaciones`; los datos entran solo por `politicas[].credibilidad_por_comuna`.
 - [x] `make lint && make test` termina en verde sin modificar el esquema existente de `simulacion.json`.
 
 ## Siguiente paso

@@ -168,6 +168,40 @@ def test_line_item_deduplication_and_outlier_filtering():
     assert {s.sector for s in sector_rows} == {"aire_calefaccion", "seguridad"}
 
 
+def test_status_codes_classify_without_the_status_text():
+    """Codes seen in the 2024 dumps: 8 and 9 Adjudicada, 7 Desierta, 15 Revocada,
+    16 Suspendida. The text is left blank so only the code decides."""
+    idx = load_rm_commune_index()
+    header = "CodigoExterno;Nombre;NombreOrganismo;CodigoEstado;Estado;FechaPublicacion"
+    rows = [f"{i}-LE24;Obra;Municipalidad de Maipú;{code};;2024-03-01"
+            for i, code in enumerate(["8", "9", "7", "15", "16", "6"])]
+    records = list(iter_records_from_csv_stream(io.StringIO("\n".join([header, *rows])), idx))
+    assert [(r.adjudicada, r.fallida) for r in records] == [
+        (True, False), (True, False), (False, True), (False, True), (False, True),
+        (False, False),
+    ]
+
+
+def test_amounts_in_other_currencies_are_left_out_of_the_peso_totals():
+    idx = load_rm_commune_index()
+    header = ("CodigoExterno;Nombre;NombreOrganismo;CodigoEstado;Estado;FechaPublicacion;"
+              "Moneda Adquisicion;MontoEstimado;Moneda de la Oferta;MontoLineaAdjudica")
+    base = "Obra;Municipalidad de Maipú;8;Adjudicada;2024-03-01"
+    rows = [
+        f"1-LE24;{base};Peso Chileno;1000000;Peso Chileno;900000",
+        f"2-LE24;{base};Unidad de Fomento;4230;Unidad de Fomento;4000",
+        f"3-LE24;{base};Dolar;5000;Moneda revisar;5000",
+    ]
+    diag: dict[str, int] = {}
+    records = list(iter_records_from_csv_stream(
+        io.StringIO("\n".join([header, *rows])), idx, diagnostics=diag))
+    assert diag["filas_moneda_no_clp"] == 2
+    (row,), _ = aggregate_records(records)
+    assert row.total_licitaciones == 3 and row.adjudicadas == 3
+    assert row.monto_estimado_clp == pytest.approx(1_000_000.0)
+    assert row.monto_adjudicado_clp == pytest.approx(900_000.0)
+
+
 def test_complaints_are_not_aggregated():
     # CantidadReclamos has no documented meaning per tender: it must not reach the output.
     assert "total_reclamos" not in {f.name for f in dataclasses.fields(CommuneYearMetrics)}

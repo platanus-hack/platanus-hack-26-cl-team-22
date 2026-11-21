@@ -11,3 +11,8 @@ y estado del proceso, fechas de inicio y término (ISO), multa total en UTA (vac
 multa), unidad fiscalizada, categoría económica, coordenadas y enlace a la ficha en SNIFA.
 
 Las sanciones firmes solo se publican como PDF anuales; no están incluidas.
+
+**`MultaTotalUTA` no siempre es una multa impuesta.** Tiene valor en 429 filas: 336 están en
+estado "Terminado - Sanción", pero 88 siguen "En curso" y 5 están en programa de cumplimiento.
+En esas 93 el monto es propuesto o provisional. Para contar multas aplicadas, filtrar por
+`ProcesoSancionEstado == "Terminado - Sanción"`.

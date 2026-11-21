@@ -95,6 +95,7 @@ export type DireccionCambio = 'mejora' | 'empeora' | 'neutro'
 
 export type TipoTransformacion =
   | 'reduccion_emisiones'
+  | 'retiro_politicas'
   | 'seguridad_comunal'
   | 'acople_hogares'
   | 'comparacion_credibilidad'
