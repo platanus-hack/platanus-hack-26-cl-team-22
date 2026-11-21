@@ -41,7 +41,8 @@ emissions and air. Branch `feat/datos-aire`. Delivery: work-unit commits. Runner
   added as a term (2024 dwellings belong to the test period). Santiago lost 30k despite +24 %
   dwellings: period effect.
 - L5: Zona B grows from 1,140,547 to 1,350,891 by 2036 (+18 %); housing cap never binds.
-  With heating following people: no policy 24.7, base 23.2 (plan progress cancelled), Zona B
-  ban worth -3.4 vs -2.9 µg/m³ with fixed heating (interaction). Toggles use `fija`.
+  With heating following people: no policy 24.7, base 23.2 (migration offsets the plan's
+  ~1.5 µg/m³ improvement). Zona B ban, paired median: -3.9 vs -3.2 µg/m³ with fixed heating
+  (+19 %, interaction). Toggles use `fija`. The loop is one-way (air does not move people).
 - L6: Process slip: the census merge commit and one lint failure were committed before checks
   (pipe hid ruff's exit code); fixed with a follow-up commit, checks now run with pipefail.

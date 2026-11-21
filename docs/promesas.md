@@ -77,11 +77,10 @@ Qué significa:
 
 - La comparación no incluye el mecanismo de hogares: la población queda fija, para aislar el
   efecto de cómo se promete y se ejecuta.
-
 - Usa el modelo de aire v0: todas las comunas se mueven casi igual, así que el resultado es
   regional. No dice qué comunas ganan más con cada paquete.
 - La credibilidad alta (0,8) es hipotética. La conclusión 2 no depende de ella; las
   conclusiones 3 y 4 comparan contra ella.
-- Esto mejora la demo, pero no reemplaza lo que más convierte el proyecto en simulación: el
-  lazo de hogares (la gente se muda, cambian las emisiones) y una segunda variable para que los
-  pesos tengan efecto.
+- El mecanismo de hogares y la segunda variable (`crecimiento_poblacion`) ya existen en la
+  simulación principal (`docs/modelo-hogares.md`); lo que sigue faltando es que el aire
+  cambie a dónde se muda la gente.

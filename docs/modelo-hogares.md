@@ -106,12 +106,24 @@ PM2,5 en 2036, promedio ponderado por la población de 2036 (nivel 2023: 23,4 µ
 
 Qué significa:
 
-- **Si la leña sigue a la gente, la migración a la Zona B anula el avance del plan.** Con el
-  cumplimiento real, el plan vigente deja la región en 23,2: prácticamente el nivel de hoy.
-  Es la cota superior; la inferior (leña fija) es 21,7.
-- **La prohibición en la Zona B vale más cuanta más gente se muda allí**: −3,4 µg/m³ con la
-  leña siguiendo a la gente contra −2,9 sin ella (18 % más), porque también cubre la leña de
-  quienes llegan. Es una interacción entre dos mecanismos, no una suma.
+- **Si la leña sigue a la gente, la migración a la Zona B compensa la mejora del plan.** El
+  plan rinde lo mismo en ambas lecturas (unos −1,5 µg/m³), pero la migración agrega unos
+  +1,5: sin políticas la región pasaría de 23,2 a 24,7, y con el plan vigente queda en 23,2,
+  prácticamente el nivel de hoy. Es la cota superior; con la leña fija queda en 21,7.
+- **La prohibición en la Zona B vale más cuanta más gente se muda allí**: mediana de la
+  diferencia pareada por réplica (con y sin la prohibición, misma semilla) de −3,9 µg/m³ con
+  la leña siguiendo a la gente contra −3,2 con la leña fija (19 % más), porque también cubre
+  la leña de quienes llegan. Es una interacción entre dos mecanismos, no una suma. La banda
+  es ancha: entre −1,0 y −5,8 (p10 a p90) en la lectura proporcional.
+
+### Qué no hace todavía
+
+- **El lazo no está cerrado.** Hay una cadena en un sentido (mudanzas → leña → aire) y una
+  interacción con las políticas, pero el aire no cambia a dónde se muda la gente (término de
+  aire en 0, ver arriba). Los destinos repiten las proporciones observadas.
+- Por lo mismo, `crecimiento_poblacion` es igual en todos los escenarios: los pesos
+  reordenan comunas, pero ningún interruptor de políticas cambia esa variable.
+- El tope de viviendas no se alcanza: la población regional es fija y las viviendas crecen.
 - Los interruptores de la interfaz usan la lectura `fija` (no exagera). Los tres escenarios
   `…-lena-sigue-a-la-gente` muestran la cota superior. Cambiar la lectura por defecto es una
   constante en `experiments/simular.py` (`DEFAULT_HOUSEHOLDS`).
