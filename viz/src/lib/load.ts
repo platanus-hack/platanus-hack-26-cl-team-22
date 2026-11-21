@@ -22,6 +22,15 @@ export async function cargarSimulacion(): Promise<Resultado> {
   }
 }
 
+/** Emisiones reales de leña por comuna (datos/lena.json); null si el archivo no está. */
+export async function cargarLena(): Promise<unknown> {
+  try {
+    return await leerJson('datos/lena.json')
+  } catch {
+    return null
+  }
+}
+
 /** Polígonos de las comunas; null si no existen todavía. */
 export async function cargarGeo(): Promise<unknown> {
   try {

@@ -13,6 +13,8 @@ export interface Comuna {
   lat: number
   lon: number
   base: Record<string, number>
+  /** zona del PPDA para la leña (A o B), si el archivo la trae */
+  zona_ppda?: string
 }
 
 export interface TipoHogar {
@@ -35,12 +37,18 @@ export interface Politica {
   comunas: 'todas' | string[]
   credibilidad: Credibilidad
   url?: string
+  /** "vigente" o "propuesta" */
+  tipo?: string
+  cita?: string
+  efecto?: string
 }
 
 export interface Escenario {
   id: string
   nombre: string
   politicas_activas: string[]
+  /** lectura de la credibilidad (p. ej. "conservadora"); sin ella cuenta como la lectura por defecto */
+  lectura?: string
 }
 
 export interface Banda {
@@ -83,6 +91,11 @@ export interface Simulacion {
     anios: number[]
     anio_base?: number
     aviso?: string
+    modelo?: string
+    replicas?: number
+    significado_sin?: string
+    lecturas?: Record<string, string>
+    lectura_por_defecto?: string
   }
   variables: Variable[]
   comunas: Comuna[]
@@ -93,5 +106,25 @@ export interface Simulacion {
   aportes?: Aportes
   flujos?: Record<string, Flujo[]>
   origen_aire?: OrigenAireMapa
-  validacion?: unknown
+  impacto?: Impacto
+  validacion?: Validacion
+}
+
+/** Personas que viven en comunas sobre la norma, por escenario y año. */
+export interface Impacto {
+  metrica: string
+  norma?: number
+  poblacion?: string
+  por_escenario: Record<string, Banda>
+}
+
+/** Un bloque de la validación: números con nombre (errores rmse_* y otros datos). */
+export interface BloqueValidacion {
+  id: string
+  valores: { clave: string; valor: number }[]
+}
+
+export interface Validacion {
+  fuente?: string
+  bloques: BloqueValidacion[]
 }

@@ -24,3 +24,9 @@ llm-logs/*.jsonl
 
 # Descargas originales: pesan cientos de MB, se regeneran con los scripts de datos/
 data/raw/
+
+# Trabajo local del flujo de diseño
+.impeccable/*.log
+.impeccable/decision-payload.json
+.impeccable/brief-root.md
+.impeccable/review/

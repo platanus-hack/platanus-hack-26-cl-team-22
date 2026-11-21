@@ -1,79 +1,77 @@
-/* Todos los colores, tamaños de letra y espacios de la interfaz viven aquí.
-   Para cambiar el aspecto basta con editar este archivo. */
+/* Todos los colores, tamaños y tiempos de la interfaz viven aquí.
+   Cada color es un papel plano: no hay degradados ni mezclas. */
 :root {
-  /* Papel y tinta */
-  --papel: #f3efe6;
-  --papel-2: #ebe5d6;
-  --tinta: #1b1b19;
-  --tinta-2: #4a4944;
-  --tinta-3: #77746b;
-  --regla: #c9c2b0; /* líneas finas */
-  --regla-fuerte: #1b1b19;
+  /* Papel base, hoja y tinta */
+  --papel: #fafaf7;
+  --papel-2: #e9e7df; /* papel de fondo de pestañas y pistas */
+  --hoja: #ffffff; /* la hoja pegada sobre la columna */
+  --tinta: #111111;
+  --tinta-2: #45443f; /* texto secundario: 9,4:1 sobre la hoja */
+  --corte: #d9d9d0; /* línea de corte de una comuna sin dato */
 
-  /* Un solo acento, solo para comuna seleccionada y controles activos */
-  --acento: #1f5c63;
-  --acento-suave: #cfdcd8;
+  /* Nivel de contaminación: una familia cálida de seis papeles, de claro a oscuro.
+     El paso 3 (bermellón) va intercalado entre naranjo y rojo; la tabla de invierno, de cinco, lo salta.
+     Los cortes están en src/lib/niveles.ts. */
+  --nivel-0: #f6de8d;
+  --nivel-1: #f2b705;
+  --nivel-2: #ee7b22;
+  --nivel-3: #e0502b;
+  --nivel-4: #b8202e;
+  --nivel-5: #6e1726;
+  /* Texto sobre cada papel de nivel (≥ 4,5:1) */
+  --nivel-txt-0: #111111;
+  --nivel-txt-1: #111111;
+  --nivel-txt-2: #111111;
+  --nivel-txt-3: #111111;
+  --nivel-txt-4: #fafaf7;
+  --nivel-txt-5: #fafaf7;
 
-  /* Rampa secuencial de PM2,5: arena pálida a marrón rojizo profundo */
-  --rampa-1: #f1e7d0;
-  --rampa-2: #e8cfa0;
-  --rampa-3: #ddb075;
-  --rampa-4: #cc8a55;
-  --rampa-5: #b5623f;
-  --rampa-6: #8f3e2d;
-  --rampa-7: #5e2220;
+  /* Políticas: una familia fría, un papel por política en orden; se repiten.
+     Turquesa y verde están oscurecidos para que el texto claro pase 4,5:1. */
+  --pol-0: #1f6fb2;
+  --pol-1: #167878;
+  --pol-2: #1b2a52;
+  --pol-3: #187a4d;
+  --pol-4: #e88fa3;
+  --pol-txt-0: #fafaf7;
+  --pol-txt-1: #fafaf7;
+  --pol-txt-2: #fafaf7;
+  --pol-txt-3: #fafaf7;
+  --pol-txt-4: #111111;
 
-  /* Paleta divergente para "diferencia frente a todos los planes": verde azulado apagado
-     (mejora) contra ladrillo apagado (empeora), con el tono papel en el cero.
-     El orden va de la mayor mejora (1) al mayor empeoramiento (5). */
-  --div-1: #2f6f6e;
-  --div-2: #9dc2ba;
-  --div-3: #ebe5d6;
-  --div-4: #dfae98;
-  --div-5: #9b3f35;
+  /* Diferencia frente al escenario de referencia: tres capas frías (mejora) y tres cálidas (empeora) */
+  --mejora-1: #cfe0f0;
+  --mejora-2: #7fb0dc;
+  --mejora-3: #1f6fb2;
+  --empeora-1: #f8cfc6;
+  --empeora-2: #ef8a78;
+  --empeora-3: #e4322b;
 
-  /* Sin dato */
-  --sin-dato: #bdb9ae;
-  --sin-dato-trama: #d3cfc4;
+  /* La leña: dos zonas del plan y el disco de emisiones */
+  --zona-a: #1b2a52;
+  --zona-a-txt: #fafaf7;
+  --zona-b: #a9c8e4;
+  --zona-b-txt: #111111;
+  --disco: #ee7b22;
 
-  /* Banda de incertidumbre en gráficos */
-  --banda: #d9c9a8;
-  --banda-borde: #a89870;
+  /* Un alzado mínimo entre dos papeles: 1 px de corrimiento, sin desenfoque */
+  --alzado: 1px 1px 0 rgba(17, 17, 17, 0.16);
 
-  /* Tipografía */
-  --f-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --f-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
-  --f-mono: 'IBM Plex Mono', 'Consolas', monospace;
+  /* Tipografía: una sola familia, empaquetada */
+  --f: 'Bricolage Grotesque', 'Segoe UI', sans-serif;
 
-  --t-xs: 11.5px;
-  --t-sm: 12.5px;
-  --t-md: 14px;
-  --t-lg: 17px;
-  --t-xl: 24px;
-  --t-2xl: 34px;
+  /* Unidad de escena: manda el ancho en 16:10 y el alto en 16:9, donde la columna tiene menos alto */
+  --u: min(1vw, 1.62vh);
+  --t-xs: max(10.5px, calc(var(--u) * 0.86));
+  --t-s: max(11.5px, calc(var(--u) * 0.96));
+  --t-m: max(12.5px, calc(var(--u) * 1.08));
+  --t-l: calc(var(--u) * 1.4);
+  --t-xl: calc(var(--u) * 2.1);
+  --t-titulo: calc(var(--u) * 2.9);
+  --t-numeral: calc(var(--u) * 4.6);
+  --t-marca: calc(var(--u) * 6.6);
 
-  /* IBM Plex Sans es más ancha y de ojo más grande que Inter Tight: interlineado algo más
-     ajustado en texto corrido y 600 solo para énfasis; 500 para nombres y etiquetas. */
-  --w-normal: 400;
-  --w-medio: 500;
-  --w-fuerte: 600;
-  --interlineado: 1.42;
-  --lh-ajustado: 1.25;
-  --lh-titulo: 1.1;
-  --tracking-caps: 0.09em;
-
-  /* Espacios */
-  --e-1: 4px;
-  --e-2: 8px;
-  --e-3: 12px;
-  --e-4: 16px;
-  --e-5: 24px;
-  --e-6: 32px;
-
-  /* Medidas de la maqueta */
-  --ancho-izq: 300px;
-  --ancho-der: 340px;
-  --alto-sup: 76px;
-  --alto-inf: 84px;
-  --hairline: 1px;
+  /* Movimiento: salida exponencial, sin rebote */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-capa: 320ms;
 }

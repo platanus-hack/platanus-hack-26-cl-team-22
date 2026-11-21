@@ -1,4 +1,4 @@
-import type { Aporte, Aportes, Flujo, OrigenAireMapa, Simulacion } from './types'
+import type { Aporte, Aportes, Banda, BloqueValidacion, Flujo, Impacto, OrigenAireMapa, Simulacion, Validacion } from './types'
 
 export type Resultado = { ok: true; data: Simulacion } | { ok: false; errores: string[] }
 
@@ -54,6 +54,49 @@ export function validarOrigenAire(raw: unknown): { ok: true; valor: OrigenAireMa
     valor[esc] = dest
   }
   return e.length > 0 ? { ok: false, errores: e } : { ok: true, valor }
+}
+
+function leerLecturas(raw: unknown): Record<string, string> | undefined {
+  if (!esObj(raw)) return undefined
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(raw)) if (esStr(k) && typeof v === 'string' && v.trim()) out[k] = v
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
+/** Clave opcional impacto: {metrica, norma_ugm3?, poblacion?, por_escenario: escenario -> banda por año}. Lo que no calza se descarta. */
+export function leerImpacto(raw: unknown, nAnios: number): Impacto | undefined {
+  if (!esObj(raw) || !esStr(raw.metrica) || !esObj(raw.por_escenario)) return undefined
+  const por: Record<string, Banda> = {}
+  for (const [esc, b] of Object.entries(raw.por_escenario)) {
+    if (esObj(b) && arrNum(b.p10) && arrNum(b.p50) && arrNum(b.p90) && [b.p10, b.p50, b.p90].every((s) => s.length === nAnios)) {
+      por[esc] = { p10: b.p10, p50: b.p50, p90: b.p90 }
+    }
+  }
+  if (Object.keys(por).length === 0) return undefined
+  return {
+    metrica: raw.metrica,
+    norma: esNum(raw.norma_ugm3) ? raw.norma_ugm3 : undefined,
+    poblacion: typeof raw.poblacion === 'string' ? raw.poblacion : undefined,
+    por_escenario: por,
+  }
+}
+
+/**
+ * Clave opcional validacion: bloques (objetos) de números con nombre. Solo se conservan números finitos;
+ * un bloque sin ningún número se descarta. Las claves rmse_* son errores comparables dentro del bloque.
+ */
+export function leerValidacion(raw: unknown): Validacion | undefined {
+  if (!esObj(raw)) return undefined
+  const bloques: BloqueValidacion[] = []
+  for (const [id, b] of Object.entries(raw)) {
+    if (!esObj(b)) continue
+    const valores = Object.entries(b)
+      .filter((e): e is [string, number] => esNum(e[1]))
+      .map(([clave, valor]) => ({ clave, valor }))
+    if (valores.length > 0) bloques.push({ id, valores })
+  }
+  if (bloques.length === 0) return undefined
+  return { fuente: typeof raw.fuente === 'string' ? raw.fuente : undefined, bloques }
 }
 
 /**
@@ -149,13 +192,19 @@ export function validarSimulacion(raw: unknown): Resultado {
   if (e.length > 0 || !meta) return { ok: false, errores: e.slice(0, 14) }
 
   const data = raw as unknown as Simulacion
+  const texto = (v: unknown) => (typeof v === 'string' && v.trim() ? v : undefined)
   const out: Simulacion = {
     meta: {
       version: String(meta.version ?? ''),
       es_ejemplo: meta.es_ejemplo === true,
       anios: anios as number[],
       anio_base: esNum(meta.anio_base) ? meta.anio_base : undefined,
-      aviso: typeof meta.aviso === 'string' ? meta.aviso : undefined,
+      aviso: texto(meta.aviso),
+      modelo: texto(meta.modelo),
+      replicas: esNum(meta.replicas) && meta.replicas > 0 ? meta.replicas : undefined,
+      significado_sin: texto(meta.significado_sin),
+      lecturas: leerLecturas(meta.lecturas),
+      lectura_por_defecto: texto(meta.lectura_por_defecto),
     },
     variables: data.variables,
     comunas: data.comunas,
@@ -163,7 +212,8 @@ export function validarSimulacion(raw: unknown): Resultado {
     politicas: data.politicas,
     escenarios: data.escenarios,
     trayectorias: data.trayectorias,
-    validacion: raw.validacion,
+    impacto: leerImpacto(raw.impacto, (anios as number[]).length),
+    validacion: leerValidacion(raw.validacion),
   }
 
   // Opcionales: se limpian sin fallar.
