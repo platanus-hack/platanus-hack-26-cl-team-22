@@ -69,6 +69,7 @@ make experiments   # réplicas del modelo de referencia -> results/mm1.csv
 
 ## 6. Documentación de referencia
 
+- [`ideas.md`](./ideas.md): tablero para proponer, filtrar y puntuar ideas.
 - [`track-simulations.md`](./track-simulations.md): criterios oficiales del track.
 - [`evaluation-rubric.md`](./evaluation-rubric.md): rúbrica de evaluación y pesos.
 - [`simulation-taxonomy.md`](./simulation-taxonomy.md): los 5 ejes de clasificación.
