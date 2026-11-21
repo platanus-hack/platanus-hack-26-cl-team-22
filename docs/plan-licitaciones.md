@@ -2,7 +2,7 @@
 
 Los datos de licitaciones de Mercado Público ingresan al simulador mediante la descarga masiva de ZIPs mensuales oficiales de **Datos Abiertos de ChileCompra** (`https://transparenciachc.blob.core.windows.net/lic-da/{year}-{month}.zip`), deduplicando líneas de ítem por `CodigoExterno` y cruzando las 52 comunas de la Región Metropolitana (`data/comunas_rm.csv`) para alimentar la credibilidad de ejecución en `core/licitaciones.py`.
 
-> **Estado actual:** descargado el **2026-11-21** para el período **2024-01 a 2024-12** (`12` ZIPs / ~270 MB en `data/raw/licitaciones/*.zip` versionados con **Git LFS**). `manifest.json` registra `2.512.286` filas totales, `236.576` líneas de compras municipales de la RM, `5` montos extremos filtrados, **52/52 comunas** en `resumen_comuna_anio.csv` y `292` cruces en `resumen_sector_comuna.csv`. Ninguna salida del modelo usa todavía estos datos: `core/licitaciones.py` es una biblioteca con tests.
+> **Estado actual:** descargado el **2026-11-21** para el período **2024-01 a 2024-12** (`12` ZIPs / ~270 MB en `data/raw/licitaciones/*.zip` versionados con **Git LFS**). `manifest.json` registra `2.512.286` filas totales, `236.576` líneas de compras municipales de la RM, `5` montos extremos filtrados, **52/52 comunas** en `resumen_comuna_anio.csv` y `292` cruces en `resumen_sector_comuna.csv`. `experiments/simular.py` usa la tasa de adjudicación 2024 para actualizar la credibilidad municipal de las políticas comunales de seguridad (`politicas[].credibilidad_por_comuna` en `simulacion.json`).
 
 ## Ruta rápida
 
