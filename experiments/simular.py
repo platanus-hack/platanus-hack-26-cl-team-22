@@ -28,7 +28,14 @@ from core.credibilidad import (
 )
 from core.estado import SOURCES, RegionState
 from core.hogares import MigrationModel
+from core.licitaciones import (
+    CommuneProcurementSummary,
+    ProcurementCredibilityEstimate,
+    estimate_commune_credibility,
+    load_procurement_summaries,
+)
 from core.seguridad import GROUPS, CrimeModel, EffectSize, SecurityIntervention, simulate_security
+from core.transformaciones import compute_scenario_transformation, serialize_transformations
 from experiments.datos_aire import ROOT, Communes, load_communes, load_emissions
 from experiments.datos_hogares import load_moves, load_population_dwellings
 
@@ -76,7 +83,11 @@ DEFAULT_READING = "conservadora"
 SEC_VARIABLE = "seguridad"
 # Security (docs/modelo-seguridad.md). Every value below was fixed before looking at outputs.
 SECURITY_COVERAGE = 0.25  # scenario choice: share of a commune's property DMCS treated
-SECURITY_CREDIBILITY = BetaCredibility(0.35 * 4, 0.65 * 4)  # assumption: wide, no history
+SECURITY_CREDIBILITY = BetaCredibility(0.35 * 4, 0.65 * 4)  # assumption: wide prior
+# ChileCompra municipal procurement (data/licitaciones): each municipality updates the prior
+# with its 2024 awarded vs closed tenders (core/licitaciones.py). A proxy, see ASSUMPTIONS.
+PROCUREMENT = ROOT / "data" / "licitaciones" / "resumen_comuna_anio.csv"
+PROCUREMENT_YEAR = 2024
 SECURITY_YEARS_TO_FULL = 10
 NEIGHBOR_KM = 6.0  # assumption: centroid distance (no commune polygons in the repo)
 SPILLOVER = (-0.1, 0.2)  # assumption: open sign, diffusion more likely (Bowers et al. 2011)
@@ -105,9 +116,13 @@ ASSUMPTIONS = [
      "in 2025-2036."),
     ("Residential heating either stays fixed or follows population (two readings); transport, "
      "industry and other sources do not follow residents."),
-    (f"Security policies cover {SECURITY_COVERAGE:.0%} of a commune's property crime, have "
-     f"municipal credibility with mean 0.35 and a wide band, and reach communes within "
-     f"{NEIGHBOR_KM:.0f} km with a share drawn in [{SPILLOVER[0]}, {SPILLOVER[1]}] (open sign)."),
+    (f"Security policies cover {SECURITY_COVERAGE:.0%} of a commune's property crime and reach "
+     f"communes within {NEIGHBOR_KM:.0f} km with a share drawn in [{SPILLOVER[0]}, "
+     f"{SPILLOVER[1]}] (open sign)."),
+    (f"Municipal credibility starts from a wide prior with mean 0.35 and is updated with the "
+     f"municipality's {PROCUREMENT_YEAR} ChileCompra tenders (awarded vs closed, effective sample "
+     "capped at 40). Awarding a tender is a proxy for a municipality's capacity to execute, not "
+     "proof that a security plan is carried out; municipalities without data keep the prior."),
 ]
 
 
@@ -261,6 +276,23 @@ def load_setup() -> Setup:
     return Setup(communes, in_b, masks, air, state, calibration, measured)
 
 
+def municipal_credibility(
+    codes: list[str], summaries: dict[str, CommuneProcurementSummary]
+) -> dict[str, ProcurementCredibilityEstimate]:
+    """Credibility of each municipality: the security prior updated with its procurement."""
+    return {c: estimate_commune_credibility(summaries.get(c), prior=SECURITY_CREDIBILITY)
+            for c in codes}
+
+
+def mixture_summary(components: list[BetaCredibility], draws: int = 20_000) -> dict[str, float]:
+    """p10 / media / p90 of an equal-weight mixture of Betas (seeded, so reproducible)."""
+    rng = np.random.default_rng([SEED, len(components)])
+    x = np.concatenate([rng.beta(b.alpha, b.beta, draws) for b in components])
+    p10, p90 = np.quantile(x, [0.1, 0.9])
+    return {"p10": float(p10), "media": float(np.mean([b.mean for b in components])),
+            "p90": float(p90)}
+
+
 def featured_communes(setup: Setup) -> list[str]:
     """Few communes with contrast (team review): the two highest and two lowest measured
     levels, plus every Zona B commune with a station. Only measured communes qualify."""
@@ -268,6 +300,51 @@ def featured_communes(setup: Setup) -> list[str]:
     order = measured[np.argsort(-setup.state.pm25[measured])]
     chosen = [*order[:2], *order[-2:], *[i for i in measured if setup.in_b[i]]]
     return [setup.communes.codes[i] for i in dict.fromkeys(int(i) for i in chosen)]
+
+
+def population_housing_validation() -> dict:
+    """Validation blocks for population (open model) and new housing, if their results exist.
+
+    Read from results/poblacion_validacion.json and results/vivienda_validacion.json, written by
+    experiments/validar_poblacion.py and experiments/validar_vivienda.py.
+    """
+    blocks: dict = {}
+    pop_file = ROOT / "results" / "poblacion_validacion.json"
+    if pop_file.exists():
+        pop = json.loads(pop_file.read_text(encoding="utf-8"))
+        err = pop["errores"]
+        blocks["poblacion"] = {
+            "fuente": "results/poblacion_validacion.json",
+            "comando": pop["comando"],
+            "metrica": "Población por comuna en 2024, proyectada desde el censo 2017 con tasas "
+                       "de 2012-2017",
+            "unidad": "personas",
+            "rmse_modelo": err["abierto"]["rmse_personas"],
+            "rmse_sin_cambio": err["sin_cambio"]["rmse_personas"],
+            "rmse_cerrado": err["cerrado"]["rmse_personas"],
+            "rmse_proyeccion_ine": err["ine_crecimiento"]["rmse_personas"],
+            "total_rm_modelo": err["abierto"]["total_rm_predicho"],
+            "total_rm_real": pop["real"]["total_rm_2024"],
+            "aviso": "Nadie le gana a «sin cambio» en 7 años, tampoco el INE: los nacimientos "
+                     "cayeron 31 % y las salidas a otras regiones subieron.",
+        }
+    housing_file = ROOT / "results" / "vivienda_validacion.json"
+    if housing_file.exists():
+        housing = json.loads(housing_file.read_text(encoding="utf-8"))
+        res = housing["resultados"]["lag_elegido_en_ajuste"]["fuera_de_muestra_2019_2024"]
+        blocks["vivienda"] = {
+            "fuente": "results/vivienda_validacion.json",
+            "comando": housing["comando"],
+            "metrica": "Migración neta por comuna 2019-2024 según a dónde van quienes se mudan",
+            "unidad": "personas",
+            "rmse_modelo": res["proporciones_2012_2017"]["rmse_personas"],
+            "rmse_pivote_permisos": res["pivote_permisos"]["rmse_personas"],
+            "rmse_gravedad_permisos": res["gravedad_permisos"]["rmse_personas"],
+            "rmse_radiacion": res["radiacion"]["rmse_personas"],
+            "aviso": "La vivienda nueva central la ocuparon llegadas desde el extranjero: los "
+                     "permisos no mejoran los destinos de las mudanzas internas.",
+        }
+    return blocks
 
 
 def main() -> None:
@@ -328,6 +405,8 @@ def main() -> None:
     log_start = log_mean + phi * (np.log(rate_2024) - log_mean)
     targets = np.argsort(-rate_2024.sum(axis=1))[:SECURITY_TARGETS]
     target_codes = [communes.codes[i] for i in targets]
+    municipal = municipal_credibility(
+        target_codes, load_procurement_summaries(PROCUREMENT, min_year=PROCUREMENT_YEAR))
     sec_by_id = {sp.id: sp for sp in SECURITY_POLICIES}
 
     def security_interventions(policy: SecurityPolicy) -> list[SecurityIntervention]:
@@ -336,8 +415,9 @@ def main() -> None:
             mask = np.zeros(n, dtype=bool)
             mask[i] = True
             code = communes.codes[i]
-            measure = Measure(f"{policy.id}-{code}", f"municipio-{code}", SECURITY_CREDIBILITY,
-                              "supuesto")
+            est = municipal[code]
+            measure = Measure(f"{policy.id}-{code}", f"municipio-{code}", est.credibility,
+                              est.provenance)
             out.append(SecurityIntervention(measure, mask, SECURITY_COVERAGE, policy.effects,
                                             SECURITY_YEARS_TO_FULL))
         return out
@@ -424,6 +504,49 @@ def main() -> None:
                               "destino": communes.codes[d], "personas": round(float(f[o, d]))})
     net = year_flows.sum(axis=1) - year_flows.sum(axis=2)  # (years, communes)
     oos = households_fit["fuera_de_muestra_2019_2024"]
+
+    base_sc = scenarios[0]
+    base_pm = run(base_sc["politicas_activas"], base_sc["lectura"], base_sc["hogares"])
+    base_sec = run_security(base_sc["politicas_activas"])
+    no_pol_pm = run([], DEFAULT_READING, DEFAULT_HOUSEHOLDS)
+    sec_ids = {sp.id for sp in SECURITY_POLICIES}
+    transformations = []
+    for sc in scenarios:
+        sid = sc["id"]
+        if sid == "base":
+            ref_id, var_id, tipo = "sin-politicas", VARIABLE, "reduccion_emisiones"
+            act_arr, ref_arr = base_pm, no_pol_pm
+        elif any(pid in sec_ids for pid in sc["politicas_activas"]):
+            ref_id, var_id, tipo = "base", SEC_VARIABLE, "seguridad_comunal"
+            act_arr, ref_arr = run_security(sc["politicas_activas"]), base_sec
+        else:
+            ref_id, var_id = "base", VARIABLE
+            if sc["hogares"] != DEFAULT_HOUSEHOLDS:
+                tipo = "acople_hogares"
+            elif sc["lectura"] != DEFAULT_READING:
+                tipo = "comparacion_credibilidad"
+            elif set(sc["politicas_activas"]) < set(base_sc["politicas_activas"]):
+                tipo = "retiro_politicas"  # removing policies raises PM2.5
+            else:
+                tipo = "reduccion_emisiones"
+            act_arr = run(sc["politicas_activas"], sc["lectura"], sc["hogares"])
+            ref_arr = base_pm
+        transformations.append(
+            compute_scenario_transformation(
+                sid,
+                ref_id,
+                var_id,
+                tipo,
+                "menor",
+                act_arr,
+                ref_arr,
+                communes.codes,
+                communes.lat,
+                communes.lon,
+                espacial=var_id != VARIABLE,  # PM2.5 pattern across communes is not validated
+            )
+        )
+
     output = {
         "meta": {
             "version": "1.0",
@@ -508,9 +631,19 @@ def main() -> None:
         ] + [
             {"id": sp.id, "nombre": sp.name, "nivel": "comunal", "tipo": "ilustrativa",
              "fuente": "seguridad", "comunas": target_codes,
-             "credibilidad": {k: round(v, 3) for k, v in SECURITY_CREDIBILITY.summary().items()},
-             "procedencia": "supuesto", "cita": sp.citation, "efecto": sp.effect,
-             "variable": SEC_VARIABLE}
+             "credibilidad": {k: round(v, 3) for k, v in mixture_summary(
+                 [municipal[c].credibility for c in target_codes]).items()},
+             "credibilidad_por_comuna": {
+                 c: {**{k: round(v, 3) for k, v in municipal[c].credibility.summary().items()},
+                     "procedencia": municipal[c].provenance,
+                     "tasa_adjudicacion": municipal[c].award_rate,
+                     "licitaciones_cerradas": municipal[c].sample_size}
+                 for c in target_codes},
+             "procedencia": ("tasa_base" if all(municipal[c].provenance == "tasa_base"
+                                                for c in target_codes) else "supuesto"),
+             "cita": f"{sp.citation} Credibilidad municipal: ChileCompra {PROCUREMENT_YEAR}, "
+                     "licitaciones adjudicadas / cerradas (data/licitaciones).",
+             "efecto": sp.effect, "variable": SEC_VARIABLE}
             for sp in SECURITY_POLICIES
         ],
         "escenarios": scenarios,
@@ -554,8 +687,10 @@ def main() -> None:
                 "rmse_nadie_se_muda": oos["nadie_se_muda"]["rmse_personas"],
                 "rmse_repetir_2012_2017": oos["repetir_2012_2017"]["rmse_personas"],
                 "correlacion_modelo": oos["modelo"]["correlacion"],
+                "unidad": "personas",
                 "aviso": "2019-2024 incluye el estallido y la pandemia.",
             },
+            **population_housing_validation(),
         },
         # Separate comparison, not a toggle scenario: see docs/promesas.md.
         "promesas": {"fuente": f"results/{PROMISES.name}", **promises},
@@ -565,6 +700,9 @@ def main() -> None:
             "por_comuna": {code: [round(float(v)) for v in net[:, i]]
                            for i, code in enumerate(communes.codes)},
         },
+        "transformaciones": serialize_transformations(
+            transformations, default_reference="base"
+        ),
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

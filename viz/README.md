@@ -39,6 +39,67 @@ Cada política es una hoja de papel frío pegada bajo las comunas donde aporta: 
 derecha, más ancha cuanto más aporta, y varias se apilan en orden. Apagar una política la desliza fuera de la pila
 y el papel cálido del nivel cambia en el mismo gesto. Un borde festoneado marca la incertidumbre.
 
+### Pestañas por tipo de riesgo
+
+Cinco pestañas (`src/lib/pestanas.ts`); todas menos el resumen abren con un título y un subtítulo, y las que
+tienen varias secciones las muestran como acordeón con una sola abierta, que también manda sobre el mapa:
+
+| Pestaña | Secciones | Qué pinta el mapa |
+|---|---|---|
+| Resumen | El índice de riesgo de 0 a 100, las tres de menor riesgo y una fila por variable | El índice |
+| Climático | Calidad del aire · La leña, su fuente principal | PM2,5 frente a la norma · zonas y emisiones de leña |
+| Legal | Los planes públicos, su probabilidad de cumplirse y el efecto de encender o apagar cada uno | Valor o diferencia |
+| Social | Seguridad ciudadana · Crecimiento poblacional · Desarrollo urbano (la simulación de mudanzas) | Posición de riesgo · flujos |
+| Referencias | Fuentes de datos y normas · El modelo contra datos que no vio | Sin cambio |
+
+En el resumen, cada fila de variable lleva a su pestaña y sección.
+
+**Unidad del índice** (`src/lib/riesgo.ts`): en cada variable, el riesgo de una comuna es el porcentaje de las
+otras comunas que están mejor que ella en ese año (0 = la mejor, 100 = la peor). El índice general es el promedio
+de esos riesgos, ponderado por la prioridad de 0 a 10 que se le da a cada variable (los perfiles de
+`tipos_hogar` son prioridades ya puestas). Hasta 33 es riesgo bajo; hasta 66, medio; más, alto. Se usa la
+posición y no el valor porque las unidades son distintas y hay comunas muy alejadas del resto.
+Es un índice relativo a la región: no dice si el valor es bueno en términos absolutos; para el aire, eso lo dice
+la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición sea buena.
+
+### Entrada guiada
+
+Al abrir, dos pantallas sobre el mapa (`src/components/Onboarding.tsx`):
+
+1. **El caso, en texto libre.** `leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía
+   hidráulica, vivienda, industria o evaluación general; la persona ve cómo se leyó y puede cambiarlo.
+2. **Los criterios.** Los tres que simula el modelo llevan peso (cinco grados) y un rango aceptado: para el aire,
+   la norma chilena o las metas de la OMS; para seguridad y crecimiento, cortes sobre los datos de la región.
+   Debajo van los criterios propios de ese caso (caudal, caída, etc.) y los que agregue la persona: **no tienen
+   datos en esta versión, no entran al cálculo y no muestran ningún número**.
+
+Al terminar se abre la hoja Riesgo: las tres de menor riesgo salen solo de las comunas que cumplen todos los
+rangos, y la ficha marca «Fuera de tu rango» donde corresponde. Con `?directo` en la dirección no aparece.
+
+La explicación la arma la propia interfaz con los números del índice (`src/lib/onboarding.ts`). Si al construir
+se define `VITE_GUIA_URL` con la dirección de un intermediario propio y la persona escribió su caso, se le pide
+a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.ts`):
+
+- Pedido: `POST` con JSON `{ perfil, contexto, prioridades, anio, top, falta }`; `top` trae las tres comunas de
+  menor riesgo con sus valores. Respuesta: JSON `{ "texto": "..." }`.
+- La clave del modelo vive en el intermediario, nunca en esta página. El intermediario debe permitir el origen
+  de la página (CORS) y limitar el uso.
+- El modelo solo redacta: el orden de las comunas lo calcula siempre el índice. Si el intermediario no está,
+  tarda más de 12 s o responde otra cosa, queda la explicación propia.
+- Lo que escribe la persona sale de la página solo en ese pedido; sin `VITE_GUIA_URL` no sale nunca.
+- Con `VITE_CASO_URL` (ruta `/interpretar` de `servidor-guia/`), antes de ordenar se le pide a Claude que lea el
+  caso y proponga ajustes de prioridad de un catálogo cerrado (`src/lib/caso.ts`). La persona los ve como
+  «Por lo que contaste: Aire: Clave» y puede apagarlos; el índice recalcula el orden. Detalle en
+  `servidor-guia/README.md`.
+
+### Junto a la landing
+
+`web/` (la landing) y `viz/` se publican como un solo sitio: `npm run build` en `web/` construye la landing,
+construye esta interfaz con `VITE_INICIO_URL=../` y la copia a `web/dist/simulador`
+(`web/scripts/incluir-simulador.mjs`). En la landing, al terminar el scroll queda la introducción con el botón «Entrar al simulador» (o un gesto nuevo de seguir bajando): el globo vuela hacia la región y se
+abre `simulador/`; aquí, la marca «root» vuelve a la landing. Para probar el paso en desarrollo, correr esta
+interfaz con `npm run dev -- --port 5174` y la landing con `npm run dev` (su `.env.development` apunta a ese puerto).
+
 ### Cómo correrla
 
 ```bash
@@ -58,8 +119,8 @@ Pensada para escritorio 16:9 y 16:10 (1920×1080, 1440×900, 1280×720), sin des
 
 | Tecla | Qué hace |
 |---|---|
-| `1` … `4` (`5`) | Vistas: La cuenca, El plan, La leña, Mi comuna y, si el archivo trae `validacion`, La prueba |
-| `Q` `W` `E` `R` … | Pega o despega la política de esa tira (la letra está impresa en cada tira) |
+| `1` … `5` | Pestañas: Resumen, Climático, Legal, Social y Referencias |
+| `Q` `W` `E` `R` … | Enciende o apaga el plan de esa fila en El plan (la letra está impresa en cada fila) |
 | `←` `→` | Año anterior o siguiente |
 | `Espacio` | Reproduce o pausa los años |
 | `D` | En El plan, alterna el mapa entre valor y diferencia frente al escenario de referencia |
@@ -79,6 +140,7 @@ Con `prefers-reduced-motion` los cambios son instantáneos.
 |---|---|---|
 | `viz/datos/simulacion.json` (lo sirve y empaqueta `vite.config.ts` como `datos/simulacion.json`) | El modelo: `python -m experiments.simular` | Se usa `viz/ejemplo/simulacion.json` (se sirve como `datos/ejemplo.json` por un plugin de `vite.config.ts`) y aparece «Datos de ejemplo» si `meta.es_ejemplo` es true |
 | `viz/public/datos/lena.json` | `datos/viz/build_lena.py` | La vista La leña lo dice en palabras |
+| `viz/public/datos/demografia.json` | `python -m experiments.exportar_demografia` | La vista Las mudanzas no aparece. Es la simulación por agentes de `docs/modelo-mudanzas-abm.md`: corre en un Web Worker (`src/lib/abm.worker.ts`), 20 corridas por cambio, y el mapa pinta la ocupación de la vivienda |
 | `viz/public/geo/comunas_rm.geojson` | Frente de cartografía | Cada comuna se dibuja como un círculo en su lat/lon |
 
 Si el JSON no cumple el contrato (`docs/plan-comunas.md`), la página muestra un estado de error con la

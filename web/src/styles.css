@@ -46,6 +46,18 @@ html.intro-on::-webkit-scrollbar {
   pointer-events: none;
 }
 
+/* Roots that grow out of the period during the zoom (roots.ts). Behind the
+   letters; the simulator's globe (z-index 1) is drawn on top of them. */
+.intro-roots {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.logo-box {
+  position: relative;
+}
+
 /* The SVG viewBox hugs the glyph ink, so the letters themselves span
    50% of the viewport height; width follows the aspect ratio (--ar, set
    from the measured glyphs) and is capped at 80vw so it never overflows
@@ -130,4 +142,84 @@ html.intro-on::-webkit-scrollbar {
 }
 @media (prefers-reduced-motion: reduce) {
   .scroll-hint-wheel { animation: none; }
+}
+
+/* Header over the logo (SiteHeader.tsx): what the project is and who we are.
+   Hidden until the user tries to scroll up at the top of the page. */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 48px;
+  padding: 32px 5vw 0 12.5vw;
+  color: var(--fg);
+  font-family: "Instrument Sans Variable", "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.site-header.is-visible {
+  opacity: 1;
+  transform: none;
+}
+body.sim-on .site-header {
+  display: none;
+}
+.site-header-block p {
+  margin: 0;
+  max-width: 52ch;
+  opacity: 0.85;
+}
+.site-header-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.site-header-team {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.site-header-team a {
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 35%, transparent);
+}
+.site-header-team a:hover {
+  border-bottom-color: var(--fg);
+}
+@media (max-width: 860px) {
+  .site-header {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px 20px 0;
+    font-size: 13px;
+  }
+}
+
+/* Velo de salida hacia el simulador: el papel de viz/ (--papel, #e8efee). Keep in sync with VELO_MS in simulador.ts. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #e8efee;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.velo::after {
+  opacity: 1;
 }

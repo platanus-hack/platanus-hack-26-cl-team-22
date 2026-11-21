@@ -1,13 +1,17 @@
 /* Todos los colores, tamaños y tiempos de la interfaz viven aquí.
    Cada color es un papel plano: no hay degradados ni mezclas. */
 :root {
-  /* Papel base, hoja y tinta */
-  --papel: #fafaf7;
-  --papel-2: #e9e7df; /* papel de fondo de pestañas y pistas */
-  --hoja: #ffffff; /* la hoja pegada sobre la columna */
-  --tinta: #111111;
-  --tinta-2: #45443f; /* texto secundario: 9,4:1 sobre la hoja */
-  --corte: #d9d9d0; /* línea de corte de una comuna sin dato */
+  /* Papel base, hoja y tinta: la misma paleta de la landing (web/src/simulator/simulator.css),
+     para que el paso de la landing al simulador no cambie de mundo. */
+  --papel: #e8efee;
+  --papel-2: #dfe8e7; /* papel de fondo de pestañas y pistas */
+  --hoja: #f7f9f7; /* la hoja pegada sobre la columna */
+  --tinta: #092122; /* el fondo oscuro de la landing */
+  --tinta-2: #4e6667; /* texto secundario: 5,8:1 sobre la hoja */
+  --corte: #c9d7d6; /* línea de corte de una comuna sin dato */
+  --marca: #123b3d; /* la tinta del logo oficial "root." (src/assets/logo-root.png) */
+  --cafe: #6c4122; /* el marrón del punto de "root."; reemplaza al amarillo decorativo */
+  --acento: #abcbcc; /* el azul claro de las letras de "root" en la landing */
 
   /* Nivel de contaminación: una familia cálida de seis papeles, de claro a oscuro.
      El paso 3 (bermellón) va intercalado entre naranjo y rojo; la tabla de invierno, de cinco, lo salta.
@@ -55,7 +59,7 @@
   --disco: #ee7b22;
 
   /* Un alzado mínimo entre dos papeles: 1 px de corrimiento, sin desenfoque */
-  --alzado: 1px 1px 0 rgba(17, 17, 17, 0.16);
+  --alzado: 1px 1px 0 rgba(9, 33, 34, 0.16);
 
   /* Tipografía: una sola familia, empaquetada */
   --f: 'Bricolage Grotesque', 'Segoe UI', sans-serif;

@@ -36,6 +36,12 @@ export interface Politica {
   fuente: string
   comunas: 'todas' | string[]
   credibilidad: Credibilidad
+  /** Comunal policies: each municipality's credibility (ChileCompra-updated prior), by CUT. */
+  credibilidad_por_comuna?: Record<string, Credibilidad & {
+    procedencia: string
+    tasa_adjudicacion: number | null
+    licitaciones_cerradas: number
+  }>
   url?: string
   /** "vigente" o "propuesta" */
   tipo?: string
@@ -85,6 +91,42 @@ export interface OrigenAire {
 /** escenario -> comuna -> orígenes del aire (la suma puede ser menor que 1: el resto es fondo regional) */
 export type OrigenAireMapa = Record<string, Record<string, OrigenAire[]>>
 
+export type DireccionCambio = 'mejora' | 'empeora' | 'neutro'
+
+export type TipoTransformacion =
+  | 'reduccion_emisiones'
+  | 'retiro_politicas'
+  | 'seguridad_comunal'
+  | 'acople_hogares'
+  | 'comparacion_credibilidad'
+  | (string & {})
+
+export interface ComunaFocoTransformacion {
+  codigo: string
+  direccion: DireccionCambio
+  delta_p50: number[]
+  incertidumbre: number[]
+  intensidad: number[]
+}
+
+export interface TransformacionEscenario {
+  referencia: string
+  variable: string
+  tipo: TipoTransformacion
+  max_abs_delta: number
+  epicentro: { lat: number; lon: number }
+  bbox: [number, number, number, number]
+  intensidad_regional: number[]
+  comunas_foco: ComunaFocoTransformacion[]
+  /** Present when the pattern across comunas is not validated: only the region-level change is shown. */
+  aviso?: string
+}
+
+export interface TransformacionesMapa {
+  referencia_por_defecto: string
+  por_escenario: Record<string, TransformacionEscenario>
+}
+
 export interface Simulacion {
   meta: {
     version: string
@@ -109,6 +151,7 @@ export interface Simulacion {
   origen_aire?: OrigenAireMapa
   impacto?: Impacto
   validacion?: Validacion
+  transformaciones?: TransformacionesMapa
 }
 
 /** Personas que viven en comunas sobre la norma, por escenario y año. */
@@ -123,6 +166,12 @@ export interface Impacto {
 export interface BloqueValidacion {
   id: string
   valores: { clave: string; valor: number }[]
+  /** Unidad de los errores del bloque (p. ej. «personas»). Sin ella, la de la variable del mapa. */
+  unidad?: string
+  /** Qué se mide, en una frase. */
+  metrica?: string
+  /** Advertencia honesta sobre la prueba. */
+  aviso?: string
 }
 
 export interface Validacion {

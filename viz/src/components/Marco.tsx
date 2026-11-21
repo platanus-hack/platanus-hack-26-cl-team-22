@@ -14,6 +14,10 @@ interface LeyendaProps {
   baseNombre?: string
   lena: Lena | null
   hayPiezas: boolean
+  /** el mapa pinta posición de riesgo (0 a 100) en vez de un valor con unidad */
+  riesgo?: { titulo: string; total: number } | null
+  /** housing occupancy of the moves simulation: three readable levels instead of six cut labels */
+  ocupacion?: boolean
 }
 
 export function Leyenda(p: LeyendaProps) {
@@ -74,6 +78,60 @@ export function Leyenda(p: LeyendaProps) {
       </div>
     )
   }
+  if (p.ocupacion)
+    return (
+      <div className="leyenda" aria-label="Leyenda del mapa">
+        <p className="leyenda-titulo">Vivienda ocupada, % de la capacidad</p>
+        <ul className="leyenda-riesgo">
+          <li>
+            <Muestra clase="nivel-0" />
+            <Muestra clase="nivel-1" /> Con espacio, hasta 90
+          </li>
+          <li>
+            <Muestra clase="nivel-2" />
+            <Muestra clase="nivel-3" /> Ajustada, 90 a 97
+          </li>
+          <li>
+            <Muestra clase="nivel-4" />
+            <Muestra clase="nivel-5" /> Llena o casi, más de 97
+          </li>
+          <li>
+            <Muestra clase="sin-dato" /> Sin dato
+          </li>
+          <li className="solo-plano">
+            <Muestra clase="nivel-2" forma="feston" /> Festón: otras simulaciones la dejan en otro nivel
+          </li>
+          <li className="solo-relieve">
+            <Muestra clase="nivel-3" forma="trama" /> Trama: otras simulaciones la dejan en otro nivel
+          </li>
+        </ul>
+        <p className="leyenda-nota">Color: la mediana de las simulaciones en el año elegido.</p>
+      </div>
+    )
+  if (p.riesgo)
+    return (
+      <div className="leyenda" aria-label="Leyenda del mapa">
+        <p className="leyenda-titulo">{p.riesgo.titulo}</p>
+        <ul className="leyenda-riesgo">
+          <li>
+            <Muestra clase="nivel-0" />
+            <Muestra clase="nivel-1" /> Bajo, hasta 33
+          </li>
+          <li>
+            <Muestra clase="nivel-2" />
+            <Muestra clase="nivel-3" /> Medio, 34 a 66
+          </li>
+          <li>
+            <Muestra clase="nivel-4" />
+            <Muestra clase="nivel-5" /> Alto, 67 o más
+          </li>
+          <li>
+            <Muestra clase="sin-dato" /> Sin dato
+          </li>
+        </ul>
+        <p className="leyenda-nota">Posición entre las {p.riesgo.total} comunas: 0 es la mejor; 100, la peor.</p>
+      </div>
+    )
   return (
     <div className="leyenda" aria-label="Leyenda del mapa">
       <p className="leyenda-titulo">

@@ -87,6 +87,18 @@ make simulate   # calibra, simula y escribe viz/datos/simulacion.json (~15 s)
 make validate   # prueba fuera de muestra contra sin cambio y tendencia -> docs/validacion.md
 ```
 
+El sitio publicado es la landing de `web/` con la interfaz de `viz/` dentro, en `simulador/`: `npm run build`
+en `web/` construye las dos. Para ver solo el resultado en el mapa en relieve (la interfaz de `viz/`):
+
+```bash
+cd viz
+npm install     # hace falta de nuevo si cambió package-lock.json
+npm run dev     # abre la dirección que imprime, normalmente http://localhost:5173
+```
+
+El mapa en relieve necesita internet y WebGL; si falta alguno, la interfaz pasa sola al mapa plano
+(detalle y respaldos sin conexión en [`viz/README.md`](viz/README.md)).
+
 Para volver a descargar los datos crudos: `pip install -e ".[datos]"` y correr el script de
 `datos/` de cada fuente (ver «Fuentes de datos»).
 

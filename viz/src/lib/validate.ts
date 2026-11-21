@@ -1,4 +1,18 @@
-import type { Aporte, Aportes, Banda, BloqueValidacion, Flujo, Impacto, OrigenAireMapa, Simulacion, Validacion } from './types'
+import type {
+  Aporte,
+  Aportes,
+  Banda,
+  BloqueValidacion,
+  ComunaFocoTransformacion,
+  DireccionCambio,
+  Flujo,
+  Impacto,
+  OrigenAireMapa,
+  Simulacion,
+  TransformacionEscenario,
+  TransformacionesMapa,
+  Validacion,
+} from './types'
 
 export type Resultado = { ok: true; data: Simulacion } | { ok: false; errores: string[] }
 
@@ -84,6 +98,7 @@ export function leerImpacto(raw: unknown, nAnios: number): Impacto | undefined {
 /**
  * Clave opcional validacion: bloques (objetos) de números con nombre. Solo se conservan números finitos;
  * un bloque sin ningún número se descarta. Las claves rmse_* son errores comparables dentro del bloque.
+ * Los textos `unidad`, `metrica` y `aviso` de cada bloque se conservan si vienen.
  */
 export function leerValidacion(raw: unknown): Validacion | undefined {
   if (!esObj(raw)) return undefined
@@ -93,10 +108,63 @@ export function leerValidacion(raw: unknown): Validacion | undefined {
     const valores = Object.entries(b)
       .filter((e): e is [string, number] => esNum(e[1]))
       .map(([clave, valor]) => ({ clave, valor }))
-    if (valores.length > 0) bloques.push({ id, valores })
+    const texto = (k: string) => (typeof b[k] === 'string' ? (b[k] as string) : undefined)
+    if (valores.length > 0) bloques.push({ id, valores, unidad: texto('unidad'), metrica: texto('metrica'), aviso: texto('aviso') })
   }
   if (bloques.length === 0) return undefined
   return { fuente: typeof raw.fuente === 'string' ? raw.fuente : undefined, bloques }
+}
+
+const esDireccion = (v: unknown): v is DireccionCambio => v === 'mejora' || v === 'empeora' || v === 'neutro'
+
+/** Clave opcional transformaciones: metadatos espacio-temporales por escenario. Lo que no calza se descarta. */
+export function leerTransformaciones(raw: unknown, nAnios: number): TransformacionesMapa | undefined {
+  if (!esObj(raw) || !esObj(raw.por_escenario) || nAnios <= 0) return undefined
+  const por: Record<string, TransformacionEscenario> = {}
+  for (const [escId, val] of Object.entries(raw.por_escenario)) {
+    if (!esObj(val)) continue
+    if (!esStr(val.referencia) || !esStr(val.variable) || !esStr(val.tipo) || !esNum(val.max_abs_delta)) continue
+    if (!esObj(val.epicentro) || !esNum(val.epicentro.lat) || !esNum(val.epicentro.lon)) continue
+    if (!arrNum(val.bbox) || val.bbox.length !== 4) continue
+    if (
+      !arrNum(val.intensidad_regional) ||
+      val.intensidad_regional.length !== nAnios ||
+      !val.intensidad_regional.every((x) => x >= 0 && x <= 1)
+    ) {
+      continue
+    }
+    if (!Array.isArray(val.comunas_foco)) continue
+    const focos: ComunaFocoTransformacion[] = []
+    for (const c of val.comunas_foco) {
+      if (!esObj(c) || !esStr(c.codigo) || !esDireccion(c.direccion)) continue
+      if (!arrNum(c.delta_p50) || c.delta_p50.length !== nAnios) continue
+      if (!arrNum(c.incertidumbre) || c.incertidumbre.length !== nAnios) continue
+      if (!arrNum(c.intensidad) || c.intensidad.length !== nAnios || !c.intensidad.every((x) => x >= 0 && x <= 1)) continue
+      focos.push({
+        codigo: c.codigo,
+        direccion: c.direccion,
+        delta_p50: c.delta_p50,
+        incertidumbre: c.incertidumbre,
+        intensidad: c.intensidad,
+      })
+    }
+    por[escId] = {
+      referencia: val.referencia,
+      variable: val.variable,
+      tipo: val.tipo,
+      max_abs_delta: val.max_abs_delta,
+      epicentro: { lat: val.epicentro.lat, lon: val.epicentro.lon },
+      bbox: [val.bbox[0]!, val.bbox[1]!, val.bbox[2]!, val.bbox[3]!],
+      intensidad_regional: val.intensidad_regional,
+      comunas_foco: focos,
+      ...(esStr(val.aviso) ? { aviso: val.aviso } : {}),
+    }
+  }
+  if (Object.keys(por).length === 0) return undefined
+  return {
+    referencia_por_defecto: esStr(raw.referencia_por_defecto) ? raw.referencia_por_defecto : 'base',
+    por_escenario: por,
+  }
 }
 
 /**
@@ -214,6 +282,7 @@ export function validarSimulacion(raw: unknown): Resultado {
     trayectorias: data.trayectorias,
     impacto: leerImpacto(raw.impacto, (anios as number[]).length),
     validacion: leerValidacion(raw.validacion),
+    transformaciones: leerTransformaciones(raw.transformaciones, (anios as number[]).length),
   }
 
   // Opcionales: se limpian sin fallar.

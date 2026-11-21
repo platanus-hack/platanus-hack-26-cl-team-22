@@ -3,11 +3,12 @@ import "@fontsource-variable/bricolage-grotesque/opsz.css";
 import "@fontsource-variable/instrument-sans";
 import "./simulator.css";
 import type { SimulatorApi } from "./engine";
+import { entrarAlSimulador, URL_SIMULADOR } from "../simulador";
 
 type Props = {
   /** Se llama una vez, cuando el motor (d3 + datos, carga diferida) está listo. */
   onReady: (api: SimulatorApi, root: HTMLDivElement) => void;
-  /** Botón "Volver al inicio": de vuelta al logo. */
+  /** Home button: back to the logo. */
   onHome: () => void;
 };
 
@@ -31,6 +32,38 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
     };
   }, [onReady]);
 
+  // Zooming into the globe by hand (wheel or pinch) does exactly what the button does: the globe
+  // flies towards Santiago and the veil closes before the example simulator's cities show, then the
+  // real simulator opens. The gesture itself is caught before the engine sees it, so it cannot zoom
+  // on its own into the cities. Dragging to rotate still works. Only after the intro (body.sim-on).
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const active = () => document.body.classList.contains("sim-on");
+    // While leaving, every gesture is swallowed so it can't stop the flight; the button fires once.
+    const leaving = () => document.body.classList.contains("saliendo");
+    const block = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!leaving()) document.getElementById("cta")?.click();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (active() && (e.deltaY < 0 || leaving())) block(e);
+    };
+    // A pinch is a second finger: the browser marks it non-primary, so no pointer count is kept
+    // (a count could go stale if a finger lifts outside the globe and turn a drag into a "pinch").
+    const onPointerDown = (e: PointerEvent) => {
+      if (active() && ((e.pointerType === "touch" && !e.isPrimary) || leaving())) block(e);
+    };
+    // Capture phase on the ancestor, so it runs before the engine's own listeners on the canvas.
+    root.addEventListener("wheel", onWheel, { capture: true, passive: false });
+    root.addEventListener("pointerdown", onPointerDown, { capture: true });
+    return () => {
+      root.removeEventListener("wheel", onWheel, { capture: true });
+      root.removeEventListener("pointerdown", onPointerDown, { capture: true });
+    };
+  }, []);
+
   return (
     <div className="sim is-intro" data-level="world" ref={rootRef}>
       <main className="app">
@@ -38,18 +71,23 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
           <canvas id="map" role="img" aria-label="Mapa interactivo: el mundo, con zoom hasta las comunas de Santiago"></canvas>
 
           <div className="brand">
-            <button type="button" className="home" onClick={onHome}>
-              ← Volver al inicio
+            <button type="button" className="home" onClick={onHome} aria-label="Volver al inicio" title="Volver al inicio">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+              </svg>
             </button>
-            <span>Platanus Hack 26, track Simulación</span>
           </div>
 
           <div className="intro">
-            <h1>Mira hacia dónde va una comuna antes de comprar</h1>
-            <p>Proyectamos el aire y la seguridad de cada comuna a 5, 10 y 30 años, según los planes públicos que la afectan y la probabilidad real de que se cumplan.</p>
-            <button className="cta" id="cta">Acercar a Santiago</button>
-            <small>Arrastra para girar el mundo. Usa la rueda o pellizca para acercarte hasta ver las calles.</small>
+            <h1>¿Quieres invertir a largo plazo?<br />Descubre qué riesgos afectan tu inversión</h1>
+            <p>Proyectamos el aire y la seguridad de cada comuna hasta 15 años, y te mostramos cuáles se deterioran aunque hoy parezcan buenas.</p>
+            {/* El motor escucha este mismo botón y vuela a la región; al llegar se abre el simulador real. */}
+            <button className="cta" id="cta" onClick={entrarAlSimulador}>
+              Entrar al simulador
+            </button>
           </div>
+
+          <p className="hint">Arrastra para girar el mundo. Presiona el botón para entrar al simulador.</p>
 
           <div className="zoom" aria-label="Zoom">
             <button id="zin" aria-label="Acercar">+</button>
@@ -62,13 +100,6 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
             <div className="ends"><span>Peor</span><span>Mejor</span></div>
             <div className="ctx"><i></i>Sin simular todavía</div>
           </div>
-
-          <nav className="crumbs" aria-label="Nivel de zoom">
-            <button data-go="world">Mundo</button>
-            <button data-go="country">Chile</button>
-            <button data-go="region">Región Metropolitana</button>
-            <button data-go="comuna" hidden></button>
-          </nav>
 
           <a className="attr" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">Calles y lugares © colaboradores de OpenStreetMap</a>
 
@@ -105,6 +136,10 @@ export const Simulator = memo(function Simulator({ onReady, onHome }: Props) {
             <button className="link" id="openSrc">Ver las fuentes internacionales del modelo</button>
 
             <p className="note">Cifras de ejemplo para mostrar la interfaz: no sirven para decidir una compra. El modelo real se alimenta de SINCA, CEAD, ENUSC, Censo, PPDA y SEIA.</p>
+
+            <a className="abrir" href={URL_SIMULADOR}>
+              Abrir el simulador con datos reales
+            </a>
           </div>
 
           <div className="view" id="viewSources" hidden>

@@ -1,23 +1,46 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Anios, ControlesMapa, Leyenda } from './components/Marco'
+import logoRoot from './assets/logo-root.png'
 import { Mapa } from './components/Mapa'
 import type { Cinta, Encuadre } from './components/MapaPapel'
-import { PERSONALIZADO, VistaComuna, VistaCuenca, VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
+import { VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
+import { GENERAL, PERSONALIZADO, VistaRiesgo } from './components/VistaRiesgo'
 import type { AportePolitica } from './lib/capas'
 import { punto, serie, variablesConDato, type Punto } from './lib/data'
 import { diferenciasPorComuna, maxAbsDiferencia } from './lib/diferencia'
-import { calcularHallazgos } from './lib/findings'
 import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
-import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, vistasDisponibles } from './lib/interaccion'
+import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, } from './lib/interaccion'
 import { leerLena, type Zona } from './lib/lena'
-import { estadoAire, TEXTO_ESTADO } from './lib/estado'
+import { CORTES_OCUPACION, bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
+import { useSimulacionAbm } from './lib/useSimulacionAbm'
+import { VistaMudanzas, type OpcionesMudanzas } from './components/VistaMudanzas'
+import { estadoAire, TEXTO_ESTADO, veredictoComuna } from './lib/estado'
 import { claseFondo } from './lib/fondo'
-import { nivel, tablaPara } from './lib/niveles'
+import { nivel, papelNivel, tablaPara } from './lib/niveles'
 import type { Etiqueta } from './components/Papel'
 import { seleccionarOrigenes } from './lib/origen'
 import { alternar, buscarEscenario, escenarioInicial, lecturasDisponibles, resolverSeleccion } from './lib/scenario'
-import { rankear, type FilaValores } from './lib/scoring'
+import {
+  aPrioridad,
+  calcularRiesgo,
+  CORTES_RIESGO,
+  decimales,
+  ESTADO_DE_RIESGO,
+  nivelRiesgo,
+  TEXTO_RIESGO,
+  textoPosicion,
+  veredictoVariable,
+  type FilaValores,
+} from './lib/riesgo'
+import { variableCorta } from './lib/variables'
+import { Hoja, VistaFuentes } from './components/Hoja'
+import type { VistaId } from './lib/interaccion'
+import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, type SeccionId } from './lib/pestanas'
+import { Onboarding, type Busqueda } from './components/Onboarding'
+import { pedirGuia, urlGuia } from './lib/guia'
+import { casoDe, explicar, fueraDeRango, GRADOS, resolverLimites } from './lib/onboarding'
+import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -31,9 +54,16 @@ interface Props {
   data: Simulacion
   geoRaw: unknown
   lenaRaw: unknown
+  demografiaRaw?: unknown
 }
 
+/** Ocupación de la vivienda (población / capacidad, %): cortes del mapa en la vista de mudanzas. */
+const VARIABLE_OCUPACION = { id: 'ocupacion_vivienda', nombre: 'Ocupación de la vivienda', unidad: '% de la capacidad', mejor: 'menor' as const }
+
 const ESPERA_DEMO_MS = 45_000
+/** Dirección de la landing cuando el simulador se publica junto a ella (la fija web/scripts/incluir-simulador.mjs). */
+// Link back to the landing: '../' in the published site, the landing's dev server in development (.env.development).
+const inicio = (import.meta.env.VITE_INICIO_URL as string | undefined) || null
 const PASO_DEMO_MS = 3_200
 const PASO_JUGAR_MS = 900
 
@@ -48,13 +78,24 @@ function useMovimientoReducido(): boolean {
   return r
 }
 
-export function Simulador({ data, geoRaw, lenaRaw }: Props) {
+export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const anios = data.meta.anios
   const conDato = useMemo(() => variablesConDato(data), [data])
-  const variable = data.variables.find((v) => conDato.has(v.id)) ?? data.variables[0]!
-  const tabla = useMemo(() => tablaPara(variable, data.impacto?.norma), [variable, data.impacto?.norma])
+  // El aire es la variable con norma, planes y validación; las demás hojas (plan, leña, prueba) hablan de ella.
+  const varAire = data.variables.find((v) => conDato.has(v.id)) ?? data.variables[0]!
+  const tabla = useMemo(() => tablaPara(varAire, data.impacto?.norma), [varAire, data.impacto?.norma])
+  const cortas = useMemo(() => data.variables.filter((v) => conDato.has(v.id)).map(variableCorta), [data.variables, conDato])
   const cortes = tabla.cortes
-  const vistas = useMemo(() => vistasDisponibles(!!data.validacion), [data.validacion])
+  const demografia = useMemo(() => {
+    if (!demografiaRaw) return null
+    try {
+      return leerParametrosAbm(demografiaRaw)
+    } catch (e) {
+      console.warn('demografia.json no se usa:', e)
+      return null
+    }
+  }, [demografiaRaw])
+  const vistas = PESTANAS
   const reducido = useMovimientoReducido()
 
   const inicial = useMemo(() => escenarioInicial(data.escenarios), [data.escenarios])
@@ -77,13 +118,27 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   const [encuadre, setEncuadre] = useState<Encuadre>('gran-santiago')
   const [reencuadre, setReencuadre] = useState(0)
   const [perfilId, setPerfilId] = useState(data.tipos_hogar[0]?.id ?? PERSONALIZADO)
-  const [pesos, setPesos] = useState<Record<string, number>>(() => ({ ...(data.tipos_hogar[0]?.pesos ?? {}) }))
+  const aPrioridades = (w: Record<string, number>) => Object.fromEntries(Object.entries(w).map(([k, v]) => [k, aPrioridad(v)]))
+  const [pesos, setPesos] = useState<Record<string, number>>(() => aPrioridades(data.tipos_hogar[0]?.pesos ?? {}))
+  /** sección abierta de cada pestaña que tiene varias */
+  const [secciones, setSecciones] = useState<Partial<Record<PestanaId, SeccionId>>>({})
   const [demo, setDemo] = useState(false)
+  // Entrada guiada: se muestra al abrir, salvo con ?directo en la dirección (para ensayar o proyectar sin ella).
+  const [onb, setOnb] = useState(() => !new URLSearchParams(window.location.search).has('directo'))
+  const [busqueda, setBusqueda] = useState<Busqueda | null>(null)
+  /** rango aceptado por variable (id de la opción); vacío = sin límites */
+  const [rangos, setRangos] = useState<Record<string, string>>({})
+  const [guiaIA, setGuiaIA] = useState<{ cargando: boolean; texto?: string } | null>(null)
+  // Lectura del caso por Claude: ajustes propuestos que la persona puede apagar uno por uno.
+  const [lecturaCaso, setLecturaCaso] = useState<{ cargando: boolean; r?: Interpretacion; apagados: Set<string>; base: Record<string, number> } | null>(null)
+  const pedido = useRef(0)
+  const onbRef = useRef(onb)
+  onbRef.current = onb
   const [seleccionada, setSeleccionada] = useState<string | null>(() => {
     let mejor: string | null = null
     let v = -Infinity
     for (const c of data.comunas) {
-      const p = punto(data, inicial.id, c.codigo, variable.id, 0)
+      const p = punto(data, inicial.id, c.codigo, varAire.id, 0)
       if (p && p.p50 > v) {
         v = p.p50
         mejor = c.codigo
@@ -92,8 +147,54 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     return mejor
   })
 
-  const vista = vistas[vistaIdx]?.id ?? 'cuenca'
+  // Pestañas por tipo de riesgo; cada una, con su sección abierta, se resuelve a la vista que dibuja panel y mapa.
+  const pestana = vistas[vistaIdx] ?? vistas[0]!
+  const papelVar: Record<Papel, string | undefined> = {
+    aire: varAire.id,
+    seguridad: conDato.has('seguridad') ? 'seguridad' : undefined,
+    crecimiento: conDato.has('crecimiento_poblacion') ? 'crecimiento_poblacion' : undefined,
+  }
+  const disponibles = seccionesDe(pestana.id, {
+    aire: true,
+    seguridad: !!papelVar.seguridad,
+    crecimiento: !!papelVar.crecimiento,
+    lena: true,
+    urbano: !!demografia,
+    validacion: !!data.validacion,
+  })
+  const modo = modoDe(pestana.id, secciones[pestana.id], disponibles)
+  const vista = modo.vista
+  const capa = (modo.papel && papelVar[modo.papel]) || GENERAL
+  /** Del resumen al detalle de una variable: abre su pestaña y su sección. */
+  const irACapa = (id: string) => {
+    if (id === GENERAL) return setVistaIdx(0)
+    const papel = (Object.keys(papelVar) as Papel[]).find((k) => papelVar[k] === id)
+    if (!papel) return
+    const l = lugarDe(papel)
+    setSecciones((x) => ({ ...x, [l.pestana]: l.seccion }))
+    setVistaIdx(vistas.findIndex((v) => v.id === l.pestana))
+  }
+  // Una dimensión (el índice general) o una variable en detalle; fuera de la hoja de riesgo siempre es el aire.
+  const variable = (vista === 'riesgo' && capa !== GENERAL && data.variables.find((v) => v.id === capa && conDato.has(v.id))) || varAire
+  const esAire = variable.id === varAire.id
+  const general = vista === 'riesgo' && capa === GENERAL
+  /** el mapa pinta posición de riesgo (0 a 100) en vez del valor de la variable */
+  const mapaRiesgo = vista === 'riesgo' && (general || !esAire)
   const anio = anios[idx] ?? anios[0]!
+
+  // Simulación de mudanzas (vista 5): corre en un Web Worker solo mientras la vista está abierta.
+  const [opcionesAbm, setOpcionesAbm] = useState<OpcionesMudanzas>({ semilla: 22, modoExtranjero: 'redes', eventos: [] })
+  const { resultado: abm, calculando: calculandoAbm } = useSimulacionAbm(vista === 'mudanzas' ? demografia : null, opcionesAbm)
+  const mapaMudanzas = vista === 'mudanzas' && !!demografia && !!abm
+  const puntosMudanzas = useMemo(() => {
+    const m = new Map<string, Punto>()
+    if (!demografia || !abm) return m
+    const t = Math.max(0, demografia.anios.indexOf(anio))
+    bandaOcupacion(abm.corridas, t).forEach((b, i) => {
+      if (b) m.set(demografia.comunas[i]!.codigo, b)
+    })
+    return m
+  }, [demografia, abm, anio])
 
   // Referencia de la diferencia: la combinación del escenario de partida, en la misma lectura.
   const referencia = useMemo(
@@ -168,18 +269,34 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     [data.origen_aire, escenario.id, seleccionada],
   )
   const cintas = useMemo<Cinta[]>(
-    () => (vista === 'cuenca' && origen ? origen.otros.map((o) => ({ desde: o.origen, fraccion: o.fraccion })) : []),
-    [vista, origen],
+    () => (vista === 'riesgo' && !mapaRiesgo && origen ? origen.otros.map((o) => ({ desde: o.origen, fraccion: o.fraccion })) : []),
+    [vista, mapaRiesgo, origen],
   )
 
-  const ranking = useMemo(() => {
-    const filas: FilaValores[] = data.comunas.map((c) => {
-      const valores: Record<string, number | undefined> = {}
-      for (const v of conDato) valores[v] = punto(data, escenario.id, c.codigo, v, idx)?.p50
-      return { codigo: c.codigo, valores }
-    })
-    return rankear(filas, data.variables, pesos)
-  }, [data, escenario.id, idx, pesos, conDato])
+  const filasDe = useCallback(
+    (i: number): FilaValores[] =>
+      data.comunas.map((c) => {
+        const valores: Record<string, number | undefined> = {}
+        for (const v of conDato) valores[v] = punto(data, escenario.id, c.codigo, v, i)?.p50
+        return { codigo: c.codigo, valores }
+      }),
+    [data, escenario.id, conDato],
+  )
+  const riesgo = useMemo(() => calcularRiesgo(filasDe(idx), data.variables, pesos), [filasDe, idx, data.variables, pesos])
+  const riesgoFin = useMemo(() => calcularRiesgo(filasDe(anios.length - 1), data.variables, pesos), [filasDe, anios.length, data.variables, pesos])
+
+  const puntosMapa = useMemo(() => {
+    if (mapaMudanzas) return puntosMudanzas
+    if (!mapaRiesgo) return puntos
+    const m = new Map<string, Punto>()
+    for (const f of riesgo.filas) {
+      const r = general ? f.indice : f.partes[variable.id]
+      if (r !== null && r !== undefined) m.set(f.codigo, { p10: r, p50: r, p90: r })
+    }
+    return m
+  }, [mapaMudanzas, puntosMudanzas, mapaRiesgo, general, puntos, riesgo, variable.id])
+  const cortesMapa = mapaMudanzas ? CORTES_OCUPACION : mapaRiesgo ? CORTES_RIESGO : cortes
+  const sinAportes = useMemo(() => new Map<string, AportePolitica[]>(), [])
 
   // ---- acciones ----
   const alternarPolitica = useCallback(
@@ -199,19 +316,23 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
 
   // Al entrar a la leña se ve toda la región (la Zona B es la periferia); al salir vuelve el encuadre anterior.
   const encuadrePrevio = useRef<Encuadre>('gran-santiago')
+  const vistaPrevia = useRef(vista)
+  useEffect(() => {
+    if (vista === 'lena' && vistaPrevia.current !== 'lena') {
+      encuadrePrevio.current = encuadre
+      setEncuadre('region')
+    } else if (vista !== 'lena' && vistaPrevia.current === 'lena') {
+      setEncuadre(encuadrePrevio.current)
+    }
+    vistaPrevia.current = vista
+    // solo al cambiar de vista: el encuadre que se guarda es el del momento del cambio
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vista])
   const irAVista = useCallback(
     (i: number) => {
-      const destino = vistas[i]?.id
-      if (!destino) return
-      if (destino === 'lena' && vista !== 'lena') {
-        encuadrePrevio.current = encuadre
-        setEncuadre('region')
-      } else if (destino !== 'lena' && vista === 'lena') {
-        setEncuadre(encuadrePrevio.current)
-      }
-      setVistaIdx(i)
+      if (vistas[i]) setVistaIdx(i)
     },
-    [vistas, vista, encuadre],
+    [vistas],
   )
 
   useEffect(() => {
@@ -253,6 +374,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
     }
     if (espera.current !== null) window.clearTimeout(espera.current)
     espera.current = window.setTimeout(() => {
+      if (onbRef.current) return // la demostración no corre detrás de la entrada guiada
       fotoDemo.current = estadoActual.current
       setJugando(false)
       setDemo(true)
@@ -272,7 +394,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   useEffect(() => {
     if (!demo) return
     let n = 0
-    const ids = vistas.map((v) => v.id)
+    const ids = vistas.map((v): VistaId => (v.id === 'legal' ? 'plan' : 'riesgo'))
     const t = window.setInterval(() => {
       n++
       const paso = pasoDemo(n, ids, anios.length, politicaDemo)
@@ -292,6 +414,7 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
       const enDemo = demoRef.current
       actividad()
       if (enDemo) return // la primera tecla solo detiene la demostración
+      if (onbRef.current) return // las teclas son de la entrada guiada
       if (e.ctrlKey || e.metaKey || e.altKey) return
       const t = e.target as HTMLElement | null
       const tag = t?.tagName
@@ -342,7 +465,11 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   const textoComuna = (f: GeoFeature): Etiqueta => {
     const titulo = f.properties.nombre
     const sim = f.properties.simCodigo
-    const clase = claseFondo({ modo: modoMapa, cortes, puntos, difs, difMax, mejor: variable.mejor, lena }, f.properties.codigo, sim)
+    const clase = claseFondo(
+      { modo: modoMapa, cortes: cortesMapa, puntos: puntosMapa, difs, difMax, mejor: mapaRiesgo || mapaMudanzas ? 'menor' : variable.mejor, lena },
+      f.properties.codigo,
+      sim,
+    )
     if (modoMapa === 'lena') {
       const c = lena?.comunas.find((x) => x.codigo === f.properties.codigo)
       if (!c) return { titulo, lineas: ['Sin dato'] }
@@ -361,6 +488,35 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
         lineas: [`${escenario.nombre}: ${fmt(d.activo.p50, 1)}`, `${referencia.nombre}: ${fmt(d.base.p50, 1)}`],
       }
     }
+    if (mapaRiesgo && modoMapa === 'valor') {
+      const r = riesgo.porCodigo.get(sim)
+      if (general) {
+        if (!r || r.indice === null) return { titulo, lineas: ['Sin dato'] }
+        const n = nivelRiesgo(r.indice)
+        const partes = cortas.filter((v) => r.partes[v.id] !== undefined).map((v) => `${v.nombre} ${fmt(r.partes[v.id]!, 0)}`)
+        return {
+          titulo,
+          valor: fmt(r.indice, 0),
+          unidad: 'de 100',
+          clase,
+          estado: { id: ESTADO_DE_RIESGO[n], texto: TEXTO_RIESGO[n] },
+          lineas: [`Puesto ${r.puesto} de ${riesgo.total} · ${anio}`, partes.join(' · ')],
+        }
+      }
+      const pv = puntos.get(sim)
+      const parte = r?.partes[variable.id]
+      if (!pv || parte === undefined) return { titulo, lineas: ['Sin dato'] }
+      const n = nivelRiesgo(parte)
+      const t = textoPosicion(parte)
+      return {
+        titulo,
+        valor: fmt(pv.p50, decimales(pv.p50)),
+        unidad: variableCorta(variable).unidad,
+        clase,
+        estado: { id: ESTADO_DE_RIESGO[n], texto: TEXTO_RIESGO[n] },
+        lineas: [`${t.charAt(0).toUpperCase()}${t.slice(1)} · ${anio}`],
+      }
+    }
     const p = puntos.get(sim)
     if (!p) return { titulo, lineas: ['Sin dato'] }
     const lineas = [`Banda ${fmt(p.p10, 1)}–${fmt(p.p90, 1)} · ${anio}`]
@@ -376,63 +532,225 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
   // ---- hoja activa ----
   const comunaSel = seleccionada ? data.comunas.find((c) => c.codigo === seleccionada) : undefined
   const ultimoAnio = anios[anios.length - 1]!
-  const nombreVariable = (id: string) => {
-    const v = data.variables.find((x) => x.id === id)
-    if (v) return v.nombre
-    const t = id.replace(/_/g, ' ')
-    return t.charAt(0).toUpperCase() + t.slice(1)
-  }
-  const claves = [...new Set([...data.tipos_hogar.flatMap((t) => Object.keys(t.pesos)), ...conDato])]
   const referenciaNorma =
     data.impacto?.norma !== undefined ? { valor: data.impacto.norma, texto: `norma ${fmt(data.impacto.norma, 0)} ${u}` } : undefined
 
-  const detalle = useMemo(() => {
-    if (!comunaSel) return null
-    const s = serie(data, escenario.id, comunaSel.codigo, variable.id)
-    if (!s) return null
-    const sb = puedeDiferencia ? serie(data, referencia.id, comunaSel.codigo, variable.id) : undefined
-    return {
-      comuna: comunaSel,
-      serie: s,
-      comparacion: sb ? { nombre: referencia.nombre, p50: sb.p50 } : undefined,
-      nivelBanda: s.p50[idx] !== undefined ? nivel(s.p50[idx]!, cortes) : null,
-      hallazgos: calcularHallazgos({
-        variable,
-        anios,
-        serie: s,
-        escenarioNombre: escenario.nombre,
-        esBase: !puedeDiferencia,
-        base: sb ? { nombre: referencia.nombre, serie: sb } : undefined,
-        aportes: data.aportes?.[escenario.id]?.[comunaSel.codigo]?.[variable.id],
-        politicas: data.politicas,
-      }),
-    }
-  }, [comunaSel, data, escenario, variable, puedeDiferencia, referencia, idx, cortes, anios])
+  // Rangos aceptados: qué comunas cumplen todos y, de la elegida, en qué variables queda fuera.
+  const valoresAnio = useMemo(() => filasDe(idx), [filasDe, idx])
+  const limites = useMemo(() => resolverLimites(rangos, data.variables, valoresAnio.map((f) => f.valores)), [rangos, data.variables, valoresAnio])
+  const hayLimites = Object.values(limites).some((v) => v !== null)
+  const dentro = useMemo(
+    () => (hayLimites ? new Set(valoresAnio.filter((f) => fueraDeRango(f.valores, limites, data.variables).length === 0).map((f) => f.codigo)) : null),
+    [hayLimites, valoresAnio, limites, data.variables],
+  )
+
+  /** Comunas que cumplen los rangos de una búsqueda (el estado aún no los tiene cuando se termina la entrada). */
+  const cumplenDe = (b: Busqueda) => {
+    const filasAnio = filasDe(idx)
+    const lim = resolverLimites(b.rangos, data.variables, filasAnio.map((f) => f.valores))
+    return new Set(filasAnio.filter((f) => fueraDeRango(f.valores, lim, data.variables).length === 0).map((f) => f.codigo))
+  }
+
+  /** Pide a Claude que redacte la guía de las comunas que quedan primeras con estas prioridades. */
+  const pedirGuiaPara = (b: Busqueda, prioridades: Record<string, number>, n: number) => {
+    const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
+    if (!url || !b.contexto) return
+    const cumple = cumplenDe(b)
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades)
+      .filas.filter((f) => f.indice !== null && cumple.has(f.codigo))
+      .slice(0, 3)
+    setGuiaIA({ cargando: true })
+    void pedirGuia(url, {
+      perfil: casoDe(b.caso).titulo,
+      contexto: b.contexto,
+      prioridades: Object.fromEntries(cortas.map((v) => [v.nombre, prioridades[v.id] ?? 0])),
+      anio,
+      falta: b.sinDatos.length > 0 ? `Sin datos en esta versión: ${b.sinDatos.join(', ')}.` : undefined,
+      top: top.map((f) => ({
+        comuna: nombre(f.codigo),
+        riesgo: Math.round(f.indice!),
+        variables: cortas.map((v) => ({
+          nombre: v.nombre,
+          valor: punto(data, escenario.id, f.codigo, v.id, idx)?.p50 ?? null,
+          unidad: v.unidad,
+          riesgo: Math.round(f.partes[v.id] ?? 0),
+        })),
+      })),
+    }).then((g) => {
+      if (n !== pedido.current) return
+      setGuiaIA(g ? { cargando: false, texto: g.texto } : null)
+    })
+  }
+
+  /** Aplica unas prioridades: ordena, elige la primera comuna que cumple los rangos y la deja seleccionada. */
+  const aplicarPrioridades = (prioridades: Record<string, number>, cumple?: ReadonlySet<string> | null) => {
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.find((f) => f.indice !== null && (!cumple || cumple.has(f.codigo)))
+    setPesos(prioridades)
+    if (top) setSeleccionada(top.codigo)
+  }
+
+  const terminarEntrada = (b: Busqueda) => {
+    const cumple = cumplenDe(b)
+    aplicarPrioridades(b.prioridades, cumple)
+    setRangos(b.rangos)
+    setPerfilId(PERSONALIZADO)
+    setVistaIdx(0)
+    setEncuadre('region') // las de menor riesgo suelen estar fuera del Gran Santiago
+    const guiada = b.contexto !== '' || b.caso !== 'general' || b.sinDatos.length > 0 || Object.keys(b.rangos).length > 0
+    setBusqueda(guiada ? b : null)
+    setOnb(false)
+    setGuiaIA(null)
+    setLecturaCaso(null)
+    const n = ++pedido.current
+    const urlCaso = urlGuia(import.meta.env.VITE_CASO_URL as string | undefined)
+    if (!urlCaso || !b.contexto) return pedirGuiaPara(b, b.prioridades, n)
+    // Primero Claude lee el caso y propone ajustes; el índice ordena con ellos; después se redacta la guía.
+    setLecturaCaso({ cargando: true, apagados: new Set(), base: b.prioridades })
+    void pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: casoDe(b.caso).titulo, prioridades: b.prioridades }).then((r) => {
+      if (n !== pedido.current) return
+      if (!r) {
+        setLecturaCaso(null)
+        return pedirGuiaPara(b, b.prioridades, n)
+      }
+      const nuevas = aplicarAjustes(b.prioridades, r)
+      setLecturaCaso({ cargando: false, r, apagados: new Set(), base: b.prioridades })
+      aplicarPrioridades(nuevas, cumple)
+      pedirGuiaPara(b, nuevas, n)
+    })
+  }
+
+  /**
+   * Enciende o apaga un ajuste propuesto por Claude y vuelve a ordenar. Parte de las prioridades actuales, así
+   * que conserva lo que la persona movió a mano; la guía de Claude hablaba de otro orden y vuelve la propia.
+   */
+  const alternarAjuste = (variable: string) => {
+    const ajuste = lecturaCaso?.r?.ajustes.find((a) => a.variable === variable)
+    if (!lecturaCaso || !ajuste) return
+    const apagados = new Set(lecturaCaso.apagados)
+    const encender = apagados.has(variable)
+    if (encender) apagados.delete(variable)
+    else apagados.add(variable)
+    setLecturaCaso({ ...lecturaCaso, apagados })
+    aplicarPrioridades({ ...pesos, [variable]: encender ? ajuste.grado : (lecturaCaso.base[variable] ?? pesos[variable] ?? 5) }, dentro)
+    pedido.current++
+    setGuiaIA(null)
+  }
+  const textoGrado = (g: number) => GRADOS.find((x) => x.valor === g)?.texto ?? String(g)
+  const ajustesGuia =
+    lecturaCaso?.r?.ajustes.map((a) => ({
+      variable: a.variable,
+      texto: `${cortas.find((v) => v.id === a.variable)?.nombre ?? a.variable}: ${textoGrado(a.grado)}`,
+      cita: a.cita,
+      activo: !lecturaCaso.apagados.has(a.variable),
+    })) ?? []
+  const notasGuia = lecturaCaso?.r
+    ? [
+        ...lecturaCaso.r.indicadores.map((k) => `Conviene mirar: ${INDICADORES[k].toLowerCase()}.`),
+        ...(lecturaCaso.r.no_medido.length > 0 ? [`El modelo no mide ${lecturaCaso.r.no_medido.map((k) => NO_MEDIDO[k]).join(', ')}.`] : []),
+      ]
+    : []
+  const guia = busqueda
+    ? {
+        titulo: casoDe(busqueda.caso).titulo,
+        texto:
+          guiaIA?.texto ??
+          (guiaIA?.cargando || lecturaCaso?.cargando
+            ? 'Leyendo tu caso…'
+            : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: busqueda.sinDatos })),
+        cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
+        porIA: !!guiaIA?.texto,
+        onCambiar: () => setOnb(true),
+        leyendo: !!lecturaCaso?.cargando,
+        ajustes: ajustesGuia,
+        notas: notasGuia,
+        onAlternarAjuste: alternarAjuste,
+      }
+    : null
 
   let hoja: ReactNode = null
-  if (vista === 'cuenca')
+  if (vista === 'riesgo') {
+    const cod = comunaSel?.codigo
+    const valores: Record<string, number | undefined> = {}
+    if (cod) for (const v of cortas) valores[v.id] = punto(data, escenario.id, cod, v.id, idx)?.p50
+    // El aire tiene norma: si la comuna la supera o la roza, eso manda sobre su posición.
+    const sellos: Record<string, { estado: 'riesgo' | 'limite'; texto: string } | undefined> = {}
+    const vAire = valores[varAire.id]
+    if (norma !== undefined && vAire !== undefined && varAire.mejor === 'menor') {
+      const e = estadoAire(vAire, norma)
+      if (e === 'riesgo') sellos[varAire.id] = { estado: e, texto: 'Sobre la norma' }
+      else if (e === 'limite') sellos[varAire.id] = { estado: e, texto: 'Al límite' }
+    }
+    const s = cod && !general ? serie(data, escenario.id, cod, variable.id) : undefined
+    const sb = s && cod && puedeDiferencia ? serie(data, referencia.id, cod, variable.id) : undefined
+    const pt = cod ? puntos.get(cod) : undefined
+    const parte = cod ? riesgo.porCodigo.get(cod)?.partes[variable.id] : undefined
+    const conNorma = esAire && norma !== undefined && variable.mejor === 'menor'
     hoja = (
-      <VistaCuenca
-        comuna={comunaSel}
-        punto={seleccionada ? puntos.get(seleccionada) : undefined}
-        cortes={cortes}
-        variable={variable}
+      <VistaRiesgo
+        variables={cortas}
+        capa={general ? GENERAL : variable.id}
+        onCapa={irACapa}
+        tipos={data.tipos_hogar}
+        perfilId={perfilId}
+        pesos={pesos}
+        onPerfil={(id) => {
+          setPerfilId(id)
+          // otro perfil: una lectura del caso todavía en camino ya no aplica
+          pedido.current++
+          setLecturaCaso((l) => (l?.cargando ? null : l))
+          const t = data.tipos_hogar.find((x) => x.id === id)
+          if (t) setPesos(aPrioridades(t.pesos))
+        }}
+        onPeso={(k, v) => {
+          setPesos((p) => ({ ...p, [k]: v }))
+          setPerfilId(PERSONALIZADO)
+          // el texto de Claude hablaba de otro orden: vuelve la explicación propia
+          pedido.current++
+          setGuiaIA(null)
+          setLecturaCaso((l) => (l?.cargando ? null : l))
+        }}
+        guia={guia}
+        riesgo={riesgo}
+        riesgoFin={riesgoFin}
         anio={anio}
         ultimoAnio={ultimoAnio}
-        escenario={escenario}
-        replicas={data.meta.replicas}
-        origen={origen}
         nombre={nombre}
-        aportes={(seleccionada && data.aportes?.[escenario.id]?.[seleccionada]?.[variable.id]) || []}
-        politicas={data.politicas}
-        activas={activas}
-        grafico={
-          detalle
-            ? { anios, idxAnio: idx, serie: detalle.serie, comparacion: detalle.comparacion, referencia: referenciaNorma }
+        comuna={comunaSel}
+        onSeleccionar={setSeleccionada}
+        valores={valores}
+        sellos={sellos}
+        dentro={dentro}
+        fuera={cod ? fueraDeRango(valores, limites, data.variables) : []}
+        detalle={
+          s
+            ? {
+                variable: variableCorta(variable),
+                punto: pt,
+                serie: s,
+                comparacion: sb ? { nombre: referencia.nombre, p50: sb.p50 } : undefined,
+                referencia: conNorma ? referenciaNorma : undefined,
+                veredicto: conNorma
+                  ? veredictoComuna(s.p50, anios, idx, norma, pt)
+                  : parte !== undefined
+                    ? veredictoVariable(parte, s.p50, anios, idx, variable)
+                    : null,
+                papel: conNorma
+                  ? pt
+                    ? papelNivel(nivel(pt.p50, cortes), cortes)
+                    : null
+                  : parte !== undefined
+                    ? papelNivel(nivel(parte, CORTES_RIESGO), CORTES_RIESGO)
+                    : null,
+                aportes: (cod && data.aportes?.[escenario.id]?.[cod]?.[variable.id]) || [],
+              }
             : null
         }
+        anios={anios}
+        idxAnio={idx}
+        politicas={data.politicas}
       />
     )
+  }
   else if (vista === 'plan')
     hoja = (
       <VistaPlan
@@ -466,40 +784,21 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
       />
     )
   else if (vista === 'lena') hoja = <VistaLena lena={lena} />
-  else if (vista === 'comuna')
+  else if (vista === 'fuentes') hoja = <VistaFuentes politicas={data.politicas} />
+  else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
+  else if (vista === 'mudanzas' && demografia)
     hoja = (
-      <VistaComuna
-        tipos={data.tipos_hogar}
-        perfilId={perfilId}
-        pesos={pesos}
-        claves={claves}
-        conDato={conDato}
-        nombreVariable={nombreVariable}
-        onPerfil={(id) => {
-          setPerfilId(id)
-          const t = data.tipos_hogar.find((x) => x.id === id)
-          if (t) setPesos({ ...t.pesos })
-        }}
-        onPeso={(k, v) => {
-          setPesos((p) => ({ ...p, [k]: v }))
-          setPerfilId(PERSONALIZADO)
-        }}
-        ranking={ranking}
-        nombre={nombre}
-        seleccionada={seleccionada}
+      <VistaMudanzas
+        datos={demografia}
+        resultado={abm}
+        calculando={calculandoAbm}
+        opciones={opcionesAbm}
+        onOpciones={setOpcionesAbm}
+        anio={anio}
+        seleccionada={seleccionada ? demografia.comunas.findIndex((c) => c.codigo === seleccionada) : -1}
         onSeleccionar={setSeleccionada}
-        detalle={detalle}
-        anios={anios}
-        idxAnio={idx}
-        variable={variable}
-        referencia={referenciaNorma}
-        puntos={puntos}
-        cortes={cortes}
-        aportes={(seleccionada && data.aportes?.[escenario.id]?.[seleccionada]?.[variable.id]) || []}
-        politicas={data.politicas}
       />
     )
-  else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
 
   const elegirAnio = (i: number) => {
     setJugando(false)
@@ -516,12 +815,12 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
         <Mapa
           features={features}
           modo={modoMapa}
-          cortes={cortes}
-          puntos={puntos}
+          cortes={cortesMapa}
+          puntos={puntosMapa}
           difs={difs}
           difMax={difMax}
-          mejor={variable.mejor}
-          aportes={aportesMapa}
+          mejor={mapaRiesgo || mapaMudanzas ? 'menor' : variable.mejor}
+          aportes={mapaRiesgo || mapaMudanzas ? sinAportes : aportesMapa}
           activas={activas}
           lena={lena}
           seleccionada={seleccionada}
@@ -541,13 +840,19 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
           />
           <Leyenda
             modo={modoMapa}
-            variable={variable}
-            cortes={cortes}
-            norma={tabla.norma}
+            variable={mapaMudanzas ? VARIABLE_OCUPACION : variable}
+            cortes={mapaMudanzas ? cortesMapa : cortes}
+            norma={mapaMudanzas ? null : tabla.norma}
             difMax={difMax}
             baseNombre={referencia.nombre}
             lena={lena}
             hayPiezas={aportesMapa.size > 0}
+            ocupacion={mapaMudanzas}
+            riesgo={
+              mapaRiesgo && modoMapa === 'valor'
+                ? { titulo: general ? 'Riesgo general, de 0 a 100' : `Riesgo en ${variableCorta(variable).nombre.toLowerCase()}, de 0 a 100`, total: riesgo.total }
+                : null
+            }
           />
           {demo && (
             <p className="etiqueta-demo" role="status">
@@ -557,9 +862,19 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
         </Mapa>
       </main>
 
-      <section className="columna" aria-label="Lectura de la simulación">
+      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} />}
+
+      <section className="columna" aria-label="Lectura de la simulación" inert={onb}>
         <header className="cabecera">
-          <h1 className="marca">root</h1>
+          <h1 className="marca">
+            {inicio ? (
+              <a href={inicio} title="Volver al inicio">
+                <img src={logoRoot} alt="root" />
+              </a>
+            ) : (
+              <img src={logoRoot} alt="root" />
+            )}
+          </h1>
           <div className="cabecera-meta">
             {data.meta.es_ejemplo ? (
               <p className="etiqueta-ejemplo">Datos de ejemplo</p>
@@ -587,8 +902,10 @@ export function Simulador({ data, geoRaw, lenaRaw }: Props) {
             </button>
           ))}
         </nav>
-        <div className="hoja" id="hoja" role="tabpanel" aria-labelledby={`tab-${vista}`} key={vista}>
-          {hoja}
+        <div className="hoja" id="hoja" role="tabpanel" aria-labelledby={`tab-${pestana.id}`} key={pestana.id}>
+          <Hoja pestana={pestana} secciones={disponibles} abierta={modo.seccion} onSeccion={(id) => setSecciones((x) => ({ ...x, [pestana.id]: id }))}>
+            {hoja}
+          </Hoja>
         </div>
       </section>
 

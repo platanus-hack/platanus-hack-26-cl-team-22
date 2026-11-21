@@ -1,0 +1,25 @@
+{
+ "fuente": "Coordinador Eléctrico Nacional, Infotécnica (https://infotecnica.coordinador.cl)",
+ "archivos": {
+  "data/raw/energia/comunas.json": {
+   "url": "https://api-infotecnica.coordinador.cl/v1/comunas/",
+   "descargado": "2026-11-21",
+   "sha256": "59a1f0d68808091147470186ac3411e9b31558eb2ef5d6c40c774893befffffd"
+  },
+  "data/raw/energia/barras.json": {
+   "url": "https://api-infotecnica.coordinador.cl/v1/barras/",
+   "descargado": "2026-11-21",
+   "sha256": "0a3e1a5f99acf96280b321f07cdb3016308235e6ba21c178ef7c1c62cb655bf3"
+  },
+  "data/raw/energia/centrales_extended.json": {
+   "url": "https://api-infotecnica.coordinador.cl/v1/centrales/extended/",
+   "descargado": "2026-11-21",
+   "sha256": "1a39188d612648b094708ec1a9be56080271b9a97a10898d4e1f6b2001f3df36"
+  },
+  "data/raw/energia/subestaciones_extended.json": {
+   "url": "https://api-infotecnica.coordinador.cl/v1/subestaciones/extended/",
+   "descargado": "2026-11-21",
+   "sha256": "48b7e6bb4f690b55210ffe1d6bbcbb0ede28322354f9389396278d4c4db63694"
+  }
+ }
+}
