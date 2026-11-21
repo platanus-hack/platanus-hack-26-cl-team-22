@@ -85,6 +85,41 @@ export interface OrigenAire {
 /** escenario -> comuna -> orígenes del aire (la suma puede ser menor que 1: el resto es fondo regional) */
 export type OrigenAireMapa = Record<string, Record<string, OrigenAire[]>>
 
+export type DireccionCambio = 'mejora' | 'empeora' | 'neutro'
+
+export type TipoTransformacion =
+  | 'reduccion_emisiones'
+  | 'seguridad_comunal'
+  | 'acople_hogares'
+  | 'comparacion_credibilidad'
+  | (string & {})
+
+export interface ComunaFocoTransformacion {
+  codigo: string
+  direccion: DireccionCambio
+  delta_p50: number[]
+  incertidumbre: number[]
+  intensidad: number[]
+}
+
+export interface TransformacionEscenario {
+  referencia: string
+  variable: string
+  tipo: TipoTransformacion
+  max_abs_delta: number
+  epicentro: { lat: number; lon: number }
+  bbox: [number, number, number, number]
+  intensidad_regional: number[]
+  comunas_foco: ComunaFocoTransformacion[]
+  /** Present when the pattern across comunas is not validated: only the region-level change is shown. */
+  aviso?: string
+}
+
+export interface TransformacionesMapa {
+  referencia_por_defecto: string
+  por_escenario: Record<string, TransformacionEscenario>
+}
+
 export interface Simulacion {
   meta: {
     version: string
@@ -109,6 +144,7 @@ export interface Simulacion {
   origen_aire?: OrigenAireMapa
   impacto?: Impacto
   validacion?: Validacion
+  transformaciones?: TransformacionesMapa
 }
 
 /** Personas que viven en comunas sobre la norma, por escenario y año. */

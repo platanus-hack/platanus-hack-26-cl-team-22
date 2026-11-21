@@ -101286,5 +101286,855 @@
     947
    ]
   }
+ },
+ "transformaciones": {
+  "referencia_por_defecto": "base",
+  "por_escenario": {
+   "base": {
+    "referencia": "sin-politicas",
+    "variable": "pm25_anual",
+    "tipo": "reduccion_emisiones",
+    "max_abs_delta": 1.816,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.022,
+     0.244,
+     0.267,
+     0.289,
+     0.511,
+     0.534,
+     0.567,
+     0.756,
+     0.8,
+     0.845,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "sin-ppda-lena-zona-a": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "reduccion_emisiones",
+    "max_abs_delta": 1.779,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.0,
+     0.25,
+     0.25,
+     0.25,
+     0.5,
+     0.5,
+     0.5,
+     0.75,
+     0.75,
+     0.75,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "sin-ppda-industria-30": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "reduccion_emisiones",
+    "max_abs_delta": 0.165,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.0,
+     0.25,
+     0.25,
+     0.25,
+     0.5,
+     0.5,
+     0.5,
+     0.75,
+     0.75,
+     0.75,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "con-propuesta-lena-zona-b": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "reduccion_emisiones",
+    "max_abs_delta": 4.2,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.0,
+     0.25,
+     0.25,
+     0.25,
+     0.5,
+     0.5,
+     0.5,
+     0.75,
+     0.75,
+     0.75,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "con-ilustrativa-camaras": {
+    "referencia": "base",
+    "variable": "seguridad",
+    "tipo": "seguridad_comunal",
+    "max_abs_delta": 59.951,
+    "epicentro": {
+     "lat": -33.4625,
+     "lon": -70.6582
+    },
+    "bbox": [
+     -70.7,
+     -33.53483,
+     -70.61667,
+     -33.43333
+    ],
+    "intensidad_regional": [
+     0.009,
+     0.118,
+     0.25,
+     0.332,
+     0.422,
+     0.514,
+     0.605,
+     0.707,
+     0.802,
+     0.89,
+     1.0
+    ],
+    "comunas_foco": [
+     {
+      "codigo": "13123",
+      "direccion": "mejora",
+      "delta_p50": [
+       0.0,
+       -8.016,
+       -15.765,
+       -20.25,
+       -24.437,
+       -30.271,
+       -35.817,
+       -41.972,
+       -47.241,
+       -52.632,
+       -59.951
+      ],
+      "incertidumbre": [
+       20.884,
+       33.091,
+       49.873,
+       64.001,
+       71.808,
+       86.585,
+       100.128,
+       110.764,
+       125.141,
+       139.691,
+       151.091
+      ],
+      "intensidad": [
+       0.0,
+       0.134,
+       0.263,
+       0.338,
+       0.408,
+       0.505,
+       0.597,
+       0.7,
+       0.788,
+       0.878,
+       1.0
+      ]
+     },
+     {
+      "codigo": "13101",
+      "direccion": "mejora",
+      "delta_p50": [
+       -1.127,
+       -6.089,
+       -11.858,
+       -15.798,
+       -20.991,
+       -23.728,
+       -26.964,
+       -31.966,
+       -36.23,
+       -40.117,
+       -45.096
+      ],
+      "incertidumbre": [
+       16.242,
+       23.391,
+       34.78,
+       44.187,
+       53.572,
+       63.454,
+       76.294,
+       82.247,
+       94.163,
+       105.692,
+       112.163
+      ],
+      "intensidad": [
+       0.019,
+       0.102,
+       0.198,
+       0.264,
+       0.35,
+       0.396,
+       0.45,
+       0.533,
+       0.604,
+       0.669,
+       0.752
+      ]
+     },
+     {
+      "codigo": "13106",
+      "direccion": "mejora",
+      "delta_p50": [
+       -0.401,
+       -3.703,
+       -8.418,
+       -11.465,
+       -14.685,
+       -17.953,
+       -22.023,
+       -26.09,
+       -28.675,
+       -31.502,
+       -34.702
+      ],
+      "incertidumbre": [
+       13.112,
+       19.697,
+       29.627,
+       37.666,
+       46.493,
+       52.381,
+       62.09,
+       70.201,
+       77.732,
+       85.506,
+       93.513
+      ],
+      "intensidad": [
+       0.007,
+       0.062,
+       0.14,
+       0.191,
+       0.245,
+       0.299,
+       0.367,
+       0.435,
+       0.478,
+       0.525,
+       0.579
+      ]
+     },
+     {
+      "codigo": "13102",
+      "direccion": "mejora",
+      "delta_p50": [
+       -0.346,
+       -3.754,
+       -7.447,
+       -10.291,
+       -13.199,
+       -15.835,
+       -18.656,
+       -21.566,
+       -24.435,
+       -27.202,
+       -30.165
+      ],
+      "incertidumbre": [
+       11.078,
+       16.736,
+       24.401,
+       31.956,
+       41.308,
+       48.036,
+       55.16,
+       60.755,
+       65.237,
+       75.128,
+       80.467
+      ],
+      "intensidad": [
+       0.006,
+       0.063,
+       0.124,
+       0.172,
+       0.22,
+       0.264,
+       0.311,
+       0.36,
+       0.408,
+       0.454,
+       0.503
+      ]
+     },
+     {
+      "codigo": "13109",
+      "direccion": "mejora",
+      "delta_p50": [
+       0.0,
+       -2.489,
+       -7.358,
+       -9.186,
+       -11.174,
+       -14.51,
+       -16.865,
+       -18.517,
+       -22.062,
+       -24.41,
+       -27.183
+      ],
+      "incertidumbre": [
+       10.13,
+       15.841,
+       22.936,
+       29.504,
+       36.097,
+       43.347,
+       49.281,
+       54.473,
+       59.553,
+       66.23,
+       74.19
+      ],
+      "intensidad": [
+       0.0,
+       0.042,
+       0.123,
+       0.153,
+       0.186,
+       0.242,
+       0.281,
+       0.309,
+       0.368,
+       0.407,
+       0.453
+      ]
+     },
+     {
+      "codigo": "13130",
+      "direccion": "mejora",
+      "delta_p50": [
+       -0.032,
+       -0.428,
+       -0.659,
+       -1.039,
+       -1.331,
+       -1.666,
+       -2.021,
+       -2.475,
+       -2.828,
+       -3.158,
+       -3.547
+      ],
+      "incertidumbre": [
+       2.849,
+       5.826,
+       8.33,
+       11.235,
+       14.263,
+       16.827,
+       20.013,
+       22.196,
+       24.399,
+       28.092,
+       30.315
+      ],
+      "intensidad": [
+       0.001,
+       0.007,
+       0.011,
+       0.017,
+       0.022,
+       0.028,
+       0.034,
+       0.041,
+       0.047,
+       0.053,
+       0.059
+      ]
+     }
+    ]
+   },
+   "con-ilustrativa-iluminacion": {
+    "referencia": "base",
+    "variable": "seguridad",
+    "tipo": "seguridad_comunal",
+    "max_abs_delta": 37.849,
+    "epicentro": {
+     "lat": -33.45475,
+     "lon": -70.65081
+    },
+    "bbox": [
+     -70.7,
+     -33.53483,
+     -70.61667,
+     -33.43333
+    ],
+    "intensidad_regional": [
+     0.002,
+     0.068,
+     0.181,
+     0.285,
+     0.412,
+     0.516,
+     0.631,
+     0.732,
+     0.817,
+     0.908,
+     1.0
+    ],
+    "comunas_foco": [
+     {
+      "codigo": "13123",
+      "direccion": "mejora",
+      "delta_p50": [
+       0.0,
+       -3.64,
+       -8.879,
+       -12.701,
+       -17.23,
+       -19.812,
+       -24.585,
+       -27.251,
+       -30.879,
+       -34.259,
+       -37.849
+      ],
+      "incertidumbre": [
+       15.429,
+       25.324,
+       34.738,
+       47.288,
+       56.477,
+       66.88,
+       74.289,
+       84.387,
+       100.654,
+       107.548,
+       120.062
+      ],
+      "intensidad": [
+       0.0,
+       0.096,
+       0.235,
+       0.336,
+       0.455,
+       0.523,
+       0.65,
+       0.72,
+       0.816,
+       0.905,
+       1.0
+      ]
+     },
+     {
+      "codigo": "13101",
+      "direccion": "mejora",
+      "delta_p50": [
+       -0.146,
+       -1.266,
+       -3.399,
+       -5.28,
+       -7.29,
+       -8.995,
+       -10.33,
+       -12.457,
+       -13.888,
+       -16.512,
+       -17.066
+      ],
+      "incertidumbre": [
+       10.711,
+       17.872,
+       26.016,
+       33.395,
+       42.651,
+       47.764,
+       55.434,
+       61.864,
+       70.175,
+       77.228,
+       82.833
+      ],
+      "intensidad": [
+       0.004,
+       0.033,
+       0.09,
+       0.139,
+       0.193,
+       0.238,
+       0.273,
+       0.329,
+       0.367,
+       0.436,
+       0.451
+      ]
+     },
+     {
+      "codigo": "13106",
+      "direccion": "mejora",
+      "delta_p50": [
+       0.0,
+       -0.56,
+       -2.145,
+       -4.343,
+       -5.655,
+       -7.279,
+       -9.217,
+       -10.532,
+       -11.894,
+       -12.856,
+       -14.293
+      ],
+      "incertidumbre": [
+       9.722,
+       14.959,
+       20.612,
+       27.69,
+       36.122,
+       41.731,
+       47.982,
+       53.179,
+       59.545,
+       64.485,
+       75.024
+      ],
+      "intensidad": [
+       0.0,
+       0.015,
+       0.057,
+       0.115,
+       0.149,
+       0.192,
+       0.244,
+       0.278,
+       0.314,
+       0.34,
+       0.378
+      ]
+     },
+     {
+      "codigo": "13102",
+      "direccion": "mejora",
+      "delta_p50": [
+       -0.002,
+       -0.531,
+       -1.466,
+       -2.62,
+       -4.0,
+       -5.109,
+       -6.26,
+       -7.694,
+       -8.39,
+       -9.183,
+       -10.491
+      ],
+      "incertidumbre": [
+       8.178,
+       13.979,
+       20.265,
+       24.428,
+       32.494,
+       37.534,
+       41.048,
+       49.562,
+       53.62,
+       57.892,
+       64.601
+      ],
+      "intensidad": [
+       0.0,
+       0.014,
+       0.039,
+       0.069,
+       0.106,
+       0.135,
+       0.165,
+       0.203,
+       0.222,
+       0.243,
+       0.277
+      ]
+     },
+     {
+      "codigo": "13109",
+      "direccion": "mejora",
+      "delta_p50": [
+       0.0,
+       0.0,
+       0.0,
+       -0.068,
+       -1.944,
+       -4.03,
+       -4.978,
+       -6.212,
+       -6.423,
+       -6.684,
+       -7.886
+      ],
+      "incertidumbre": [
+       6.664,
+       12.672,
+       18.76,
+       26.79,
+       30.931,
+       37.408,
+       43.392,
+       50.303,
+       53.03,
+       58.862,
+       66.569
+      ],
+      "intensidad": [
+       0.0,
+       0.0,
+       0.0,
+       0.002,
+       0.051,
+       0.106,
+       0.132,
+       0.164,
+       0.17,
+       0.177,
+       0.208
+      ]
+     }
+    ]
+   },
+   "sin-politicas": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "reduccion_emisiones",
+    "max_abs_delta": 1.816,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.022,
+     0.244,
+     0.267,
+     0.289,
+     0.511,
+     0.534,
+     0.567,
+     0.756,
+     0.8,
+     0.845,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "base-lectura-optimista": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "comparacion_credibilidad",
+    "max_abs_delta": 2.298,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.018,
+     0.211,
+     0.228,
+     0.404,
+     0.421,
+     0.596,
+     0.632,
+     0.685,
+     0.825,
+     0.878,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "base-plan-escrito": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "comparacion_credibilidad",
+    "max_abs_delta": 3.298,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.134,
+     0.159,
+     0.293,
+     0.427,
+     0.451,
+     0.585,
+     0.713,
+     0.756,
+     0.878,
+     1.0,
+     0.915
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "sin-politicas-lena-sigue-a-la-gente": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "acople_hogares",
+    "max_abs_delta": 3.433,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.104,
+     0.259,
+     0.314,
+     0.369,
+     0.521,
+     0.574,
+     0.631,
+     0.764,
+     0.825,
+     0.886,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "base-lena-sigue-a-la-gente": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "acople_hogares",
+    "max_abs_delta": 1.89,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.183,
+     0.271,
+     0.358,
+     0.443,
+     0.528,
+     0.609,
+     0.69,
+     0.77,
+     0.847,
+     0.923,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   },
+   "con-propuesta-lena-zona-b-lena-sigue-a-la-gente": {
+    "referencia": "base",
+    "variable": "pm25_anual",
+    "tipo": "acople_hogares",
+    "max_abs_delta": 3.083,
+    "epicentro": {
+     "lat": -33.51621,
+     "lon": -70.74081
+    },
+    "bbox": [
+     -71.46667,
+     -34.03333,
+     -70.36667,
+     -33.08333
+    ],
+    "intensidad_regional": [
+     0.115,
+     0.19,
+     0.141,
+     0.093,
+     0.423,
+     0.382,
+     0.343,
+     0.694,
+     0.661,
+     0.631,
+     1.0
+    ],
+    "comunas_foco": [],
+    "aviso": "Patrón entre comunas no validado: repartir el mismo cambio en todas predice igual (make validate). Solo se muestra el cambio de la región."
+   }
+  }
  }
 }
