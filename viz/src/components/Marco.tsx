@@ -13,6 +13,8 @@ interface LeyendaProps {
   difMax: number
   baseNombre?: string
   lena: Lena | null
+  /** mapa del agua: año de caudal mostrado (null = promedio) y período medido */
+  agua?: { anio: number | null; rango: string } | null
   hayPiezas: boolean
   /** el mapa pinta posición de riesgo (0 a 100) en vez de un valor con unidad */
   riesgo?: { titulo: string; total: number } | null
@@ -20,6 +22,30 @@ interface LeyendaProps {
 
 export function Leyenda(p: LeyendaProps) {
   const u = p.variable.unidad
+  if (p.modo === 'agua')
+    return (
+      <div className="leyenda" aria-label="Leyenda del mapa">
+        <p className="leyenda-titulo">Caudal de los ríos, {p.agua?.anio ?? `promedio ${p.agua?.rango ?? ''}`}</p>
+        <ul className="leyenda-agua">
+          <li>
+            <i className="leyenda-rio" /> Ancho del río: su caudal
+          </li>
+          <li>
+            <Muestra clase="agua-tono-estable" forma="disco" /> Se mantiene
+          </li>
+          <li>
+            <Muestra clase="agua-tono-baja" forma="disco" /> Baja hasta 25 %
+          </li>
+          <li>
+            <Muestra clase="agua-tono-fuerte" forma="disco" /> Baja hasta 45 %
+          </li>
+          <li>
+            <Muestra clase="agua-tono-critica" forma="disco" /> Baja más de 45 %
+          </li>
+        </ul>
+        <p className="leyenda-nota">Punto: estación de la DGA, según cuánto cayó su caudal en la megasequía (2010–2017).</p>
+      </div>
+    )
   if (p.modo === 'lena') {
     const tMax = Math.max(0, ...(p.lena?.comunas.map((c) => c.toneladas ?? 0) ?? [0]))
     return (

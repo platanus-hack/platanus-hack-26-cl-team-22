@@ -62,6 +62,9 @@ export interface ColoresRelieve {
   disco: string
   corte: string
   edificio: string
+  /** el agua de los ríos y el brillo que corre sobre ella */
+  agua: string
+  aguaClara: string
 }
 
 export const CAPAS = {
@@ -69,6 +72,13 @@ export const CAPAS = {
   trama: 'c-trama',
   linea: 'c-linea',
   nombres: 'c-nombres',
+  riosFilo: 'rios-filo',
+  riosBase: 'rios-base',
+  rios: 'rios',
+  flujoBase: 'rios-flujo-base',
+  flujo: 'rios-flujo',
+  estaciones: 'estaciones',
+  pulso: 'estaciones-pulso',
 } as const
 
 const VACIO = { type: 'FeatureCollection', features: [] }
@@ -76,6 +86,71 @@ const VACIO = { type: 'FeatureCollection', features: [] }
 const PX_POR_METRO_Z0 = 1 / (78271.517 * Math.cos((33.45 * Math.PI) / 180))
 
 const estado = (k: string) => ['boolean', ['feature-state', k], false]
+const ES_RIO = ['==', ['get', 'class'], 'river']
+const NINGUNO = ['==', ['get', 'class'], '__ninguno__']
+
+/** Capa de línea sobre los cauces de las teselas del mapa base; oculta hasta que se muestra el agua. */
+function capaRio(id: string, filter: unknown, paint: Record<string, unknown>, redonda: boolean): Record<string, unknown> {
+  return {
+    id,
+    type: 'line',
+    source: 'openmaptiles',
+    'source-layer': 'waterway',
+    filter,
+    layout: { visibility: 'none', 'line-join': 'round', ...(redonda ? { 'line-cap': 'round' } : {}) },
+    paint,
+  }
+}
+
+/** Capas de ríos, de abajo hacia arriba. */
+export const CAPAS_RIOS = ['rios-filo', 'rios-base', 'rios', 'rios-flujo-base', 'rios-flujo'] as const
+
+export interface CauceAncho {
+  /** nombres con que el cauce puede venir en las teselas */
+  nombres: readonly string[]
+  ancho: number
+}
+
+/** Filtro de los cauces medidos: su nombre es uno de los conocidos y están dentro de la región (hay ríos homónimos fuera). */
+export function filtroCauces(cauces: readonly CauceAncho[], limites: readonly [number, number, number, number]): unknown {
+  const [o, s, e, n] = limites
+  const nombres = cauces.flatMap((c) => c.nombres)
+  if (nombres.length === 0) return NINGUNO
+  return [
+    'all',
+    ['in', ['get', 'name'], ['literal', nombres]],
+    ['within', { type: 'Polygon', coordinates: [[[o, s], [e, s], [e, n], [o, n], [o, s]]] }],
+  ]
+}
+
+/** Ancho de línea por nombre de cauce, multiplicado por `k` y con `mas` píxeles de filo. */
+export function anchoCauces(cauces: readonly CauceAncho[], k = 1, mas = 0, piso = 0): unknown {
+  const con = cauces.filter((c) => c.nombres.length > 0)
+  if (con.length === 0) return Math.max(piso, 1.3 * k + mas)
+  const pares = con.flatMap((c) => [[...c.nombres], Math.max(piso, c.ancho * k + mas)])
+  return ['match', ['get', 'name'], ...pares, Math.max(piso, 1.3 * k + mas)]
+}
+
+/**
+ * Secuencia de trazos que, puesta una tras otra, hace correr el brillo del río en el sentido de la línea
+ * (la técnica de la «hilera de hormigas» de MapLibre). Cada paso corre el trazo medio guion.
+ */
+export const TRAZOS_FLUJO: readonly number[][] = [
+  [0, 4, 3],
+  [0.5, 4, 2.5],
+  [1, 4, 2],
+  [1.5, 4, 1.5],
+  [2, 4, 1],
+  [2.5, 4, 0.5],
+  [3, 4, 0],
+  [0, 0.5, 3, 3.5],
+  [0, 1, 3, 3],
+  [0, 1.5, 3, 2.5],
+  [0, 2, 3, 2],
+  [0, 2.5, 3, 1.5],
+  [0, 3, 3, 1],
+  [0, 3.5, 3, 0.5],
+]
 
 /**
  * Estilo completo del mapa en relieve a partir del estilo base: quita los rótulos de lugares (las comunas
@@ -90,7 +165,7 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
   if (!fuentes['relieve-dem']) fuentes['relieve-dem'] = { type: 'raster-dem', url: RELIEVE_LINEA }
   // Una fuente aparte para las sombras: compartirla con el terreno baja la calidad del sombreado.
   fuentes['relieve-sombra'] = { ...(fuentes['relieve-dem'] as object) }
-  for (const id of ['comunas', 'rotulos', 'cintas', 'discos']) fuentes[id] = { type: 'geojson', data: VACIO }
+  for (const id of ['comunas', 'rotulos', 'cintas', 'discos', 'estaciones']) fuentes[id] = { type: 'geojson', data: VACIO }
 
   const capas = (base.layers as Record<string, unknown>[]).filter(
     (l) => l.source !== 'ne2_shaded' && !(l.type === 'symbol' && l['source-layer'] === 'place'),
@@ -154,6 +229,32 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
         'circle-color': ['case', ['get', 'dato'], c.disco, c.corte],
         'circle-stroke-color': c.papel,
         'circle-stroke-width': 1.5,
+      },
+    },
+    // Ríos: salen de la capa de cauces de las mismas teselas del mapa base, así que no hay otro archivo que
+    // cargar. Los medidos llevan un filo de papel y un ancho según su caudal; todos, un brillo de trazos que
+    // corre aguas abajo. Parten ocultos: la pantalla los enciende, les da el filtro y el ancho.
+    capaRio('rios-filo', NINGUNO, { 'line-color': c.papel, 'line-opacity': 0.85, 'line-width': 3 }, true),
+    capaRio(CAPAS.riosBase, ES_RIO, { 'line-color': c.agua, 'line-width': 1.3 }, true),
+    capaRio(CAPAS.rios, NINGUNO, { 'line-color': c.agua, 'line-width': 2 }, true),
+    capaRio(CAPAS.flujoBase, ES_RIO, { 'line-color': c.aguaClara, 'line-opacity': 0.9, 'line-width': 0.7, 'line-dasharray': TRAZOS_FLUJO[0] }, false),
+    capaRio(CAPAS.flujo, NINGUNO, { 'line-color': c.aguaClara, 'line-opacity': 0.9, 'line-width': 1, 'line-dasharray': TRAZOS_FLUJO[0] }, false),
+    {
+      id: CAPAS.pulso,
+      type: 'circle',
+      source: 'estaciones',
+      paint: { 'circle-radius': ['get', 'r'], 'circle-color': ['get', 'color'], 'circle-opacity': 0, 'circle-pitch-alignment': 'map' },
+    },
+    {
+      id: CAPAS.estaciones,
+      type: 'circle',
+      source: 'estaciones',
+      paint: {
+        'circle-radius': ['case', ['get', 'sel'], ['+', ['get', 'r'], 2], ['get', 'r']],
+        'circle-color': ['get', 'color'],
+        'circle-stroke-color': ['case', ['get', 'sel'], c.tinta, c.papel],
+        'circle-stroke-width': ['case', ['get', 'sel'], 3.5, 1.8],
+        'circle-pitch-alignment': 'map',
       },
     },
     { id: 'c-hover', type: 'line', source: 'comunas', paint: { 'line-color': c.tinta, 'line-width': ['case', estado('hover'), 2.6, 0] } },

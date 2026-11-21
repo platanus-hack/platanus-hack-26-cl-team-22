@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { anchoRio, factorAnio, radioEstacion, tonoCambio, type CauceDato, type Estacion, type Rio } from '../lib/agua'
 import type { AportePolitica } from '../lib/capas'
 import { apilarLabios, apilarNivel, PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
@@ -39,6 +40,27 @@ export interface Cinta {
   fraccion: number
 }
 
+/** Lo que el mapa necesita para dibujar el agua: cauces, estaciones y el año que se mira. */
+export interface AguaMapa {
+  rios: readonly Rio[]
+  estaciones: readonly Estacion[]
+  cauces: readonly CauceDato[]
+  /** comunas por donde pasa el río elegido */
+  pasa: ReadonlySet<string>
+  porCodigo: ReadonlyMap<string, Estacion>
+  /** índice del año mostrado; null = promedio del período */
+  idxAnio: number | null
+  elegida: string | null
+  onElegir: (codigo: string) => void
+  etiqueta: (e: Estacion) => Etiqueta
+}
+
+/** Caudal con que se dibuja un cauce en el año mostrado; null si ninguna estación lo mide. */
+export function caudalDeRio(r: Rio, a: AguaMapa): number | null {
+  const e = r.estacion ? a.porCodigo.get(r.estacion) : undefined
+  return e ? e.medio * factorAnio(e, a.idxAnio) : null
+}
+
 export interface PropsMapa {
   features: GeoFeature[]
   modo: ModoMapa
@@ -50,6 +72,8 @@ export interface PropsMapa {
   aportes: ReadonlyMap<string, AportePolitica[]>
   activas: ReadonlySet<string>
   lena: Lena | null
+  /** ríos y estaciones; solo se dibujan en el modo «agua» */
+  agua: AguaMapa | null
   seleccionada: string | null
   cintas: Cinta[]
   encuadre: Encuadre
@@ -89,7 +113,7 @@ export function MapaPapel(p: PropsMapa) {
   const arrastre = useRef<{ x: number; y: number; v: Vista; movido: boolean } | null>(null)
 
   // Proyección y geometría, una sola vez por conjunto de polígonos.
-  const { prep, cajaRegion, cajaGS, orden } = useMemo(() => {
+  const { prep, cajaRegion, cajaGS, orden, proj } = useMemo(() => {
     const lim = limitesDe(p.features) ?? [-71.7, -34.3, -69.7, -32.9]
     const proj = crearProyeccion(lim)
     const prep: Prep[] = []
@@ -113,8 +137,21 @@ export function MapaPapel(p: PropsMapa) {
     const cajaGS = cg && gs.length >= 3 ? { x0: cg.x0 - holgura, y0: cg.y0 - holgura, x1: cg.x1 + holgura, y1: cg.y1 + holgura } : cajaRegion
     // Orden de pegado: primero lo de abajo a la derecha, para que el canto de cada pila caiga sobre su vecina.
     const orden = prep.map((_, i) => i).sort((a, b) => prep[b]!.centro[0] + prep[b]!.centro[1] - (prep[a]!.centro[0] + prep[a]!.centro[1]))
-    return { prep, cajaRegion, cajaGS, orden }
+    return { prep, cajaRegion, cajaGS, orden, proj }
   }, [p.features])
+
+  // Ríos proyectados una vez; el ancho depende del año y se calcula al dibujar.
+  const rios = useMemo(
+    () =>
+      p.modo === 'agua' && p.agua
+        ? p.agua.rios.map((r) => ({
+            r,
+            d: r.coords.map((c, i) => `${i ? 'L' : 'M'}${proj(c[0], c[1]).map((n) => +n.toFixed(5)).join(' ')}`).join(''),
+          }))
+        : [],
+    [p.modo, p.agua?.rios, proj],
+  )
+  const [sobreEstacion, setSobreEstacion] = useState<{ e: Estacion; x: number; y: number } | null>(null)
 
   const porSim = useMemo(() => {
     const m = new Map<string, Prep>()
@@ -237,7 +274,7 @@ export function MapaPapel(p: PropsMapa) {
     return Math.round(Math.min(1, Math.max(0, (tam.w - sx) / tam.w)) * 260)
   }
 
-  const claseFondo = (x: Prep): string => claseDeFondo(p, x.f.properties.codigo, x.sim)
+  const claseFondo = (x: Prep): string => claseDeFondo({ ...p, pasa: p.agua?.pasa }, x.f.properties.codigo, x.sim)
 
   const tMaxLena = useMemo(() => Math.max(0, ...(p.lena?.comunas.map((c) => c.toneladas ?? 0) ?? [0])), [p.lena])
   const radioLena = (cajaRegion.x1 - cajaRegion.x0) * 0.038
@@ -376,6 +413,51 @@ export function MapaPapel(p: PropsMapa) {
               </g>
             )}
 
+            {/* El agua: cauces con el ancho de su caudal y un brillo que corre aguas abajo; un punto por estación */}
+            {p.modo === 'agua' && p.agua && (
+              <g className="rios">
+                {rios.map((x, i) => {
+                  const w = anchoRio(caudalDeRio(x.r, p.agua!), x.r.clase)
+                  return (
+                    <g key={i} aria-hidden="true">
+                      <path d={x.d} className="rio-filo" style={{ strokeWidth: w + 2.4 }} />
+                      <path d={x.d} className="rio" style={{ strokeWidth: w }} />
+                      <path d={x.d} className="rio-flujo" style={{ strokeWidth: Math.max(0.7, w * 0.42) }} />
+                    </g>
+                  )
+                })}
+                {p.agua.estaciones.map((e) => {
+                  const c = proj(e.lon, e.lat)
+                  const elegida = e.codigo === p.agua!.elegida
+                  return (
+                    <circle
+                      key={e.codigo}
+                      cx={c[0]}
+                      cy={c[1]}
+                      r={(radioEstacion(e.medio) + (elegida ? 2 : 0)) / k}
+                      className={`estacion agua-tono-${tonoCambio(e.cambio)}${elegida ? ' estacion-elegida' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${e.nombre}: ${e.medio} metros cúbicos por segundo`}
+                      onPointerDown={(ev) => ev.stopPropagation()}
+                      onClick={() => p.agua!.onElegir(e.codigo)}
+                      onKeyDown={(ev) => {
+                        if (ev.key === 'Enter' || ev.key === ' ') {
+                          ev.preventDefault()
+                          p.agua!.onElegir(e.codigo)
+                        }
+                      }}
+                      onPointerMove={(ev) => {
+                        ev.stopPropagation()
+                        setSobreEstacion({ e, x: ev.clientX, y: ev.clientY })
+                      }}
+                      onPointerLeave={() => setSobreEstacion(null)}
+                    />
+                  )
+                })}
+              </g>
+            )}
+
             {/* De dónde viene el aire: cintas de papel desde cada comuna de origen */}
             {sel && p.cintas.length > 0 && (
               <g className="cintas" aria-hidden="true">
@@ -405,7 +487,15 @@ export function MapaPapel(p: PropsMapa) {
           </g>
         )}
       </svg>
-      {hov && tag && hover && (
+      {sobreEstacion && p.agua && (
+        <TarjetaMapa
+          e={p.agua.etiqueta(sobreEstacion.e)}
+          x={sobreEstacion.x - (caja.current?.getBoundingClientRect().left ?? 0)}
+          y={sobreEstacion.y - (caja.current?.getBoundingClientRect().top ?? 0)}
+          ancho={tam.w}
+        />
+      )}
+      {!sobreEstacion && hov && tag && hover && (
         <TarjetaMapa
           e={tag}
           x={hover.x - (caja.current?.getBoundingClientRect().left ?? 0)}

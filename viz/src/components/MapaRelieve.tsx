@@ -6,11 +6,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import urlWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 setWorkerUrl(urlWorker)
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { anchoRio, caucesMedidos, factorAnio, radioEstacion, tonoCambio, type Estacion, type TonoCambio } from '../lib/agua'
 import { apilarNivel } from '../lib/capas'
 import { claseFondo, variableDeClase } from '../lib/fondo'
 import { radioDisco } from '../lib/lena'
 import { poligonoMayor, proyectarGeometria, puntoInterior, type Pt } from '../lib/proyeccion'
-import { aRgb, CAPAS, curva, estiloRelieve, mezclar, textoRgb, type RGB } from '../lib/relieve'
+import { anchoCauces, aRgb, CAPAS, CAPAS_RIOS, curva, estiloRelieve, filtroCauces, mezclar, textoRgb, TRAZOS_FLUJO, type RGB } from '../lib/relieve'
 import { esGranSantiago, limitesDe, type Limites } from '../lib/vista'
 import type { PropsMapa } from './MapaPapel'
 import { TarjetaMapa } from './Papel'
@@ -31,6 +32,12 @@ const CAMARA = {
 const DURACION_COLOR = 320
 const ESPERA_CARGA_MS = 12_000
 const RADIO_DISCO_M = 7000
+/** cada cuánto avanza el brillo de los ríos y cuánto dura un latido de las estaciones */
+const PASO_FLUJO_MS = 55
+const LATIDO_MS = 2400
+const DURACION_CAUDAL = 380
+/** papel de cada grado de caída del caudal, para el punto de la estación */
+const PAPEL_TONO: Record<TonoCambio, string> = { sin: '--tinta-2', estable: '--agua', baja: '--nivel-1', fuerte: '--nivel-3', critica: '--nivel-5' }
 
 type Datos = Parameters<GeoJSONSource['setData']>[0]
 const fc = (features: unknown[]) => ({ type: 'FeatureCollection', features }) as unknown as Datos
@@ -59,6 +66,7 @@ export default function MapaRelieve(p: Props) {
   const [listo, setListo] = useState(false)
   const [tam, setTam] = useState(0)
   const [hover, setHover] = useState<{ i: number; x: number; y: number } | null>(null)
+  const [sobreEstacion, setSobreEstacion] = useState<{ e: Estacion; x: number; y: number } | null>(null)
   const ultimo = useRef(p)
   ultimo.current = p
 
@@ -109,6 +117,8 @@ export default function MapaRelieve(p: Props) {
         disco: tok('--disco', '#ee7b22'),
         corte: tok('--corte', '#d9d9d0'),
         edificio: tok('--papel-2', '#e9e7df'),
+        agua: tok('--agua', '#1f6fb2'),
+        aguaClara: tok('--agua-clara', '#d7ecfa'),
       }) as unknown as StyleSpecification
       const cam = CAMARA[ultimo.current.encuadre]
       m = new MapaGL({
@@ -174,6 +184,22 @@ export default function MapaRelieve(p: Props) {
       m.getCanvas().style.cursor = ''
       setHover(null)
     })
+    // Estaciones de caudal: se eligen con un clic y muestran su tarjeta al pasar.
+    const estacionDe = (e: MapLayerMouseEvent) => {
+      const codigo = e.features?.[0]?.properties?.codigo
+      return typeof codigo === 'string' ? ultimo.current.agua?.porCodigo.get(codigo) : undefined
+    }
+    m.on('mousemove', CAPAS.estaciones, (e: MapLayerMouseEvent) => {
+      const est = estacionDe(e)
+      if (!est) return
+      m.getCanvas().style.cursor = 'pointer'
+      setSobreEstacion({ e: est, x: e.point.x, y: e.point.y })
+    })
+    m.on('mouseleave', CAPAS.estaciones, () => setSobreEstacion(null))
+    m.on('click', CAPAS.estaciones, (e: MapLayerMouseEvent) => {
+      const est = estacionDe(e)
+      if (est) ultimo.current.agua?.onElegir(est.codigo)
+    })
     m.on('click', CAPAS.relleno, (e: MapLayerMouseEvent) => {
       const i = e.features?.[0]?.id
       const sim = typeof i === 'number' ? ultimo.current.features[i]?.properties.simCodigo : undefined
@@ -201,7 +227,7 @@ export default function MapaRelieve(p: Props) {
     const m = mapa.current
     if (!m || !listo) return
     const cs = getComputedStyle(document.documentElement)
-    const d = { modo: p.modo, cortes: p.cortes, puntos: p.puntos, difs: p.difs, difMax: p.difMax, mejor: p.mejor, lena: p.lena }
+    const d = { modo: p.modo, cortes: p.cortes, puntos: p.puntos, difs: p.difs, difMax: p.difMax, mejor: p.mejor, lena: p.lena, pasa: p.agua?.pasa }
     const destino = p.features.map((f) => {
       const v = variableDeClase(claseFondo(d, f.properties.codigo, f.properties.simCodigo))
       const sim = f.properties.simCodigo
@@ -230,7 +256,7 @@ export default function MapaRelieve(p: Props) {
       if (t < 1) cuadro = requestAnimationFrame(paso)
     })
     return () => cancelAnimationFrame(cuadro)
-  }, [listo, prep, p.features, p.modo, p.cortes, p.puntos, p.difs, p.difMax, p.mejor, p.lena, p.reducido])
+  }, [listo, prep, p.features, p.modo, p.cortes, p.puntos, p.difs, p.difMax, p.mejor, p.lena, p.agua?.pasa, p.reducido])
 
   // Comuna elegida.
   const elegida = useRef<number | null>(null)
@@ -278,6 +304,93 @@ export default function MapaRelieve(p: Props) {
     ;(m.getSource('discos') as GeoJSONSource | undefined)?.setData(fc(discos))
   }, [listo, prep, p.features, p.modo, p.lena])
 
+  // El agua: los cauces son los de las teselas. Se encienden con el modo, se filtran por nombre y su ancho
+  // sigue al caudal del año mostrado, con una transición corta.
+  const aguaActiva = p.modo === 'agua' ? p.agua : null
+  const cauces = useMemo(() => (aguaActiva ? caucesMedidos(aguaActiva.estaciones, aguaActiva.cauces) : []), [aguaActiva?.estaciones, aguaActiva?.cauces])
+  const anchos = useRef<number[]>([])
+  useEffect(() => {
+    const m = mapa.current
+    if (!m || !listo) return
+    const hay = !!aguaActiva
+    for (const id of CAPAS_RIOS) if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', hay ? 'visible' : 'none')
+    if (!aguaActiva) {
+      anchos.current = []
+      return
+    }
+    const nombrados = (w: number[]) => cauces.map((c, i) => ({ nombres: c.nombres, ancho: w[i]! }))
+    const filtro = filtroCauces(nombrados(cauces.map(() => 1)), prep.limites.region) as Parameters<MapaGL['setFilter']>[1]
+    for (const id of [CAPAS.riosFilo, CAPAS.rios, CAPAS.flujo]) if (m.getLayer(id)) m.setFilter(id, filtro)
+    const destino = cauces.map((c) => anchoRio(c.estacion.medio * factorAnio(c.estacion, aguaActiva.idxAnio), 'river'))
+    const desde = anchos.current.length === destino.length ? [...anchos.current] : destino
+    type Ancho = number // la expresión se arma en relieve.ts sin los tipos de MapLibre
+    const poner = (t: number) => {
+      const w = destino.map((d, i) => desde[i]! + (d - desde[i]!) * t)
+      anchos.current = w
+      const c = nombrados(w)
+      if (m.getLayer(CAPAS.riosFilo)) m.setPaintProperty(CAPAS.riosFilo, 'line-width', anchoCauces(c, 1, 2.4) as unknown as Ancho)
+      if (m.getLayer(CAPAS.rios)) m.setPaintProperty(CAPAS.rios, 'line-width', anchoCauces(c) as unknown as Ancho)
+      if (m.getLayer(CAPAS.flujo)) m.setPaintProperty(CAPAS.flujo, 'line-width', anchoCauces(c, 0.42, 0, 0.7) as unknown as Ancho)
+    }
+    if (p.reducido || desde === destino) {
+      poner(1)
+      return
+    }
+    const t0 = performance.now()
+    let cuadro = requestAnimationFrame(function paso(ahora) {
+      const t = Math.min(1, (ahora - t0) / DURACION_CAUDAL)
+      poner(1 - Math.pow(1 - t, 3))
+      if (t < 1) cuadro = requestAnimationFrame(paso)
+    })
+    return () => cancelAnimationFrame(cuadro)
+  }, [listo, aguaActiva, cauces, aguaActiva?.idxAnio, prep.limites.region, p.reducido])
+
+  // Estaciones: un punto por estación, del color de su caída en la megasequía.
+  useEffect(() => {
+    const m = mapa.current
+    if (!m || !listo) return
+    const cs = getComputedStyle(document.documentElement)
+    const puntos = aguaActiva
+      ? aguaActiva.estaciones.map((e) => ({
+          type: 'Feature',
+          properties: {
+            codigo: e.codigo,
+            r: radioEstacion(e.medio),
+            color: cs.getPropertyValue(PAPEL_TONO[tonoCambio(e.cambio)]).trim() || '#1f6fb2',
+            sel: e.codigo === aguaActiva.elegida,
+          },
+          geometry: { type: 'Point', coordinates: [e.lon, e.lat] },
+        }))
+      : []
+    ;(m.getSource('estaciones') as GeoJSONSource | undefined)?.setData(fc(puntos))
+    if (!aguaActiva) setSobreEstacion(null)
+  }, [listo, aguaActiva, aguaActiva?.estaciones, aguaActiva?.elegida])
+
+  // Movimiento del agua: el brillo corre aguas abajo y las estaciones laten. Quieto si se pidió menos movimiento.
+  const hayAgua = !!aguaActiva
+  useEffect(() => {
+    const m = mapa.current
+    if (!m || !listo || !hayAgua || p.reducido) return
+    let pasoPrevio = -1
+    let cuadro = requestAnimationFrame(function anima(ahora) {
+      const paso = Math.floor(ahora / PASO_FLUJO_MS) % TRAZOS_FLUJO.length
+      if (paso !== pasoPrevio) {
+        for (const id of [CAPAS.flujoBase, CAPAS.flujo]) if (m.getLayer(id)) m.setPaintProperty(id, 'line-dasharray', TRAZOS_FLUJO[paso] as number[])
+        pasoPrevio = paso
+      }
+      if (m.getLayer(CAPAS.pulso)) {
+        const t = (ahora % LATIDO_MS) / LATIDO_MS
+        m.setPaintProperty(CAPAS.pulso, 'circle-radius', ['*', ['get', 'r'], 1 + t * 2.2])
+        m.setPaintProperty(CAPAS.pulso, 'circle-opacity', 0.45 * (1 - t))
+      }
+      cuadro = requestAnimationFrame(anima)
+    })
+    return () => {
+      cancelAnimationFrame(cuadro)
+      if (m.getLayer(CAPAS.pulso)) m.setPaintProperty(CAPAS.pulso, 'circle-opacity', 0)
+    }
+  }, [listo, hayAgua, p.reducido])
+
   // Encuadre: Gran Santiago o toda la región; `reencuadre` fuerza volver aunque no cambie.
   const encuadrado = useRef(false)
   const tamPrevio = useRef(0)
@@ -311,7 +424,8 @@ export default function MapaRelieve(p: Props) {
   return (
     <div className="mapa mapa-relieve" ref={caja}>
       <div className="mapa-gl" ref={lienzo} role="application" aria-label="Mapa en relieve de las comunas de la Región Metropolitana" />
-      {hover && tag && <TarjetaMapa e={tag} x={hover.x} y={hover.y} ancho={ancho} />}
+      {sobreEstacion && p.agua && <TarjetaMapa e={p.agua.etiqueta(sobreEstacion.e)} x={sobreEstacion.x} y={sobreEstacion.y} ancho={ancho} />}
+      {!sobreEstacion && hover && tag && <TarjetaMapa e={tag} x={hover.x} y={hover.y} ancho={ancho} />}
       {p.children}
     </div>
   )

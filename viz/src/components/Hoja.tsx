@@ -61,6 +61,8 @@ const FUENTES: readonly { sigla: string; que: string }[] = [
   { sigla: 'INE', que: 'Censos 2017 y 2024.' },
   { sigla: 'CEAD', que: 'Delitos de mayor connotación social por comuna.' },
   { sigla: 'ECOS-Chile y SMA', que: 'Cumplimiento del plan de descontaminación.' },
+  { sigla: 'DGA, compilación (CR)2', que: 'Caudal medio mensual por estación, 1980–2017 (CC0).' },
+  { sigla: 'OpenStreetMap', que: 'Trazado de los ríos (ODbL).' },
 ]
 
 /** Bibliografía: fuentes de datos y la cita de cada plan o medida que el modelo usa. */

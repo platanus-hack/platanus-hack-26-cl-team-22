@@ -7,17 +7,17 @@ import './styles.css'
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Simulador } from './App'
-import { cargarDemografia, cargarGeo, cargarLena, cargarSimulacion } from './lib/load'
+import { cargarAgua, cargarDemografia, cargarGeo, cargarLena, cargarSimulacion } from './lib/load'
 import type { Resultado } from './lib/validate'
 
-type Estado = { fase: 'cargando' } | { fase: 'listo'; res: Resultado; geo: unknown; lena: unknown; demografia: unknown }
+type Estado = { fase: 'cargando' } | { fase: 'listo'; res: Resultado; geo: unknown; lena: unknown; demografia: unknown; agua: { caudales: unknown; rios: unknown } }
 
 function Raiz() {
   const [estado, setEstado] = useState<Estado>({ fase: 'cargando' })
   useEffect(() => {
     let vivo = true
-    Promise.all([cargarSimulacion(), cargarGeo(), cargarLena(), cargarDemografia()]).then(([res, geo, lena, demografia]) => {
-      if (vivo) setEstado({ fase: 'listo', res, geo, lena, demografia })
+    Promise.all([cargarSimulacion(), cargarGeo(), cargarLena(), cargarDemografia(), cargarAgua()]).then(([res, geo, lena, demografia, agua]) => {
+      if (vivo) setEstado({ fase: 'listo', res, geo, lena, demografia, agua })
     })
     return () => {
       vivo = false
@@ -46,7 +46,7 @@ function Raiz() {
       </div>
     )
   }
-  return <Simulador data={estado.res.data} geoRaw={estado.geo} lenaRaw={estado.lena} demografiaRaw={estado.demografia} />
+  return <Simulador data={estado.res.data} geoRaw={estado.geo} lenaRaw={estado.lena} demografiaRaw={estado.demografia} aguaRaw={estado.agua} />
 }
 
 createRoot(document.getElementById('root')!).render(

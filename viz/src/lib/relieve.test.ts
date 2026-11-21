@@ -14,7 +14,7 @@ const base = {
     { id: 'ciudad', type: 'symbol', source: 'openmaptiles', 'source-layer': 'place' },
   ],
 }
-const colores = { tinta: '#111111', papel: '#fafaf7', disco: '#ee7b22', corte: '#d9d9d0', edificio: '#e9e7df' }
+const colores = { tinta: '#111111', papel: '#fafaf7', disco: '#ee7b22', corte: '#d9d9d0', edificio: '#e9e7df', agua: '#1f6fb2', aguaClara: '#d7ecfa' }
 
 describe('elegirMapa', () => {
   const ok = async () => base

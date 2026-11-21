@@ -40,6 +40,13 @@ export async function cargarDemografia(): Promise<unknown> {
   }
 }
 
+/** Caudales reales por estación (datos/caudales.json) y trazado de los ríos (geo/rios_rm.geojson); null si faltan. */
+export async function cargarAgua(): Promise<{ caudales: unknown; rios: unknown }> {
+  const leer = (url: string) => leerJson(url).catch(() => null)
+  const [caudales, rios] = await Promise.all([leer('datos/caudales.json'), leer('geo/rios_rm.geojson')])
+  return { caudales, rios }
+}
+
 /** Polígonos de las comunas; null si no existen todavía. */
 export async function cargarGeo(): Promise<unknown> {
   try {
