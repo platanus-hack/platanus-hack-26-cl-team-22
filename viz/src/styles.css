@@ -2756,3 +2756,385 @@ body:has(.estado) {
 .fuentes a {
   color: var(--tinta-2);
 }
+
+/* ---------- El agua: caudal de los ríos ---------- */
+.agua-tono-sin { fill: var(--tinta-2); background: var(--tinta-2); color: var(--papel); }
+.agua-tono-estable { fill: var(--agua); background: var(--agua); color: var(--agua-txt); }
+.agua-tono-baja { fill: var(--nivel-1); background: var(--nivel-1); color: var(--nivel-txt-1); }
+.agua-tono-fuerte { fill: var(--nivel-3); background: var(--nivel-3); color: var(--nivel-txt-3); }
+.agua-tono-critica { fill: var(--nivel-5); background: var(--nivel-5); color: var(--nivel-txt-5); }
+
+/* Mapa plano: cauce, filo y un brillo de trazos que corre aguas abajo */
+.rio,
+.rio-filo,
+.rio-flujo {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke-width 380ms var(--ease);
+}
+.rio { stroke: var(--agua); }
+.rio-filo { stroke: var(--papel); opacity: 0.85; }
+.rio-flujo {
+  stroke: var(--agua-clara);
+  stroke-linecap: butt;
+  stroke-dasharray: 9 12;
+  animation: rio-corre 1.1s linear infinite;
+}
+@keyframes rio-corre {
+  to { stroke-dashoffset: -21; }
+}
+.quieto .rio-flujo { animation: none; }
+.estacion {
+  stroke: var(--papel);
+  stroke-width: 1.8px;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+}
+.estacion-elegida {
+  stroke: var(--tinta);
+  stroke-width: 3.5px;
+}
+.estacion:focus-visible {
+  outline: none;
+  stroke: var(--tinta);
+  stroke-width: 4px;
+}
+.leyenda .leyenda-agua {
+  grid-template-columns: repeat(2, auto);
+}
+.leyenda-agua li:first-child {
+  grid-column: 1 / -1;
+}
+.leyenda-rio {
+  display: inline-block;
+  width: 2.2em;
+  height: 0.5em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  border-radius: 0.25em;
+  background: linear-gradient(90deg, var(--agua) 0 45%, var(--agua-clara) 45% 60%, var(--agua) 60%);
+}
+
+/* Hoja del agua */
+.v-agua {
+  display: grid;
+  gap: calc(var(--u) * 0.5);
+}
+.v-agua .etiqueta-real {
+  justify-self: start;
+  margin-bottom: 0;
+}
+.v-agua h4 {
+  font-size: var(--t-m);
+  font-weight: 800;
+  line-height: 1.15;
+}
+.agua-cabeza {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: calc(var(--u) * 1.2);
+  align-items: center;
+}
+.agua-cifra {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 0.35em;
+  min-width: calc(var(--u) * 8.5);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 0.9) calc(var(--u) * 0.45);
+  box-shadow: var(--alzado);
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-cifra b {
+  font-size: calc(var(--u) * 3.6);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.agua-cifra span {
+  font-size: var(--t-m);
+  font-weight: 800;
+}
+.agua-cifra small {
+  grid-column: 1 / -1;
+  margin-top: calc(var(--u) * 0.25);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.agua-titulo h3 {
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.agua-lugar {
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.agua-veredicto > span:last-child {
+  flex-basis: 100%;
+}
+.agua-veredicto {
+  margin-top: calc(var(--u) * 0.35);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 0.25) calc(var(--u) * 0.6);
+  font-size: var(--t-s);
+}
+.agua-sello {
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.6);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.agua-serie-cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 0.8);
+  margin-bottom: calc(var(--u) * 0.3);
+}
+.agua-serie-botones {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+}
+.accion-ligera {
+  display: inline-block;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+  color: var(--tinta);
+  text-decoration: none;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
+  white-space: nowrap;
+  transition: background-color var(--t-capa) var(--ease), color var(--t-capa) var(--ease);
+}
+.accion-ligera:hover {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.agua-jugar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  border: 0;
+  cursor: pointer;
+  background: var(--agua);
+  color: var(--agua-txt);
+  font-size: var(--t-s);
+  font-weight: 800;
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.9);
+  box-shadow: var(--alzado);
+  white-space: nowrap;
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-jugar:hover,
+.agua-jugar[aria-pressed='true'] {
+  background: var(--tinta);
+}
+.agua-jugar .icono {
+  width: 0.9em;
+  height: 0.9em;
+  fill: currentColor;
+}
+.agua-jugar:focus-visible,
+.accion-ligera:focus-visible,
+.agua-otra:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.agua-barras {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.agua-franja { fill: var(--empeora-1); opacity: 0.55; }
+.agua-franja-texto,
+.agua-linea-texto,
+.agua-eje {
+  font-size: 8.5px;
+  font-weight: 600;
+  fill: var(--tinta-2);
+}
+.agua-franja-texto { fill: var(--nivel-5); font-weight: 800; }
+.agua-barra { cursor: pointer; }
+.agua-barra-zona { fill: transparent; }
+.agua-barra-cuerpo {
+  fill: var(--agua);
+  transition: fill var(--t-capa) var(--ease);
+}
+.agua-barra-seca .agua-barra-cuerpo { fill: var(--nivel-3); }
+.agua-barra-vacia .agua-barra-cuerpo { fill: var(--corte); }
+.agua-barra:hover .agua-barra-zona { fill: var(--tinta); opacity: 0.08; }
+.agua-barra-elegida .agua-barra-cuerpo { fill: var(--tinta); }
+.agua-barra-elegida .agua-barra-zona { fill: var(--tinta); opacity: 0.1; }
+.agua-linea-base {
+  stroke: var(--tinta);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+.agua-linea-texto {
+  fill: var(--tinta);
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: var(--hoja);
+  stroke-width: 3px;
+}
+.agua-doble {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: calc(var(--u) * 1.4);
+  align-items: start;
+}
+.agua-meses {
+  list-style: none;
+  padding: 0;
+  margin-top: calc(var(--u) * 0.45);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  height: calc(var(--u) * 2.1);
+}
+.agua-meses li {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  text-align: center;
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.agua-meses i {
+  display: block;
+  background: var(--mejora-2);
+}
+.agua-mes-alto i { background: var(--agua); }
+.agua-mes-alto span { color: var(--tinta); font-weight: 800; }
+.agua-variable p {
+  margin: calc(var(--u) * 0.15) 0 calc(var(--u) * 0.3);
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.agua-otras ul {
+  list-style: none;
+  padding: 0;
+  margin-top: calc(var(--u) * 0.4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.3);
+}
+.agua-otra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  border: 0;
+  cursor: pointer;
+  background: var(--papel-2);
+  color: var(--tinta);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-otra:hover { background: var(--corte); }
+.agua-otra b { font-weight: 800; font-variant-numeric: tabular-nums; }
+.agua-punto {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  flex: none;
+}
+.agua-pie {
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.lectura.ajustar.ajustar-agua {
+  background: var(--agua);
+  color: var(--agua-txt);
+  box-shadow: none;
+}
+
+/* Por dónde pasa el río: las comunas en fila, de aguas arriba a aguas abajo, unidas por el cauce */
+.agua-pasa h4 small {
+  font-weight: 600;
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.agua-pasa ol {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.22) 0;
+}
+.agua-pasa .agua-pasa-titulo {
+  font-size: var(--t-s);
+  font-weight: 800;
+  margin-right: calc(var(--u) * 0.5);
+}
+.agua-pasa .agua-pasa-titulo + li::before {
+  display: none;
+}
+.agua-estacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  margin-bottom: calc(var(--u) * 0.3);
+}
+.agua-pasa li {
+  display: flex;
+  align-items: center;
+}
+.agua-pasa li + li::before {
+  content: '';
+  width: calc(var(--u) * 0.45);
+  height: 3px;
+  background: var(--agua);
+}
+.agua-pasa button {
+  border: 0;
+  cursor: pointer;
+  background: var(--mejora-1);
+  color: var(--tinta);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.4);
+  white-space: nowrap;
+  transition: background-color var(--t-capa) var(--ease), color var(--t-capa) var(--ease);
+}
+.agua-pasa button:hover {
+  background: var(--agua);
+  color: var(--agua-txt);
+}
+.agua-pasa button:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.agua-pasa-estacion button {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.pliegue-cuerpo:has(> .v-agua) {
+  padding: calc(var(--u) * 0.7) 0 calc(var(--u) * 0.2);
+}
+
+/* Ajustar pesos: cada variable con su peso y el rango que se acepta */
+.peso-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 0.9);
+}
+.peso-fila .desplegable-lista {
+  right: 0;
+  left: auto;
+}

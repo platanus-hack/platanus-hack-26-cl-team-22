@@ -1,3 +1,5 @@
+import { rangosDe } from '../lib/onboarding'
+import { Desplegable } from './Desplegable'
 import { useEffect, useRef, useState } from 'react'
 import { PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
@@ -18,6 +20,9 @@ const valorTxt = (v: number | undefined, unidad: string) => (v === undefined ? '
 
 interface Props {
   variables: VariableCorta[]
+  /** rango aceptado por variable (id de la opción) */
+  rangos: Record<string, string>
+  onRango: (variable: string, id: string) => void
   /** resultado de la entrada guiada: para quién es el orden y por qué */
   guia?: {
     titulo: string
@@ -25,6 +30,8 @@ interface Props {
     cargando: boolean
     porIA: boolean
     onCambiar: () => void
+    /** el caso depende del agua y hay caudales medidos: lleva a verlos */
+    onAgua?: () => void
     /** Claude está leyendo el caso */
     leyendo?: boolean
     /** ajustes de prioridad que Claude propuso a partir del caso; la persona puede apagarlos */
@@ -108,6 +115,11 @@ function General(p: Props) {
         <div className="tramo-cabeza">
           <h3 id="h-prio">{p.guia ? p.guia.titulo : 'Qué priorizas'}</h3>
           <div className="tramo-acciones">
+            {p.guia?.onAgua && !ajustar && (
+              <button type="button" className="lectura ajustar ajustar-agua" onClick={p.guia.onAgua}>
+                Ver caudales
+              </button>
+            )}
             {p.guia && !ajustar && (
               <button type="button" className="lectura ajustar" onClick={p.guia.onCambiar}>
                 Cambiar búsqueda
@@ -121,11 +133,21 @@ function General(p: Props) {
         {ajustar ? (
           <div className="pesos" id="pesos">
             {p.variables.map((v) => (
-              <label className="peso" key={v.id}>
-                <span className="peso-nombre">{v.nombre}</span>
-                <input type="range" min={0} max={10} step={1} value={p.pesos[v.id] ?? 0} onChange={(e) => p.onPeso(v.id, Number(e.target.value))} />
-                <span className="peso-num">{fmt(p.pesos[v.id] ?? 0, 0)}</span>
-              </label>
+              <div className="peso-fila" key={v.id}>
+                <label className="peso">
+                  <span className="peso-nombre">{v.nombre}</span>
+                  <input type="range" min={0} max={10} step={1} value={p.pesos[v.id] ?? 0} onChange={(e) => p.onPeso(v.id, Number(e.target.value))} />
+                  <span className="peso-num">{fmt(p.pesos[v.id] ?? 0, 0)}</span>
+                </label>
+                {rangosDe(v.id).length > 1 && (
+                  <Desplegable
+                    etiqueta="Acepto"
+                    valor={p.rangos[v.id] ?? 'libre'}
+                    onCambiar={(id) => p.onRango(v.id, id)}
+                    opciones={rangosDe(v.id).map((o) => ({ id: o.id, titulo: o.titulo, detalle: o.detalle }))}
+                  />
+                )}
+              </div>
             ))}
           </div>
         ) : p.guia ? (

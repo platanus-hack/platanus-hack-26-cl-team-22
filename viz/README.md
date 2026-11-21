@@ -47,12 +47,23 @@ tienen varias secciones las muestran como acordeón con una sola abierta, que ta
 | Pestaña | Secciones | Qué pinta el mapa |
 |---|---|---|
 | Resumen | El índice de riesgo de 0 a 100, las tres de menor riesgo y una fila por variable | El índice |
-| Climático | Calidad del aire · La leña, su fuente principal | PM2,5 frente a la norma · zonas y emisiones de leña |
+| Climático | Calidad del aire · La leña, su fuente principal · El agua: caudal de los ríos | PM2,5 frente a la norma · zonas y emisiones de leña · ríos y estaciones de caudal |
 | Legal | Los planes públicos, su probabilidad de cumplirse y el efecto de encender o apagar cada uno | Valor o diferencia |
 | Social | Seguridad ciudadana · Crecimiento poblacional · Desarrollo urbano (la simulación de mudanzas) | Posición de riesgo · flujos |
 | Referencias | Fuentes de datos y normas · El modelo contra datos que no vio | Sin cambio |
 
 En el resumen, cada fila de variable lleva a su pestaña y sección.
+
+**El agua** (`src/lib/agua.ts`, `src/components/VistaAgua.tsx`): caudal medio mensual medido por las estaciones
+de la DGA entre 1980 y 2017. Es medición histórica, no sale del modelo y no cambia con el año de la simulación.
+El mapa dibuja cada cauce con un ancho que crece con la raíz de su caudal y un brillo que corre aguas abajo; cada
+estación es un punto coloreado según cuánto cayó su caudal en la megasequía (2010–2017 frente a 1980–2009). La
+hoja muestra el caudal de la estación elegida, su serie anual, el régimen (de deshielo o de lluvia, por el mes
+de más agua) y la variabilidad. Elegir un año, o «Ver secarse los ríos», cambia el ancho de los cauces en el
+mapa. Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
+tiene. Cada río con nombre trae las comunas por donde pasa, de aguas arriba a aguas abajo (`cauces` en
+`caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el caso «Energía hidráulica» el resumen ofrece un botón directo a esta sección. El caudal no entra
+al índice de riesgo: solo 14 estaciones cumplen el filtro y no hay un valor por comuna.
 
 **Unidad del índice** (`src/lib/riesgo.ts`): en cada variable, el riesgo de una comuna es el porcentaje de las
 otras comunas que están mejor que ella en ese año (0 = la mejor, 100 = la peor). El índice general es el promedio
@@ -64,17 +75,17 @@ la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición
 
 ### Entrada guiada
 
-Al abrir, dos pantallas sobre el mapa (`src/components/Onboarding.tsx`):
+Al abrir, una sola pantalla sobre el mapa (`src/components/Onboarding.tsx`): **el caso, en texto libre**.
+`leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía hidráulica, vivienda, industria
+o evaluación general, y de ahí salen solos los pesos de las tres variables simuladas; no hay más preguntas.
+Los criterios propios del caso que el modelo no mide (caída disponible, precio del suelo, etc.) **no entran al
+cálculo ni muestran número**: la guía los nombra como «aún sin datos», porque para usarlos hace falta un valor
+por comuna que hoy no existe. El caudal sí tiene datos y se ve en Climático › El agua.
 
-1. **El caso, en texto libre.** `leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía
-   hidráulica, vivienda, industria o evaluación general; la persona ve cómo se leyó y puede cambiarlo.
-2. **Los criterios.** Los tres que simula el modelo llevan peso (cinco grados) y un rango aceptado: para el aire,
-   la norma chilena o las metas de la OMS; para seguridad y crecimiento, cortes sobre los datos de la región.
-   Debajo van los criterios propios de ese caso (caudal, caída, etc.) y los que agregue la persona: **no tienen
-   datos en esta versión, no entran al cálculo y no muestran ningún número**.
-
-Al terminar se abre la hoja Riesgo: las tres de menor riesgo salen solo de las comunas que cumplen todos los
-rangos, y la ficha marca «Fuera de tu rango» donde corresponde. Con `?directo` en la dirección no aparece.
+Ya en el mapa, «Ajustar pesos» abre el peso de cada variable (0 a 10) y el rango que se acepta: para el aire,
+la norma chilena o las metas de la OMS; para seguridad y crecimiento, cortes sobre los datos de la región. Las
+tres de menor riesgo salen solo de las comunas que cumplen todos los rangos, y la ficha marca «Fuera de tu
+rango» donde corresponde. Con `?directo` en la dirección la entrada no aparece.
 
 La explicación la arma la propia interfaz con los números del índice (`src/lib/onboarding.ts`). Si al construir
 se define `VITE_GUIA_URL` con la dirección de un intermediario propio y la persona escribió su caso, se le pide
@@ -141,6 +152,7 @@ Con `prefers-reduced-motion` los cambios son instantáneos.
 | `viz/datos/simulacion.json` (lo sirve y empaqueta `vite.config.ts` como `datos/simulacion.json`) | El modelo: `python -m experiments.simular` | Se usa `viz/ejemplo/simulacion.json` (se sirve como `datos/ejemplo.json` por un plugin de `vite.config.ts`) y aparece «Datos de ejemplo» si `meta.es_ejemplo` es true |
 | `viz/public/datos/lena.json` | `datos/viz/build_lena.py` | La vista La leña lo dice en palabras |
 | `viz/public/datos/demografia.json` | `python -m experiments.exportar_demografia` | La vista Las mudanzas no aparece. Es la simulación por agentes de `docs/modelo-mudanzas-abm.md`: corre en un Web Worker (`src/lib/abm.worker.ts`), 20 corridas por cambio, y el mapa pinta la ocupación de la vivienda |
+| `viz/public/datos/caudales.json` y `viz/public/geo/rios_rm.geojson` | `python -m datos.dga.fetch_caudales` y después `python -m datos.dga.rios_teselas` (DGA compilado por CR2, CC0; cauces de OpenStreetMap, ODbL, leídos de las teselas de OpenFreeMap) | La sección El agua no aparece; sin el segundo archivo se ven las estaciones sin ríos |
 | `viz/public/geo/comunas_rm.geojson` | Frente de cartografía | Cada comuna se dibuja como un círculo en su lat/lon |
 
 Si el JSON no cumple el contrato (`docs/plan-comunas.md`), la página muestra un estado de error con la
