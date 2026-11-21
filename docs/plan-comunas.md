@@ -58,7 +58,7 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 |---|---|---|---|---|---|
 | 1. Datos de aire | Mediciones de PM2,5 por estación, 2017 a 2024 | `data/aire/*.csv` | Nada | Hecho |  |
 | 2. Emisiones y comunas | Emisiones por comuna y fuente; tabla de las 52 comunas | `data/emisiones/`, `data/comunas_rm.csv` | Nada | En curso |  |
-| 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Libre |  |
+| 3. Censo y mudanzas | Las dos matrices de mudanza entre comunas (2012 a 2017 y 2019 a 2024) y viviendas por comuna | `data/censo/*.csv` | Nada | Por empezar | Massiel |
 | 4. Seguridad | Delitos por comuna y año (CEAD) y victimización (ENUSC) | `data/seguridad/*.csv` | Nada | Libre |  |
 | 5. Políticas y credibilidad | Catálogo cerrado de intervenciones con rangos citados; medidas del plan de aire y proyectos del SEIA clasificados; credibilidad por medida | `data/politicas/*.csv`, `docs/catalogo-intervenciones.md` | Nada | Inventario inicial en curso |  |
 | 6. Modelo | Aire acoplado por la cuenca; luego flujos de hogares por tipo; luego seguridad | `core/`, con pruebas | 1 y 2 para aire; 3 para hogares | Por empezar | Jesús |
@@ -68,6 +68,44 @@ código de la simulación en `core/` (no un LLM) y tiene un solo dueño.
 
 Los frentes 3, 4 y 5 no dependen de nadie y el modelo los necesita. Son los mejores para
 tomar ahora.
+
+## Por dónde empieza cada uno
+
+### Jesús: frente 6, el modelo
+
+Es el código de la simulación en `core/`. Orden de construcción:
+
+1. **Aire acoplado por la cuenca.** Entradas ya disponibles en `data/aire/` (mediciones por
+   estación) y, cuando termine el frente 2, `data/emisiones/` y `data/comunas_rm.csv`.
+   `experiments/prueba_brecha.py` tiene una versión de tamizaje del acople entre comunas
+   que sirve como punto de partida, no como modelo final.
+2. **Flujos de hogares por tipo**, cuando Massiel entregue las matrices del censo.
+3. **Seguridad**, solo si queda tiempo.
+
+Lo primero que necesita la interfaz es que el modelo escriba `simulacion.json` con la
+forma del contrato de arriba, aunque sea solo con aire.
+
+### Massiel: frente 3, censo y mudanzas
+
+Entrega tablas limpias en `data/censo/`, con el script de descarga en `datos/censo/` y un
+README con fuente, fecha y vacíos:
+
+1. **Matriz de mudanzas 2019 a 2024**: del Censo 2024, comuna de residencia actual contra
+   comuna de residencia hace 5 años, para las 52 comunas de la región.
+2. **Matriz de mudanzas 2012 a 2017**: lo mismo del Censo 2017.
+3. **Viviendas y población por comuna** en ambos censos, para el tope de viviendas.
+
+Formato sugerido de cada matriz: una fila por par, con columnas `codigo_origen`,
+`codigo_destino`, `personas`. Los códigos de comuna son los de cinco dígitos (13101 es
+Santiago), los mismos que usa `viz/public/geo/comunas_rm.geojson`.
+
+Por comprobar al empezar: si el INE publica esas matrices ya tabuladas por comuna o hay
+que construirlas desde los microdatos.
+
+### Gabriel: frente 8, la interfaz
+
+Trabaja en la rama `feat/viz-interfaz` con el ejemplo de `viz/ejemplo/simulacion.json`.
+
 
 ## Orden y cortes
 
