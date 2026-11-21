@@ -137,6 +137,20 @@ Al comparar períodos:
   pandemia.
 - `residencia_ignorada` es más alta en 2017 porque fue censo de hecho.
 
+## Proyección oficial del INE: `proyeccion_ine.csv`
+
+`codigo`, `comuna`, `anio`, `poblacion`. Las 52 comunas, de 2017 a 2035: 988 filas. Es la suma
+por sexo y edad simple de «Estimaciones y proyecciones de población 2002–2035, comunas» (INE,
+base censo 2017):
+https://www.ine.gob.cl/docs/default-source/proyecciones-de-poblacion/cuadros-estadisticos/base-2017/estimaciones-y-proyecciones-2002-2035-comunas.xlsx
+
+- Totales de la RM: 7.508.690 en 2017 y 8.420.729 en 2024. **No están en la misma escala que el
+  censo**: el INE corrige la omisión censal y estima la población a mitad de año. El censo 2024
+  contó 7.400.741 personas.
+- Se usa como alternativa de comparación en `docs/validacion-poblacion.md`.
+- El INE publicó una proyección base 2024, pero solo a nivel país. Cuando publique la versión
+  por comuna, conviene reemplazar esta.
+
 ## Cómo reejecutar
 
 ```bash

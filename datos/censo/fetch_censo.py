@@ -7,6 +7,7 @@ Outputs in data/censo/:
   mudanzas_2019_2024.csv   Censo 2024, reshaped from the INE table D5 (sheet "2")
   poblacion_viviendas.csv  population and dwellings per comuna, both censuses
   flujos_externos.csv      people entering or leaving each RM comuna, both periods
+  proyeccion_ine.csv       INE official population projection per comuna, 2017-2035
 Needs pandas, openpyxl, requests and `bsdtar` (the 2017 files are nested RAR archives).
 Never fills gaps: anything missing stays out and is reported in data/censo/README.md.
 """
@@ -32,6 +33,7 @@ from datos.censo.censo import (
     externos_2024,
     matriz_2024,
     pares_2017,
+    sumar_proyeccion,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -59,7 +61,12 @@ FUENTES = {
     "csv-viviendas-censo-2017.zip": (
         INE17 + "csv-viviendas-censo-2017.zip",
         "5c68e936aec3fceff15750118d701954c6f25fa3e85ce8720fabac44708b987b"),
+    "estimaciones-y-proyecciones-2002-2035-comunas.xlsx": (
+        ("https://www.ine.gob.cl/docs/default-source/proyecciones-de-poblacion/"
+         "cuadros-estadisticos/base-2017/estimaciones-y-proyecciones-2002-2035-comunas.xlsx"),
+        "de4ed9522031fad091dd2a51b3215bba685ebb851a14fb7421078ba927aa7ec1"),
 }
+PROYECCION_ANIOS = list(range(2017, 2036))
 HEADERS = {"User-Agent": "Mozilla/5.0 (research script; hackathon census data)"}
 
 COLS_P17 = ["COMUNA", "P10", "P10COMUNA", "P11", "P11COMUNA"]
@@ -204,6 +211,16 @@ def main() -> None:
     externos = externos[["codigo", "comuna", "periodo", *EXTERNOS]]
     externos.sort_values(["periodo", "codigo"]).to_csv(OUT / "flujos_externos.csv", index=False)
     print(externos.groupby("periodo")[EXTERNOS].sum().T)
+
+    libro = openpyxl.load_workbook(descargar("estimaciones-y-proyecciones-2002-2035-comunas.xlsx"),
+                                   read_only=True)
+    proy = sumar_proyeccion(list(libro.worksheets[0].iter_rows(values_only=True)),
+                            PROYECCION_ANIOS)
+    with (OUT / "proyeccion_ine.csv").open("w", encoding="utf-8", newline="") as fh:
+        fh.write("codigo,comuna,anio,poblacion\n")
+        for codigo in codigos:
+            for anio in PROYECCION_ANIOS:
+                fh.write(f"{codigo},{nombres[codigo]},{anio},{proy[(codigo, anio)]}\n")
 
     for anio, m in (("2012-2017", m17), ("2019-2024", m24)):
         fuera = m[m["codigo_origen"] != m["codigo_destino"]]["personas"].sum()

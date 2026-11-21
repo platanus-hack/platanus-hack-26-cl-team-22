@@ -12,6 +12,7 @@ from datos.censo.censo import (
     externos_2024,
     matriz_2024,
     pares_2017,
+    sumar_proyeccion,
 )
 
 DATA = Path(__file__).resolve().parent.parent / "data" / "censo"
@@ -281,3 +282,29 @@ def test_external_flows_close_the_population_accounting(periodo, matriz, anio):
 def test_external_flow_totals(periodo, totales):
     filas = [f for f in _leer("flujos_externos.csv") if f["periodo"] == periodo]
     assert {c: sum(int(f[c]) for f in filas) for c in totales} == totales
+
+
+# --- INE official projections (base 2017) ----------------------------------------------
+
+
+
+
+def test_projection_sums_sexes_and_ages_per_rm_comuna_and_year():
+    filas = [
+        ("Region", "Nombre Region", "Provincia", "Nombre Provincia", "Comuna", "Nombre Comuna",
+         "Sexo", "Edad", "Poblacion 2017", "Poblacion 2024"),
+        (13, "RM", 131, "Santiago", 13101, "Santiago", 1, 0, 10.4, 12.0),
+        (13, "RM", 131, "Santiago", 13101, "Santiago", 2, 80, 5.0, 6.0),
+        (5, "Valparaíso", 51, "Valparaíso", 5101, "Valparaíso", 1, 0, 99.0, 99.0),
+    ]
+    assert sumar_proyeccion(filas, [2017, 2024]) == {(13101, 2017): 15, (13101, 2024): 18}
+
+
+def test_published_projection_covers_every_rm_comuna_2017_to_2035():
+    filas = _leer("proyeccion_ine.csv")
+    assert {int(f["anio"]) for f in filas} == set(range(2017, 2036))
+    assert len(filas) == 52 * 19
+    rm = {a: sum(int(f["poblacion"]) for f in filas if f["anio"] == a) for a in ("2017", "2024")}
+    # INE estimaciones y proyecciones base 2017, RM totals (they correct census omission,
+    # so 2017 is above the census count of 7.028.421).
+    assert rm == {"2017": 7_508_690, "2024": 8_420_729}

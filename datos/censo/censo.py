@@ -215,3 +215,22 @@ def externos_2024(filas: list[tuple]) -> pd.DataFrame:
             "residencia_ignorada": ignorada,
         })
     return pd.DataFrame(registros, columns=["codigo", *EXTERNOS])
+
+
+def sumar_proyeccion(filas: list[tuple], anios: list[int]) -> dict[tuple[int, int], int]:
+    """Total projected population per (RM comuna, year) from INE's comuna projection sheet.
+
+    The sheet has one row per comuna, sex and single age, and one 'Poblacion YYYY' column per
+    year. Values are fractional estimates; totals are rounded after summing.
+    """
+    encabezado = filas[0]
+    col = {a: encabezado.index(f"Poblacion {a}") for a in anios}
+    i_comuna = encabezado.index("Comuna")
+    suma: dict[tuple[int, int], float] = {}
+    for fila in filas[1:]:
+        codigo = fila[i_comuna]
+        if not isinstance(codigo, int) or not es_comuna_rm(pd.Series([codigo])).iloc[0]:
+            continue
+        for a, j in col.items():
+            suma[(codigo, a)] = suma.get((codigo, a), 0.0) + float(fila[j])
+    return {k: round(v) for k, v in suma.items()}
