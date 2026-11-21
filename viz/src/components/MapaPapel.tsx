@@ -27,6 +27,7 @@ import {
   type Vista,
 } from '../lib/proyeccion'
 import type { Mejor } from '../lib/types'
+import type { EstadoTransicionMapa } from '../lib/transicion'
 import { TarjetaMapa, type Etiqueta } from './Papel'
 import { esGranSantiago, limitesDe } from '../lib/vista'
 
@@ -54,6 +55,7 @@ export interface PropsMapa {
   encuadre: Encuadre
   reencuadre: number
   reducido: boolean
+  transicion?: EstadoTransicionMapa
   onSeleccionar: (codigo: string) => void
   etiqueta: (f: GeoFeature) => Etiqueta
   nombreAccesible: (f: GeoFeature) => string
