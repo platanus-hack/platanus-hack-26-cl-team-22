@@ -111,6 +111,8 @@ export interface TransformacionEscenario {
   bbox: [number, number, number, number]
   intensidad_regional: number[]
   comunas_foco: ComunaFocoTransformacion[]
+  /** Present when the pattern across comunas is not validated: only the region-level change is shown. */
+  aviso?: string
 }
 
 export interface TransformacionesMapa {

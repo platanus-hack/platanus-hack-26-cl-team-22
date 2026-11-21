@@ -61,14 +61,49 @@ def month_range(desde: str, hasta: str) -> list[tuple[int, int]]:
     return months
 
 
-def _file_manifest_entry(path: Path, url: str) -> dict[str, object]:
+def _file_manifest_entry(path: Path, url: str, *, descargado: str | None) -> dict[str, object]:
     body = path.read_bytes()
     return {
         "url": url,
-        "descargado": dt.date.fromtimestamp(path.stat().st_mtime).isoformat(),
+        "descargado": descargado,
         "sha256": hashlib.sha256(body).hexdigest(),
         "bytes": len(body),
     }
+
+
+def load_previous_download_dates(manifest_path: Path) -> dict[str, str]:
+    """Map sha256 -> recorded download date from an existing manifest ({} if absent)."""
+    if not manifest_path.exists():
+        return {}
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    files = data.get("archivos") if isinstance(data, dict) else None
+    if not isinstance(files, dict):
+        return {}
+    dates: dict[str, str] = {}
+    for entry in files.values():
+        if not isinstance(entry, dict):
+            continue
+        sha, date = entry.get("sha256"), entry.get("descargado")
+        if isinstance(sha, str) and isinstance(date, str) and date:
+            dates[sha] = date
+    return dates
+
+
+def _local_manifest_entry(
+    path: Path, url: str, previous_dates: Mapping[str, str]
+) -> dict[str, object]:
+    """Entry for a file not downloaded in this run.
+
+    The file mtime is not a download date (an LFS checkout sets it to the clone date), so the
+    date comes only from a previous manifest record with the same sha256; otherwise it is
+    unknown (None).
+    """
+    entry = _file_manifest_entry(path, url, descargado=None)
+    entry["descargado"] = previous_dates.get(str(entry["sha256"]))
+    return entry
 
 
 def download_month_zip(
@@ -78,8 +113,13 @@ def download_month_zip(
     *,
     force: bool = False,
     delay_s: float = 0.5,
+    previous_dates: Mapping[str, str] | None = None,
 ) -> tuple[Path, dict[str, object]]:
-    """Download one ChileCompra monthly ZIP with local caching and ZIP header check."""
+    """Download one ChileCompra monthly ZIP with local caching and ZIP header check.
+
+    A genuinely new download records today's date; a cached file keeps the date recorded for
+    its sha256 in `previous_dates` (None when there is no record).
+    """
     url = CHILECOMPRA_URL_TEMPLATE.format(year=year, month=month)
     zip_path = raw_dir / f"{year}-{month}.zip"
     if not zip_path.exists() or force:
@@ -92,8 +132,11 @@ def download_month_zip(
         zip_path.write_bytes(body)
         if delay_s > 0:
             time.sleep(delay_s)
+        return zip_path, _file_manifest_entry(
+            zip_path, url, descargado=dt.date.today().isoformat()
+        )
 
-    return zip_path, _file_manifest_entry(zip_path, url)
+    return zip_path, _local_manifest_entry(zip_path, url, previous_dates or {})
 
 
 def _infer_year_from_zip_name(zip_path: Path) -> int | None:
@@ -148,7 +191,6 @@ def build_tables_from_zips(
         "proporcion_oferente_unico",
         "monto_estimado_clp",
         "monto_adjudicado_clp",
-        "total_reclamos",
     ]
     with year_csv.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=year_fields)
@@ -216,6 +258,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     months = month_range(args.desde, args.hasta)
     commune_index = load_rm_commune_index()
+    # Read before build_tables_from_zips overwrites the manifest.
+    previous_dates = load_previous_download_dates(args.out_dir / "manifest.json")
 
     zip_paths: list[Path] = []
     manifest_files: dict[str, dict[str, object]] = {}
@@ -225,7 +269,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             if candidate.exists():
                 url = CHILECOMPRA_URL_TEMPLATE.format(year=year, month=month)
                 zip_paths.append(candidate)
-                manifest_files[_manifest_key(candidate)] = _file_manifest_entry(candidate, url)
+                manifest_files[_manifest_key(candidate)] = _local_manifest_entry(
+                    candidate, url, previous_dates
+                )
         if not zip_paths:
             raise SystemExit(
                 f"No local ZIP files found in {args.raw_dir} for {args.desde}..{args.hasta}"
@@ -233,7 +279,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         for year, month in months:
             path, meta = download_month_zip(
-                year, month, args.raw_dir, force=args.forzar_descarga
+                year,
+                month,
+                args.raw_dir,
+                force=args.forzar_descarga,
+                previous_dates=previous_dates,
             )
             zip_paths.append(path)
             manifest_files[_manifest_key(path)] = meta

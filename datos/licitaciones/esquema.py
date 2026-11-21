@@ -111,8 +111,10 @@ SECTOR_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ),
 )
 
+# Buyer names seen in the 2024 dumps: "I MUNICIPALIDAD DE X", "I.MUNICIPALIDAD DE X",
+# "ILUSTRE MUNICIPALIDAD DE X", "I MUNICIPALIDAD X", "I MUNICIPALIDAD DE LA COMUNA DE X".
 _MUNI_RE = re.compile(
-    r"^(?:i\.?\s+|ilustre\s+)?municipalidad\s+(?:de\s+|del\s+)?(.+)$"
+    r"^(?:i\.?\s*|ilustre\s+)?municipalidad\s+(?:de\s+|del\s+)?(?:la\s+comuna\s+de\s+)?(.+)$"
 )
 _DATE_FORMATS = (
     "%Y-%m-%d",
@@ -141,7 +143,6 @@ class TenderLineRecord:
     monto_estimado: float | None
     monto_adjudicado: float | None
     numero_oferentes: int | None
-    cantidad_reclamos: int
     dias_pub_cierre: int | None
     dias_pub_adj: int | None
     outlier_monto: bool = False
@@ -164,7 +165,6 @@ class CommuneYearMetrics:
     proporcion_oferente_unico: float | None
     monto_estimado_clp: float
     monto_adjudicado_clp: float
-    total_reclamos: int
 
 
 @dataclass(frozen=True)
@@ -274,20 +274,15 @@ RM_COMMUNE_ALIASES: dict[str, str] = {
 
 
 def match_rm_commune(
-    commune_field: str | None,
     org_name: str | None,
     commune_index: Mapping[str, str],
 ) -> str | None:
-    """Resolve an RM commune CUT code conservatively without guessing.
+    """Return the RM commune CUT code only when the buyer is that commune's municipality.
 
-    Checks exact normalized `commune_field` first, then `Municipalidad de <commune>`
-    patterns in `org_name`. National ministries without an RM commune stay `None`.
+    Only `Municipalidad de <commune>` buyer names count. The buying unit's location
+    (`ComunaUnidad`) is ignored on purpose: ministries, hospitals, police, and municipal
+    corporations located in a commune are not that commune's municipal procurement.
     """
-    norm_commune = normalize_text(commune_field)
-    norm_commune = RM_COMMUNE_ALIASES.get(norm_commune, norm_commune)
-    if norm_commune in commune_index:
-        return commune_index[norm_commune]
-
     norm_org = normalize_text(org_name)
     if norm_org:
         match = _MUNI_RE.match(norm_org)
@@ -338,9 +333,8 @@ def iter_records_from_csv_stream(
         if not codigo_externo:
             continue
 
-        commune_field = _field_lookup(row, "ComunaUnidad", "Comuna")
         org_name = _field_lookup(row, "NombreOrganismo", "Organismo")
-        codigo_comuna = match_rm_commune(commune_field, org_name, commune_index)
+        codigo_comuna = match_rm_commune(org_name, commune_index)
         if codigo_comuna is None:
             if diagnostics is not None:
                 diagnostics["filas_sin_comuna_rm"] = (
@@ -403,9 +397,6 @@ def iter_records_from_csv_stream(
         )
 
         numero_oferentes = parse_chilecompra_int(_field_lookup(row, "NumeroOferentes"))
-        cantidad_reclamos = (
-            parse_chilecompra_int(_field_lookup(row, "CantidadReclamos")) or 0
-        )
 
         sector = classify_sector(
             _field_lookup(row, "Nombre"),
@@ -432,7 +423,6 @@ def iter_records_from_csv_stream(
             monto_estimado=monto_estimado,
             monto_adjudicado=monto_adjudicado,
             numero_oferentes=numero_oferentes,
-            cantidad_reclamos=cantidad_reclamos,
             dias_pub_cierre=dias_pub_cierre,
             dias_pub_adj=dias_pub_adj,
             outlier_monto=outlier_monto,
@@ -473,7 +463,6 @@ class _TenderAcc:
     monto_estimado: float | None = None
     monto_adjudicado: float = 0.0
     numero_oferentes: int | None = None
-    cantidad_reclamos: int = 0
     dias_pub_cierre: int | None = None
     dias_pub_adj: int | None = None
 
@@ -484,7 +473,7 @@ def aggregate_records(
     """Deduplicate tender-level attributes per CodigoExterno and aggregate by commune.
 
     ChileCompra dumps contain one row per line item (`CodigoExterno` repeats).
-    Status, dates, bidder counts, complaints, and `MontoEstimado` are tender-level
+    Status, dates, bidder counts, and `MontoEstimado` are tender-level
     and deduplicated per `(codigo_comuna, codigo_externo)`; `MontoLineaAdjudica` is
     line-level and summed across lines.
     """
@@ -516,7 +505,6 @@ def aggregate_records(
                 if acc.numero_oferentes is None
                 else max(acc.numero_oferentes, rec.numero_oferentes)
             )
-        acc.cantidad_reclamos = max(acc.cantidad_reclamos, rec.cantidad_reclamos)
         if acc.dias_pub_cierre is None and rec.dias_pub_cierre is not None:
             acc.dias_pub_cierre = rec.dias_pub_cierre
         if acc.dias_pub_adj is None and rec.dias_pub_adj is not None:
@@ -564,7 +552,6 @@ def aggregate_records(
                     sum(t.monto_estimado for t in items if t.monto_estimado is not None), 2
                 ),
                 monto_adjudicado_clp=round(sum(t.monto_adjudicado for t in items), 2),
-                total_reclamos=sum(t.cantidad_reclamos for t in items),
             )
         )
 

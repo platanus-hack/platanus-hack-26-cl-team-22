@@ -28,7 +28,6 @@ from core.credibilidad import (
 )
 from core.estado import SOURCES, RegionState
 from core.hogares import MigrationModel
-from core.licitaciones import load_procurement_summaries
 from core.seguridad import GROUPS, CrimeModel, EffectSize, SecurityIntervention, simulate_security
 from core.transformaciones import compute_scenario_transformation, serialize_transformations
 from experiments.datos_aire import ROOT, Communes, load_communes, load_emissions
@@ -463,12 +462,10 @@ def main() -> None:
                 communes.codes,
                 communes.lat,
                 communes.lon,
+                espacial=var_id != VARIABLE,  # PM2.5 pattern across communes is not validated
             )
         )
 
-    proc_summaries = load_procurement_summaries(
-        ROOT / "data" / "licitaciones" / "resumen_comuna_anio.csv"
-    )
     output = {
         "meta": {
             "version": "1.0",
@@ -510,11 +507,6 @@ def main() -> None:
                           "por política son modelados en ambos casos.",
             "comunas_destacadas": "Regla fija: las dos de mayor y las dos de menor nivel "
                                   "medido, más las de la Zona B con estación.",
-            "licitaciones": {
-                "disponible": bool(proc_summaries),
-                "comunas_con_datos": len(proc_summaries),
-                "comando": "make licitaciones",
-            },
             "supuestos": ASSUMPTIONS,
         },
         "variables": [

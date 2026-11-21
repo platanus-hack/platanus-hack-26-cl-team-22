@@ -4,11 +4,11 @@
  "generado": "2026-11-21",
  "diagnosticos": {
   "total_filas": 2512286,
-  "filas_rm": 681828,
-  "filas_sin_comuna_rm": 1830458,
+  "filas_rm": 236576,
+  "filas_sin_comuna_rm": 2275710,
   "outliers_monto_filtrados": 5,
   "filas_resumen_comuna_anio": 52,
-  "filas_resumen_sector_comuna": 307
+  "filas_resumen_sector_comuna": 292
  },
  "archivos": {
   "data/raw/licitaciones/2024-1.zip": {

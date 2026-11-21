@@ -3,6 +3,8 @@
 Reads cleaned commune-level ChileCompra aggregates (`data/licitaciones/resumen_comuna_anio.csv`)
 when present, and updates an executor Beta prior via Beta-Binomial updating with an effective
 sample-size cap so high-volume municipalities keep realistic epistemic bands.
+
+Library only: no model output uses it yet (docs/plan-licitaciones.md).
 """
 from __future__ import annotations
 
@@ -12,6 +14,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from core.credibilidad import BetaCredibility, Provenance
+
+# Assumption, no source: minimum closed tenders before the award rate is used as a base rate.
+MIN_SAMPLE_ASSUMPTION = 20
+# Assumption, no source: cap on the effective sample size of the Beta update, so hundreds of
+# tenders do not collapse the p10-p90 band of a commune's credibility.
+MAX_EFFECTIVE_N_ASSUMPTION = 40.0
 
 
 @dataclass(frozen=True)
@@ -26,7 +34,6 @@ class CommuneProcurementSummary:
     awarded_amount_clp: float
     median_award_days: float | None
     single_bidder_share: float | None
-    complaints_total: int
 
 
 @dataclass(frozen=True)
@@ -78,7 +85,6 @@ def load_procurement_summaries(
         failed = sum(_opt_int(r.get("fallidas")) for r in rows)
         closed = sum(_opt_int(r.get("cerradas")) for r in rows)
         amount = sum(_opt_float(r.get("monto_adjudicado_clp")) or 0.0 for r in rows)
-        complaints = sum(_opt_int(r.get("total_reclamos")) for r in rows)
 
         days_vals = [
             v
@@ -104,7 +110,6 @@ def load_procurement_summaries(
             single_bidder_share=(
                 round(float(statistics.mean(single_vals)), 6) if single_vals else None
             ),
-            complaints_total=complaints,
         )
     return out
 
@@ -113,14 +118,19 @@ def estimate_commune_credibility(
     summary: CommuneProcurementSummary | None,
     *,
     prior: BetaCredibility,
-    min_sample: int = 20,
-    max_effective_n: float = 40.0,
+    min_sample: int = MIN_SAMPLE_ASSUMPTION,
+    max_effective_n: float = MAX_EFFECTIVE_N_ASSUMPTION,
 ) -> ProcurementCredibilityEstimate:
     """Update a Beta prior using observed closed tenders (awarded vs failed).
 
-    When `tenders_closed` exceeds `max_effective_n`, counts are rescaled linearly so
-    the posterior mean matches the empirical award rate while preserving a realistic
-    epistemic band width.
+    When `tenders_closed` exceeds `max_effective_n`, awarded and failed counts are rescaled
+    linearly to sum to `max_effective_n`, which keeps a realistic epistemic band width. The
+    posterior mean is (alpha + s * awarded) / (alpha + beta + s * closed), so the prior shifts
+    it away from the observed award rate; it does not equal that rate.
+
+    Provenance: awarding a tender is not executing a measure, so this never returns
+    "medida". With at least `min_sample` closed tenders the award rate stands as a
+    municipal base rate ("tasa_base"); with fewer, or none, the result stays "supuesto".
     """
     if min_sample < 1:
         raise ValueError("min_sample must be at least 1")
@@ -145,7 +155,7 @@ def estimate_commune_credibility(
     eff_failed = failed * scale
 
     posterior = BetaCredibility(prior.alpha + eff_awarded, prior.beta + eff_failed)
-    provenance: Provenance = "medida" if closed >= min_sample else "tasa_base"
+    provenance: Provenance = "tasa_base" if closed >= min_sample else "supuesto"
     return ProcurementCredibilityEstimate(
         codigo_comuna=summary.codigo_comuna,
         credibility=posterior,

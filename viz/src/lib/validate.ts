@@ -155,6 +155,7 @@ export function leerTransformaciones(raw: unknown, nAnios: number): Transformaci
       bbox: [val.bbox[0]!, val.bbox[1]!, val.bbox[2]!, val.bbox[3]!],
       intensidad_regional: val.intensidad_regional,
       comunas_foco: focos,
+      ...(esStr(val.aviso) ? { aviso: val.aviso } : {}),
     }
   }
   if (Object.keys(por).length === 0) return undefined

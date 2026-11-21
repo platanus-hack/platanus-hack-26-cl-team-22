@@ -114,8 +114,8 @@ def test_simulacion_json_contains_valid_transformaciones_and_existing_keys():
     ):
         assert key in data, f"Missing key {key!r} in simulacion.json"
 
-    assert "licitaciones" in data["meta"]
-    assert set(data["meta"]["licitaciones"]) >= {"disponible", "comunas_con_datos", "comando"}
+    # No model output uses procurement data yet, so meta does not advertise it.
+    assert "licitaciones" not in data["meta"]
 
     n_years = len(data["meta"]["anios"])
     scenario_ids = {s["id"] for s in data["escenarios"]}
@@ -123,6 +123,8 @@ def test_simulacion_json_contains_valid_transformaciones_and_existing_keys():
     assert set(por_esc) == scenario_ids
 
     for sid, tr in por_esc.items():
+        if tr["variable"] == "pm25_anual":  # pattern across communes not validated
+            assert tr["comunas_foco"] == [] and tr["aviso"], sid
         assert len(tr["intensidad_regional"]) == n_years, sid
         assert all(0.0 <= x <= 1.0 for x in tr["intensidad_regional"]), sid
         assert len(tr["bbox"]) == 4
@@ -131,3 +133,49 @@ def test_simulacion_json_contains_valid_transformaciones_and_existing_keys():
             assert len(c["incertidumbre"]) == n_years
             assert len(c["intensidad"]) == n_years
             assert all(0.0 <= x <= 1.0 for x in c["intensidad"])
+
+
+def _two_commune_runs():
+    ref = np.zeros((2, 2, 2))
+    act = np.zeros((2, 2, 2))
+    act[:, :, 0] = -2.0
+    act[:, :, 1] = -1.0
+    return act, ref, ["13101", "13105"], np.array([-33.4, -33.6]), np.array([-70.6, -70.7])
+
+
+def test_unvalidated_spatial_pattern_publishes_only_the_region():
+    act, ref, codes, lat, lon = _two_commune_runs()
+    tr = compute_scenario_transformation("x", "base", "pm25_anual", "reduccion_emisiones",
+                                         "menor", act, ref, codes, lat, lon, espacial=False)
+    assert tr.comunas_foco == ()
+    assert tr.aviso
+    assert (tr.epicentro_lat, tr.epicentro_lon) == pytest.approx((-33.5, -70.65))
+    assert tr.bbox == pytest.approx((-70.7, -33.6, -70.6, -33.4))
+    out = serialize_transformations([tr])["por_escenario"]["x"]
+    assert out["comunas_foco"] == [] and out["aviso"] == tr.aviso
+
+
+def test_validated_spatial_pattern_keeps_focus_and_no_warning():
+    act, ref, codes, lat, lon = _two_commune_runs()
+    tr = compute_scenario_transformation("x", "base", "seguridad", "seguridad_comunal",
+                                         "menor", act, ref, codes, lat, lon)
+    assert len(tr.comunas_foco) == 2 and tr.aviso is None
+    assert "aviso" not in serialize_transformations([tr])["por_escenario"]["x"]
+
+
+def test_epicenter_is_weighted_by_intensity_only():
+    act, ref, codes, lat, lon = _two_commune_runs()
+    act[:, :, 1] = [-1.5, -0.1]  # peaks early, ends small
+    tr = compute_scenario_transformation("x", "base", "seguridad", "seguridad_comunal",
+                                         "menor", act, ref, codes, lat, lon)
+    # Peak intensities 1.0 and 0.75, whatever the units or the final-year change.
+    assert tr.epicentro_lat == pytest.approx((-33.4 * 1.0 + -33.6 * 0.75) / 1.75)
+
+
+def test_computing_a_transformation_does_not_mutate_its_inputs():
+    act, ref, codes, lat, lon = _two_commune_runs()
+    before = [a.copy() for a in (act, ref, lat, lon)]
+    compute_scenario_transformation("x", "base", "seguridad", "seguridad_comunal",
+                                    "menor", act, ref, codes, lat, lon)
+    for original, now in zip(before, (act, ref, lat, lon), strict=True):
+        assert np.array_equal(original, now)

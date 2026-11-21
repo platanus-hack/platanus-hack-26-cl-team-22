@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|
 | **A. Coropleta + banda continua** | Interpola `(p10, p50, p90)` entre año `t` y `t+1` al reproducir la línea de tiempo (`interpolarMapaPuntos`) | `trayectorias[escenario][comuna][variable]` | Alta: `MapaRelieve` ya interpola RGB a 320 ms; SVG puede actualizar relleno/festón | Ninguno si las bandas se interpolan respetando `p10 ≤ p50 ≤ p90` | **Implementar primero** |
 | **B. Focos y halos en comunas activas** | Pulsa o resalta borde/halo proporcional a `intensidad` en las comunas que más cambian (`comunas_foco`) | `transformaciones.por_escenario[esc].comunas_foco` (`delta_p50`, `incertidumbre`, `intensidad`) | Alta: capa `circle`/`line` desde `featuresDeFocos()` en MapLibre y anillo SVG en `MapaPapel` | Bajo: el radio/opacidad es estrictamente proporcional a `intensidad` e `incertidumbre` | **Implementar junto con A** |
-| **C. Encuadre guiado al epicentro / bbox** | Desplaza suavemente la cámara hacia la zona donde ocurre la transformación al cambiar escenario (`easeTo` / `interpolarVista`) | `epicentro { lat, lon }` y `bbox [lonMin, latMin, lonMax, maxLat]` ponderados por `\|delta_p50\|` | Alta: `fitBounds`/`easeTo` en MapLibre y `ajustarCaja` + `interpolarVista` en SVG | Medio si mueve la cámara sin acción explícita del usuario; mejor ofrecerlo como botón o vista | **Fase 2 (opcional con toggle)** |
+| **C. Encuadre guiado al epicentro / bbox** | Desplaza suavemente la cámara hacia la zona donde ocurre la transformación al cambiar escenario (`easeTo` / `interpolarVista`) | `epicentro { lat, lon }` y `bbox [lonMin, latMin, lonMax, maxLat]` ponderados por la `intensidad` de cada foco | Alta: `fitBounds`/`easeTo` en MapLibre y `ajustarCaja` + `interpolarVista` en SVG | Medio si mueve la cámara sin acción explícita del usuario; mejor ofrecerlo como botón o vista | **Fase 2 (opcional con toggle)** |
 | **D. Progresión en flujos / cintas de acoplamiento** | Ajusta grosor/opacidad de las cintas año a año según el escenario activo (`cintas` y `flujos`) | `origen_aire` (fracción emisora) y `flujos` (mudanzas por año) | Media: en 3D son `LineString` GeoJSON; en SVG ya existen rutas cuadráticas `rutaCurva` | Alto si simula partículas móviles falsas; aceptable si solo modula grosor o trazo continuo | **Solo modular grosor sin partículas** |
 | **E. Extrusión / alzado 3D en modo diferencia** | Eleva cada comuna proporcionalmente a `\|delta_p50\|` en «El plan» (`fill-extrusion-height`) | `delta_p50` de `comunas_foco` en `transformaciones` | **Baja:** solo existe en WebGL/MapLibre (`MapaRelieve`); el SVG plano queda en 2D | Medio: puede tapar comunas vecinas o etiquetas con `pitch = 60` | **Descartada para MVP** |
 
@@ -28,8 +28,9 @@
 
 1. **Sin animaciones decorativas (`PRODUCT.md`):** no agregar viento inventado ni partículas sin respaldo en `trayectorias` o `transformaciones`.
 2. **Accesibilidad (`prefers-reduced-motion`):** toda transición debe pasar por `resolverProgreso(t, reducido, curva)` para saltar de inmediato a `1` cuando el usuario prefiere movimiento reducido.
-3. **Incertidumbre visible:** en Opción B, acompañar la `intensidad` del foco con su `incertidumbre` (por ejemplo, ancho del trazo o lectura en la ficha), nunca ocultar la banda.
-4. **Cero lógica de modelo en el render:** `App.tsx`, `MapaRelieve.tsx` y `MapaPapel.tsx` solo consumen `estadoTransformacionEnCursor(...)` y `interpolarMapaPuntos(...)`.
+3. **Solo donde el patrón está validado:** para el PM2,5, `make validate` muestra que repartir el mismo cambio en todas las comunas predice igual que el modelo. Por eso esos escenarios traen `comunas_foco` vacío, epicentro y `bbox` de toda la región, y un `aviso`; las Opciones B y C aplican hoy solo a seguridad.
+4. **Incertidumbre visible:** en Opción B, acompañar la `intensidad` del foco con su `incertidumbre` (por ejemplo, ancho del trazo o lectura en la ficha), nunca ocultar la banda.
+5. **Cero lógica de modelo en el render:** `App.tsx`, `MapaRelieve.tsx` y `MapaPapel.tsx` solo consumen `estadoTransformacionEnCursor(...)` y `interpolarMapaPuntos(...)`.
 
 ## Cómo conectar la animación cuando el equipo la active
 

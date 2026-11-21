@@ -43,6 +43,11 @@ class ScenarioTransformation:
     bbox: tuple[float, float, float, float]
     intensidad_regional: tuple[float, ...]
     comunas_foco: tuple[CommuneTransformation, ...]
+    aviso: str | None = None
+
+
+UNVALIDATED_PATTERN = ("Patrón entre comunas no validado: repartir el mismo cambio en todas "
+                       "predice igual (make validate). Solo se muestra el cambio de la región.")
 
 
 def compute_scenario_transformation(
@@ -58,8 +63,14 @@ def compute_scenario_transformation(
     lon: np.ndarray,
     *,
     min_intensity: float = 0.05,
+    espacial: bool = True,
 ) -> ScenarioTransformation:
-    """Derive spatial-temporal transformation metadata from paired Monte Carlo runs."""
+    """Derive spatial-temporal transformation metadata from paired Monte Carlo runs.
+
+    espacial=False is for variables whose pattern across communes is not validated (PM2.5:
+    `make validate` shows the same change everywhere predicts as well). Then no focus communes
+    are published, the epicentre and bbox cover the whole region, and `aviso` says why.
+    """
     if better not in ("menor", "mayor"):
         raise ValueError(f"better must be 'menor' or 'mayor', got {better!r}")
     if not 0.0 <= min_intensity <= 1.0:
@@ -98,7 +109,7 @@ def compute_scenario_transformation(
         regional_intensity = tuple(0.0 for _ in range(n_years))
 
     focus_pairs: list[tuple[int, CommuneTransformation]] = []
-    if max_abs > _EPS:
+    if espacial and max_abs > _EPS:
         for i, code in enumerate(codes):
             peak = float(np.max(intensity[:, i]))
             if peak < min_intensity:
@@ -135,10 +146,10 @@ def compute_scenario_transformation(
 
     if focus_pairs:
         idx = np.array([i for i, _ in focus_pairs], dtype=int)
-        weights = np.array(
-            [max(abs(item.delta_p50[-1]), max(item.intensidad), 1e-12) for _, item in focus_pairs],
-            dtype=float,
-        )
+        # Intensity is unitless in [0, 1]; mixing it with the change would make the weight
+        # depend on the variable's units.
+        weights = np.array([max(max(item.intensidad), 1e-12) for _, item in focus_pairs],
+                           dtype=float)
         total_w = float(np.sum(weights))
         epicentro_lat = float(np.sum(lat_arr[idx] * weights) / total_w)
         epicentro_lon = float(np.sum(lon_arr[idx] * weights) / total_w)
@@ -169,6 +180,7 @@ def compute_scenario_transformation(
         bbox=bbox,
         intensidad_regional=regional_intensity,
         comunas_foco=focus_items,
+        aviso=None if espacial else UNVALIDATED_PATTERN,
     )
 
 
@@ -202,6 +214,8 @@ def serialize_transformations(
                 for c in item.comunas_foco
             ],
         }
+        if item.aviso:
+            por_escenario[item.scenario_id]["aviso"] = item.aviso
     return {
         "referencia_por_defecto": default_reference,
         "por_escenario": por_escenario,
