@@ -1,0 +1,3549 @@
+{
+ "meta": {
+  "version": "0.1",
+  "es_ejemplo": true,
+  "semilla": 22,
+  "aviso": "Datos de ejemplo para la interfaz. Solo la línea base es real.",
+  "anio_base": 2024,
+  "anios": [
+   2026,
+   2027,
+   2028,
+   2029,
+   2030,
+   2031,
+   2032,
+   2033,
+   2034,
+   2035,
+   2036
+  ]
+ },
+ "variables": [
+  {
+   "id": "pm25_invierno",
+   "nombre": "PM2,5 de invierno (mayo a agosto)",
+   "unidad": "µg/m³",
+   "mejor": "menor"
+  }
+ ],
+ "comunas": [
+  {
+   "codigo": "cerrillos",
+   "nombre": "Cerrillos",
+   "lat": -33.49461,
+   "lon": -70.69325,
+   "base": {
+    "pm25_invierno": 41.38
+   }
+  },
+  {
+   "codigo": "cerro-navia",
+   "nombre": "Cerro Navia",
+   "lat": -33.43307,
+   "lon": -70.73206,
+   "base": {
+    "pm25_invierno": 48.24
+   }
+  },
+  {
+   "codigo": "el-bosque",
+   "nombre": "El Bosque",
+   "lat": -33.54994,
+   "lon": -70.67652,
+   "base": {
+    "pm25_invierno": 42.9
+   }
+  },
+  {
+   "codigo": "la-florida",
+   "nombre": "La Florida",
+   "lat": -33.51667,
+   "lon": -70.58816,
+   "base": {
+    "pm25_invierno": 33.42
+   }
+  },
+  {
+   "codigo": "las-condes",
+   "nombre": "Las Condes",
+   "lat": -33.37678,
+   "lon": -70.52326,
+   "base": {
+    "pm25_invierno": 24.2
+   }
+  },
+  {
+   "codigo": "pudahuel",
+   "nombre": "Pudahuel",
+   "lat": -33.43779,
+   "lon": -70.75014,
+   "base": {
+    "pm25_invierno": 45.26
+   }
+  },
+  {
+   "codigo": "puente-alto",
+   "nombre": "Puente Alto",
+   "lat": -33.59136,
+   "lon": -70.59443,
+   "base": {
+    "pm25_invierno": 29.64
+   }
+  },
+  {
+   "codigo": "quilicura",
+   "nombre": "Quilicura",
+   "lat": -33.34963,
+   "lon": -70.72385,
+   "base": {
+    "pm25_invierno": 36.16
+   }
+  },
+  {
+   "codigo": "santiago",
+   "nombre": "Santiago",
+   "lat": -33.46418,
+   "lon": -70.6607,
+   "base": {
+    "pm25_invierno": 34.91
+   }
+  },
+  {
+   "codigo": "talagante",
+   "nombre": "Talagante",
+   "lat": -33.67382,
+   "lon": -70.953,
+   "base": {
+    "pm25_invierno": 36.87
+   }
+  }
+ ],
+ "tipos_hogar": [
+  {
+   "id": "sensible-aire",
+   "nombre": "Sensible a la contaminación",
+   "pesos": {
+    "pm25_invierno": 0.8,
+    "seguridad": 0.2
+   }
+  },
+  {
+   "id": "prioriza-seguridad",
+   "nombre": "Prioriza seguridad",
+   "pesos": {
+    "pm25_invierno": 0.2,
+    "seguridad": 0.8
+   }
+  },
+  {
+   "id": "equilibrado",
+   "nombre": "Equilibrado",
+   "pesos": {
+    "pm25_invierno": 0.5,
+    "seguridad": 0.5
+   }
+  }
+ ],
+ "politicas": [
+  {
+   "id": "ppda-lena",
+   "nombre": "Restricción de calefacción a leña",
+   "nivel": "regional",
+   "fuente": "lena",
+   "comunas": "todas",
+   "credibilidad": {
+    "p10": 0.45,
+    "media": 0.6,
+    "p90": 0.75
+   }
+  },
+  {
+   "id": "ppda-transporte",
+   "nombre": "Normas de emisión para transporte",
+   "nivel": "regional",
+   "fuente": "transporte",
+   "comunas": "todas",
+   "credibilidad": {
+    "p10": 0.6,
+    "media": 0.75,
+    "p90": 0.9
+   }
+  },
+  {
+   "id": "seia-planta",
+   "nombre": "Proyecto industrial aprobado (ejemplo)",
+   "nivel": "proyecto",
+   "fuente": "industria",
+   "comunas": [
+    "cerrillos"
+   ],
+   "credibilidad": {
+    "p10": 0.7,
+    "media": 0.85,
+    "p90": 0.95
+   }
+  }
+ ],
+ "escenarios": [
+  {
+   "id": "base",
+   "nombre": "Todos los planes vigentes",
+   "politicas_activas": [
+    "ppda-lena",
+    "ppda-transporte",
+    "seia-planta"
+   ]
+  },
+  {
+   "id": "sin-ppda-lena",
+   "nombre": "Sin: Restricción de calefacción a leña",
+   "politicas_activas": [
+    "ppda-transporte",
+    "seia-planta"
+   ]
+  },
+  {
+   "id": "sin-ppda-transporte",
+   "nombre": "Sin: Normas de emisión para transporte",
+   "politicas_activas": [
+    "ppda-lena",
+    "seia-planta"
+   ]
+  },
+  {
+   "id": "sin-seia-planta",
+   "nombre": "Sin: Proyecto industrial aprobado (ejemplo)",
+   "politicas_activas": [
+    "ppda-lena",
+    "ppda-transporte"
+   ]
+  }
+ ],
+ "trayectorias": {
+  "base": {
+   "cerrillos": {
+    "pm25_invierno": {
+     "p10": [
+      39.65,
+      38.76,
+      37.85,
+      37.04,
+      36.54,
+      35.58,
+      35.01,
+      34.48,
+      33.71,
+      32.89,
+      32.25
+     ],
+     "p50": [
+      41.15,
+      40.96,
+      40.75,
+      40.64,
+      40.84,
+      40.58,
+      40.71,
+      40.88,
+      40.81,
+      40.69,
+      40.75
+     ],
+     "p90": [
+      42.65,
+      43.16,
+      43.65,
+      44.24,
+      45.14,
+      45.58,
+      46.41,
+      47.28,
+      47.91,
+      48.49,
+      49.25
+     ]
+    }
+   },
+   "cerro-navia": {
+    "pm25_invierno": {
+     "p10": [
+      46.48,
+      45.67,
+      44.66,
+      43.76,
+      42.55,
+      41.28,
+      39.89,
+      38.57,
+      37.38,
+      36.27,
+      34.93
+     ],
+     "p50": [
+      47.98,
+      47.87,
+      47.56,
+      47.36,
+      46.85,
+      46.28,
+      45.59,
+      44.97,
+      44.48,
+      44.07,
+      43.43
+     ],
+     "p90": [
+      49.48,
+      50.07,
+      50.46,
+      50.96,
+      51.15,
+      51.28,
+      51.29,
+      51.37,
+      51.58,
+      51.87,
+      51.93
+     ]
+    }
+   },
+   "el-bosque": {
+    "pm25_invierno": {
+     "p10": [
+      41.12,
+      39.99,
+      38.79,
+      37.57,
+      36.76,
+      35.68,
+      34.44,
+      33.19,
+      32.36,
+      31.16,
+      30.23
+     ],
+     "p50": [
+      42.62,
+      42.19,
+      41.69,
+      41.17,
+      41.06,
+      40.68,
+      40.14,
+      39.59,
+      39.46,
+      38.96,
+      38.73
+     ],
+     "p90": [
+      44.12,
+      44.39,
+      44.59,
+      44.77,
+      45.36,
+      45.68,
+      45.84,
+      45.99,
+      46.56,
+      46.76,
+      47.23
+     ]
+    }
+   },
+   "la-florida": {
+    "pm25_invierno": {
+     "p10": [
+      31.66,
+      30.13,
+      29.15,
+      27.94,
+      26.6,
+      25.34,
+      24.25,
+      23.13,
+      22.01,
+      20.73,
+      19.74
+     ],
+     "p50": [
+      33.16,
+      32.33,
+      32.05,
+      31.54,
+      30.9,
+      30.34,
+      29.95,
+      29.53,
+      29.11,
+      28.53,
+      28.24
+     ],
+     "p90": [
+      34.66,
+      34.53,
+      34.95,
+      35.14,
+      35.2,
+      35.34,
+      35.65,
+      35.93,
+      36.21,
+      36.33,
+      36.74
+     ]
+    }
+   },
+   "las-condes": {
+    "pm25_invierno": {
+     "p10": [
+      22.5,
+      21.66,
+      20.68,
+      19.84,
+      19.04,
+      18.02,
+      17.03,
+      15.99,
+      14.95,
+      13.96,
+      12.58
+     ],
+     "p50": [
+      24.0,
+      23.86,
+      23.58,
+      23.44,
+      23.34,
+      23.02,
+      22.73,
+      22.39,
+      22.05,
+      21.76,
+      21.08
+     ],
+     "p90": [
+      25.5,
+      26.06,
+      26.48,
+      27.04,
+      27.64,
+      28.02,
+      28.43,
+      28.79,
+      29.15,
+      29.56,
+      29.58
+     ]
+    }
+   },
+   "pudahuel": {
+    "pm25_invierno": {
+     "p10": [
+      43.16,
+      41.99,
+      40.42,
+      38.96,
+      37.94,
+      36.54,
+      35.22,
+      34.03,
+      32.7,
+      31.33,
+      30.0
+     ],
+     "p50": [
+      44.66,
+      44.19,
+      43.32,
+      42.56,
+      42.24,
+      41.54,
+      40.92,
+      40.43,
+      39.8,
+      39.13,
+      38.5
+     ],
+     "p90": [
+      46.16,
+      46.39,
+      46.22,
+      46.16,
+      46.54,
+      46.54,
+      46.62,
+      46.83,
+      46.9,
+      46.93,
+      47.0
+     ]
+    }
+   },
+   "puente-alto": {
+    "pm25_invierno": {
+     "p10": [
+      27.62,
+      26.38,
+      25.25,
+      24.34,
+      23.23,
+      22.32,
+      21.28,
+      20.25,
+      19.18,
+      17.98,
+      16.89
+     ],
+     "p50": [
+      29.12,
+      28.58,
+      28.15,
+      27.94,
+      27.53,
+      27.32,
+      26.98,
+      26.65,
+      26.28,
+      25.78,
+      25.39
+     ],
+     "p90": [
+      30.62,
+      30.78,
+      31.05,
+      31.54,
+      31.83,
+      32.32,
+      32.68,
+      33.05,
+      33.38,
+      33.58,
+      33.89
+     ]
+    }
+   },
+   "quilicura": {
+    "pm25_invierno": {
+     "p10": [
+      34.21,
+      32.85,
+      31.77,
+      30.66,
+      29.52,
+      28.24,
+      26.65,
+      25.68,
+      24.47,
+      22.95,
+      21.86
+     ],
+     "p50": [
+      35.71,
+      35.05,
+      34.67,
+      34.26,
+      33.82,
+      33.24,
+      32.35,
+      32.08,
+      31.57,
+      30.75,
+      30.36
+     ],
+     "p90": [
+      37.21,
+      37.25,
+      37.57,
+      37.86,
+      38.12,
+      38.24,
+      38.05,
+      38.48,
+      38.67,
+      38.55,
+      38.86
+     ]
+    }
+   },
+   "santiago": {
+    "pm25_invierno": {
+     "p10": [
+      32.82,
+      31.73,
+      30.53,
+      29.52,
+      28.36,
+      27.22,
+      26.05,
+      25.05,
+      23.67,
+      22.66,
+      21.58
+     ],
+     "p50": [
+      34.32,
+      33.93,
+      33.43,
+      33.12,
+      32.66,
+      32.22,
+      31.75,
+      31.45,
+      30.77,
+      30.46,
+      30.08
+     ],
+     "p90": [
+      35.82,
+      36.13,
+      36.33,
+      36.72,
+      36.96,
+      37.22,
+      37.45,
+      37.85,
+      37.87,
+      38.26,
+      38.58
+     ]
+    }
+   },
+   "talagante": {
+    "pm25_invierno": {
+     "p10": [
+      34.79,
+      33.59,
+      32.32,
+      31.13,
+      30.08,
+      28.78,
+      27.69,
+      26.63,
+      25.53,
+      24.56,
+      23.35
+     ],
+     "p50": [
+      36.29,
+      35.79,
+      35.22,
+      34.73,
+      34.38,
+      33.78,
+      33.39,
+      33.03,
+      32.63,
+      32.36,
+      31.85
+     ],
+     "p90": [
+      37.79,
+      37.99,
+      38.12,
+      38.33,
+      38.68,
+      38.78,
+      39.09,
+      39.43,
+      39.73,
+      40.16,
+      40.35
+     ]
+    }
+   }
+  },
+  "sin-ppda-lena": {
+   "cerrillos": {
+    "pm25_invierno": {
+     "p10": [
+      40.31,
+      40.3,
+      39.93,
+      39.53,
+      39.15,
+      38.86,
+      38.39,
+      37.98,
+      37.34,
+      36.8,
+      36.27
+     ],
+     "p50": [
+      41.81,
+      42.5,
+      42.83,
+      43.13,
+      43.45,
+      43.86,
+      44.09,
+      44.38,
+      44.44,
+      44.6,
+      44.77
+     ],
+     "p90": [
+      43.31,
+      44.7,
+      45.73,
+      46.73,
+      47.75,
+      48.86,
+      49.79,
+      50.78,
+      51.54,
+      52.4,
+      53.27
+     ]
+    }
+   },
+   "cerro-navia": {
+    "pm25_invierno": {
+     "p10": [
+      46.51,
+      45.68,
+      45.02,
+      44.21,
+      43.25,
+      42.52,
+      41.79,
+      40.82,
+      40.08,
+      39.16,
+      38.31
+     ],
+     "p50": [
+      48.01,
+      47.88,
+      47.92,
+      47.81,
+      47.55,
+      47.52,
+      47.49,
+      47.22,
+      47.18,
+      46.96,
+      46.81
+     ],
+     "p90": [
+      49.51,
+      50.08,
+      50.82,
+      51.41,
+      51.85,
+      52.52,
+      53.19,
+      53.62,
+      54.28,
+      54.76,
+      55.31
+     ]
+    }
+   },
+   "el-bosque": {
+    "pm25_invierno": {
+     "p10": [
+      41.23,
+      40.59,
+      39.71,
+      38.9,
+      38.17,
+      37.56,
+      36.98,
+      36.07,
+      35.48,
+      34.77,
+      34.19
+     ],
+     "p50": [
+      42.73,
+      42.79,
+      42.61,
+      42.5,
+      42.47,
+      42.56,
+      42.68,
+      42.47,
+      42.58,
+      42.57,
+      42.69
+     ],
+     "p90": [
+      44.23,
+      44.99,
+      45.51,
+      46.1,
+      46.77,
+      47.56,
+      48.38,
+      48.87,
+      49.68,
+      50.37,
+      51.19
+     ]
+    }
+   },
+   "la-florida": {
+    "pm25_invierno": {
+     "p10": [
+      31.89,
+      30.92,
+      30.04,
+      29.11,
+      28.28,
+      27.64,
+      26.76,
+      25.77,
+      25.26,
+      24.23,
+      23.34
+     ],
+     "p50": [
+      33.39,
+      33.12,
+      32.94,
+      32.71,
+      32.58,
+      32.64,
+      32.46,
+      32.17,
+      32.36,
+      32.03,
+      31.84
+     ],
+     "p90": [
+      34.89,
+      35.32,
+      35.84,
+      36.31,
+      36.88,
+      37.64,
+      38.16,
+      38.57,
+      39.46,
+      39.83,
+      40.34
+     ]
+    }
+   },
+   "las-condes": {
+    "pm25_invierno": {
+     "p10": [
+      22.51,
+      21.43,
+      20.66,
+      19.94,
+      19.04,
+      18.16,
+      17.24,
+      16.09,
+      15.24,
+      14.17,
+      13.14
+     ],
+     "p50": [
+      24.01,
+      23.63,
+      23.56,
+      23.54,
+      23.34,
+      23.16,
+      22.94,
+      22.49,
+      22.34,
+      21.97,
+      21.64
+     ],
+     "p90": [
+      25.51,
+      25.83,
+      26.46,
+      27.14,
+      27.64,
+      28.16,
+      28.64,
+      28.89,
+      29.44,
+      29.77,
+      30.14
+     ]
+    }
+   },
+   "pudahuel": {
+    "pm25_invierno": {
+     "p10": [
+      43.63,
+      42.88,
+      41.87,
+      41.15,
+      40.53,
+      39.67,
+      38.77,
+      37.91,
+      36.96,
+      35.95,
+      35.16
+     ],
+     "p50": [
+      45.13,
+      45.08,
+      44.77,
+      44.75,
+      44.83,
+      44.67,
+      44.47,
+      44.31,
+      44.06,
+      43.75,
+      43.66
+     ],
+     "p90": [
+      46.63,
+      47.28,
+      47.67,
+      48.35,
+      49.13,
+      49.67,
+      50.17,
+      50.71,
+      51.16,
+      51.55,
+      52.16
+     ]
+    }
+   },
+   "puente-alto": {
+    "pm25_invierno": {
+     "p10": [
+      28.06,
+      27.1,
+      26.15,
+      25.17,
+      24.18,
+      23.15,
+      22.03,
+      21.28,
+      20.34,
+      19.47,
+      18.85
+     ],
+     "p50": [
+      29.56,
+      29.3,
+      29.05,
+      28.77,
+      28.48,
+      28.15,
+      27.73,
+      27.68,
+      27.44,
+      27.27,
+      27.35
+     ],
+     "p90": [
+      31.06,
+      31.5,
+      31.95,
+      32.37,
+      32.78,
+      33.15,
+      33.43,
+      34.08,
+      34.54,
+      35.07,
+      35.85
+     ]
+    }
+   },
+   "quilicura": {
+    "pm25_invierno": {
+     "p10": [
+      34.4,
+      33.6,
+      32.51,
+      31.53,
+      30.75,
+      29.82,
+      28.72,
+      27.6,
+      26.76,
+      25.73,
+      24.95
+     ],
+     "p50": [
+      35.9,
+      35.8,
+      35.41,
+      35.13,
+      35.05,
+      34.82,
+      34.42,
+      34.0,
+      33.86,
+      33.53,
+      33.45
+     ],
+     "p90": [
+      37.4,
+      38.0,
+      38.31,
+      38.73,
+      39.35,
+      39.82,
+      40.12,
+      40.4,
+      40.96,
+      41.33,
+      41.95
+     ]
+    }
+   },
+   "santiago": {
+    "pm25_invierno": {
+     "p10": [
+      33.26,
+      32.33,
+      31.43,
+      30.65,
+      29.77,
+      28.74,
+      27.9,
+      26.96,
+      26.03,
+      25.23,
+      24.39
+     ],
+     "p50": [
+      34.76,
+      34.53,
+      34.33,
+      34.25,
+      34.07,
+      33.74,
+      33.6,
+      33.36,
+      33.13,
+      33.03,
+      32.89
+     ],
+     "p90": [
+      36.26,
+      36.73,
+      37.23,
+      37.85,
+      38.37,
+      38.74,
+      39.3,
+      39.76,
+      40.23,
+      40.83,
+      41.39
+     ]
+    }
+   },
+   "talagante": {
+    "pm25_invierno": {
+     "p10": [
+      35.33,
+      34.42,
+      33.46,
+      32.52,
+      31.69,
+      30.68,
+      29.74,
+      28.72,
+      27.72,
+      26.81,
+      26.27
+     ],
+     "p50": [
+      36.83,
+      36.62,
+      36.36,
+      36.12,
+      35.99,
+      35.68,
+      35.44,
+      35.12,
+      34.82,
+      34.61,
+      34.77
+     ],
+     "p90": [
+      38.33,
+      38.82,
+      39.26,
+      39.72,
+      40.29,
+      40.68,
+      41.14,
+      41.52,
+      41.92,
+      42.41,
+      43.27
+     ]
+    }
+   }
+  },
+  "sin-ppda-transporte": {
+   "cerrillos": {
+    "pm25_invierno": {
+     "p10": [
+      39.99,
+      39.5,
+      38.99,
+      38.43,
+      37.91,
+      37.67,
+      37.1,
+      36.81,
+      36.37,
+      35.72,
+      35.09
+     ],
+     "p50": [
+      41.49,
+      41.7,
+      41.89,
+      42.03,
+      42.21,
+      42.67,
+      42.8,
+      43.21,
+      43.47,
+      43.52,
+      43.59
+     ],
+     "p90": [
+      42.99,
+      43.9,
+      44.79,
+      45.63,
+      46.51,
+      47.67,
+      48.5,
+      49.61,
+      50.57,
+      51.32,
+      52.09
+     ]
+    }
+   },
+   "cerro-navia": {
+    "pm25_invierno": {
+     "p10": [
+      46.42,
+      45.31,
+      44.52,
+      43.63,
+      42.76,
+      41.66,
+      40.77,
+      39.74,
+      39.14,
+      38.18,
+      37.27
+     ],
+     "p50": [
+      47.92,
+      47.51,
+      47.42,
+      47.23,
+      47.06,
+      46.66,
+      46.47,
+      46.14,
+      46.24,
+      45.98,
+      45.77
+     ],
+     "p90": [
+      49.42,
+      49.71,
+      50.32,
+      50.83,
+      51.36,
+      51.66,
+      52.17,
+      52.54,
+      53.34,
+      53.78,
+      54.27
+     ]
+    }
+   },
+   "el-bosque": {
+    "pm25_invierno": {
+     "p10": [
+      41.24,
+      40.25,
+      39.27,
+      38.3,
+      37.5,
+      36.47,
+      35.53,
+      34.66,
+      33.68,
+      32.56,
+      31.47
+     ],
+     "p50": [
+      42.74,
+      42.45,
+      42.17,
+      41.9,
+      41.8,
+      41.47,
+      41.23,
+      41.06,
+      40.78,
+      40.36,
+      39.97
+     ],
+     "p90": [
+      44.24,
+      44.65,
+      45.07,
+      45.5,
+      46.1,
+      46.47,
+      46.93,
+      47.46,
+      47.88,
+      48.16,
+      48.47
+     ]
+    }
+   },
+   "la-florida": {
+    "pm25_invierno": {
+     "p10": [
+      31.57,
+      30.44,
+      29.59,
+      28.6,
+      27.6,
+      26.46,
+      25.55,
+      24.51,
+      23.37,
+      22.29,
+      21.65
+     ],
+     "p50": [
+      33.07,
+      32.64,
+      32.49,
+      32.2,
+      31.9,
+      31.46,
+      31.25,
+      30.91,
+      30.47,
+      30.09,
+      30.15
+     ],
+     "p90": [
+      34.57,
+      34.84,
+      35.39,
+      35.8,
+      36.2,
+      36.46,
+      36.95,
+      37.31,
+      37.57,
+      37.89,
+      38.65
+     ]
+    }
+   },
+   "las-condes": {
+    "pm25_invierno": {
+     "p10": [
+      22.37,
+      21.31,
+      20.54,
+      19.71,
+      18.74,
+      18.0,
+      16.85,
+      15.84,
+      14.67,
+      13.93,
+      13.0
+     ],
+     "p50": [
+      23.87,
+      23.51,
+      23.44,
+      23.31,
+      23.04,
+      23.0,
+      22.55,
+      22.24,
+      21.77,
+      21.73,
+      21.5
+     ],
+     "p90": [
+      25.37,
+      25.71,
+      26.34,
+      26.91,
+      27.34,
+      28.0,
+      28.25,
+      28.64,
+      28.87,
+      29.53,
+      30.0
+     ]
+    }
+   },
+   "pudahuel": {
+    "pm25_invierno": {
+     "p10": [
+      43.77,
+      42.78,
+      41.78,
+      40.55,
+      39.32,
+      38.18,
+      37.24,
+      36.03,
+      34.61,
+      33.67,
+      32.73
+     ],
+     "p50": [
+      45.27,
+      44.98,
+      44.68,
+      44.15,
+      43.62,
+      43.18,
+      42.94,
+      42.43,
+      41.71,
+      41.47,
+      41.23
+     ],
+     "p90": [
+      46.77,
+      47.18,
+      47.58,
+      47.75,
+      47.92,
+      48.18,
+      48.64,
+      48.83,
+      48.81,
+      49.27,
+      49.73
+     ]
+    }
+   },
+   "puente-alto": {
+    "pm25_invierno": {
+     "p10": [
+      27.73,
+      26.82,
+      26.0,
+      25.2,
+      23.99,
+      23.02,
+      21.93,
+      21.09,
+      20.12,
+      18.97,
+      18.0
+     ],
+     "p50": [
+      29.23,
+      29.02,
+      28.9,
+      28.8,
+      28.29,
+      28.02,
+      27.63,
+      27.49,
+      27.22,
+      26.77,
+      26.5
+     ],
+     "p90": [
+      30.73,
+      31.22,
+      31.8,
+      32.4,
+      32.59,
+      33.02,
+      33.33,
+      33.89,
+      34.32,
+      34.57,
+      35.0
+     ]
+    }
+   },
+   "quilicura": {
+    "pm25_invierno": {
+     "p10": [
+      34.43,
+      33.18,
+      31.96,
+      30.84,
+      29.77,
+      28.66,
+      27.37,
+      26.12,
+      25.09,
+      24.12,
+      22.97
+     ],
+     "p50": [
+      35.93,
+      35.38,
+      34.86,
+      34.44,
+      34.07,
+      33.66,
+      33.07,
+      32.52,
+      32.19,
+      31.92,
+      31.47
+     ],
+     "p90": [
+      37.43,
+      37.58,
+      37.76,
+      38.04,
+      38.37,
+      38.66,
+      38.77,
+      38.92,
+      39.29,
+      39.72,
+      39.97
+     ]
+    }
+   },
+   "santiago": {
+    "pm25_invierno": {
+     "p10": [
+      33.12,
+      32.38,
+      31.33,
+      30.25,
+      29.13,
+      28.19,
+      27.21,
+      26.23,
+      25.16,
+      24.21,
+      23.26
+     ],
+     "p50": [
+      34.62,
+      34.58,
+      34.23,
+      33.85,
+      33.43,
+      33.19,
+      32.91,
+      32.63,
+      32.26,
+      32.01,
+      31.76
+     ],
+     "p90": [
+      36.12,
+      36.78,
+      37.13,
+      37.45,
+      37.73,
+      38.19,
+      38.61,
+      39.03,
+      39.36,
+      39.81,
+      40.26
+     ]
+    }
+   },
+   "talagante": {
+    "pm25_invierno": {
+     "p10": [
+      35.03,
+      34.17,
+      32.92,
+      32.01,
+      30.97,
+      30.07,
+      29.33,
+      28.32,
+      27.27,
+      26.25,
+      25.44
+     ],
+     "p50": [
+      36.53,
+      36.37,
+      35.82,
+      35.61,
+      35.27,
+      35.07,
+      35.03,
+      34.72,
+      34.37,
+      34.05,
+      33.94
+     ],
+     "p90": [
+      38.03,
+      38.57,
+      38.72,
+      39.21,
+      39.57,
+      40.07,
+      40.73,
+      41.12,
+      41.47,
+      41.85,
+      42.44
+     ]
+    }
+   }
+  },
+  "sin-seia-planta": {
+   "cerrillos": {
+    "pm25_invierno": {
+     "p10": [
+      39.58,
+      38.37,
+      37.23,
+      36.27,
+      35.12,
+      33.67,
+      32.32,
+      31.02,
+      29.85,
+      28.54,
+      27.52
+     ],
+     "p50": [
+      41.08,
+      40.57,
+      40.13,
+      39.87,
+      39.42,
+      38.67,
+      38.02,
+      37.42,
+      36.95,
+      36.34,
+      36.02
+     ],
+     "p90": [
+      42.58,
+      42.77,
+      43.03,
+      43.47,
+      43.72,
+      43.67,
+      43.72,
+      43.82,
+      44.05,
+      44.14,
+      44.52
+     ]
+    }
+   },
+   "cerro-navia": {
+    "pm25_invierno": {
+     "p10": [
+      46.1,
+      45.07,
+      43.7,
+      42.64,
+      41.4,
+      40.34,
+      39.37,
+      38.36,
+      37.25,
+      35.88,
+      34.5
+     ],
+     "p50": [
+      47.6,
+      47.27,
+      46.6,
+      46.24,
+      45.7,
+      45.34,
+      45.07,
+      44.76,
+      44.35,
+      43.68,
+      43.0
+     ],
+     "p90": [
+      49.1,
+      49.47,
+      49.5,
+      49.84,
+      50.0,
+      50.34,
+      50.77,
+      51.16,
+      51.45,
+      51.48,
+      51.5
+     ]
+    }
+   },
+   "el-bosque": {
+    "pm25_invierno": {
+     "p10": [
+      40.4,
+      39.39,
+      38.35,
+      37.27,
+      35.87,
+      35.05,
+      33.72,
+      32.63,
+      31.16,
+      29.84,
+      28.8
+     ],
+     "p50": [
+      41.9,
+      41.59,
+      41.25,
+      40.87,
+      40.17,
+      40.05,
+      39.42,
+      39.03,
+      38.26,
+      37.64,
+      37.3
+     ],
+     "p90": [
+      43.4,
+      43.79,
+      44.15,
+      44.47,
+      44.47,
+      45.05,
+      45.12,
+      45.43,
+      45.36,
+      45.44,
+      45.8
+     ]
+    }
+   },
+   "la-florida": {
+    "pm25_invierno": {
+     "p10": [
+      31.6,
+      30.27,
+      29.09,
+      28.09,
+      26.65,
+      25.59,
+      24.19,
+      23.12,
+      21.91,
+      20.88,
+      19.64
+     ],
+     "p50": [
+      33.1,
+      32.47,
+      31.99,
+      31.69,
+      30.95,
+      30.59,
+      29.89,
+      29.52,
+      29.01,
+      28.68,
+      28.14
+     ],
+     "p90": [
+      34.6,
+      34.67,
+      34.89,
+      35.29,
+      35.25,
+      35.59,
+      35.59,
+      35.92,
+      36.11,
+      36.48,
+      36.64
+     ]
+    }
+   },
+   "las-condes": {
+    "pm25_invierno": {
+     "p10": [
+      22.23,
+      21.06,
+      19.8,
+      18.64,
+      17.37,
+      16.16,
+      15.14,
+      13.97,
+      13.01,
+      12.0,
+      11.0
+     ],
+     "p50": [
+      23.73,
+      23.26,
+      22.7,
+      22.24,
+      21.67,
+      21.16,
+      20.84,
+      20.37,
+      20.11,
+      19.8,
+      19.5
+     ],
+     "p90": [
+      25.23,
+      25.46,
+      25.6,
+      25.84,
+      25.97,
+      26.16,
+      26.54,
+      26.77,
+      27.21,
+      27.6,
+      28.0
+     ]
+    }
+   },
+   "pudahuel": {
+    "pm25_invierno": {
+     "p10": [
+      43.04,
+      41.86,
+      40.82,
+      39.71,
+      38.64,
+      37.62,
+      36.15,
+      34.98,
+      33.82,
+      32.54,
+      31.1
+     ],
+     "p50": [
+      44.54,
+      44.06,
+      43.72,
+      43.31,
+      42.94,
+      42.62,
+      41.85,
+      41.38,
+      40.92,
+      40.34,
+      39.6
+     ],
+     "p90": [
+      46.04,
+      46.26,
+      46.62,
+      46.91,
+      47.24,
+      47.62,
+      47.55,
+      47.78,
+      48.02,
+      48.14,
+      48.1
+     ]
+    }
+   },
+   "puente-alto": {
+    "pm25_invierno": {
+     "p10": [
+      27.71,
+      26.53,
+      25.67,
+      24.71,
+      23.49,
+      22.18,
+      20.9,
+      19.73,
+      18.47,
+      17.61,
+      16.28
+     ],
+     "p50": [
+      29.21,
+      28.73,
+      28.57,
+      28.31,
+      27.79,
+      27.18,
+      26.6,
+      26.13,
+      25.57,
+      25.41,
+      24.78
+     ],
+     "p90": [
+      30.71,
+      30.93,
+      31.47,
+      31.91,
+      32.09,
+      32.18,
+      32.3,
+      32.53,
+      32.67,
+      33.21,
+      33.28
+     ]
+    }
+   },
+   "quilicura": {
+    "pm25_invierno": {
+     "p10": [
+      34.15,
+      32.98,
+      31.85,
+      30.52,
+      29.29,
+      28.13,
+      26.99,
+      25.71,
+      24.47,
+      23.31,
+      22.4
+     ],
+     "p50": [
+      35.65,
+      35.18,
+      34.75,
+      34.12,
+      33.59,
+      33.13,
+      32.69,
+      32.11,
+      31.57,
+      31.11,
+      30.9
+     ],
+     "p90": [
+      37.15,
+      37.38,
+      37.65,
+      37.72,
+      37.89,
+      38.13,
+      38.39,
+      38.51,
+      38.67,
+      38.91,
+      39.4
+     ]
+    }
+   },
+   "santiago": {
+    "pm25_invierno": {
+     "p10": [
+      32.75,
+      31.67,
+      30.72,
+      29.33,
+      28.36,
+      27.39,
+      26.22,
+      25.19,
+      24.23,
+      23.03,
+      21.88
+     ],
+     "p50": [
+      34.25,
+      33.87,
+      33.62,
+      32.93,
+      32.66,
+      32.39,
+      31.92,
+      31.59,
+      31.33,
+      30.83,
+      30.38
+     ],
+     "p90": [
+      35.75,
+      36.07,
+      36.52,
+      36.53,
+      36.96,
+      37.39,
+      37.62,
+      37.99,
+      38.43,
+      38.63,
+      38.88
+     ]
+    }
+   },
+   "talagante": {
+    "pm25_invierno": {
+     "p10": [
+      34.72,
+      33.43,
+      32.25,
+      31.05,
+      30.1,
+      28.88,
+      27.52,
+      26.46,
+      25.41,
+      24.29,
+      23.08
+     ],
+     "p50": [
+      36.22,
+      35.63,
+      35.15,
+      34.65,
+      34.4,
+      33.88,
+      33.22,
+      32.86,
+      32.51,
+      32.09,
+      31.58
+     ],
+     "p90": [
+      37.72,
+      37.83,
+      38.05,
+      38.25,
+      38.7,
+      38.88,
+      38.92,
+      39.26,
+      39.61,
+      39.89,
+      40.08
+     ]
+    }
+   }
+  }
+ },
+ "aportes": {
+  "base": {
+   "cerrillos": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.72
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 5.61
+     }
+    ]
+   },
+   "cerro-navia": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -4.17
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 1.4
+     }
+    ]
+   },
+   "el-bosque": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.82
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 1.4
+     }
+    ]
+   },
+   "la-florida": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.2
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "las-condes": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -2.59
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "pudahuel": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.98
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "puente-alto": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -2.95
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "quilicura": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.38
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "santiago": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.29
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "talagante": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.42
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   }
+  },
+  "sin-ppda-lena": {
+   "cerrillos": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 5.61
+     }
+    ]
+   },
+   "cerro-navia": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 1.4
+     }
+    ]
+   },
+   "el-bosque": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 1.4
+     }
+    ]
+   },
+   "la-florida": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "las-condes": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "pudahuel": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "puente-alto": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "quilicura": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "santiago": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "talagante": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   }
+  },
+  "sin-ppda-transporte": {
+   "cerrillos": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.72
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 5.61
+     }
+    ]
+   },
+   "cerro-navia": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -4.17
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 1.4
+     }
+    ]
+   },
+   "el-bosque": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.82
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 1.4
+     }
+    ]
+   },
+   "la-florida": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.2
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "las-condes": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -2.59
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "pudahuel": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.98
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "puente-alto": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -2.95
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "quilicura": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.38
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "santiago": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.29
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   },
+   "talagante": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.42
+     },
+     {
+      "politica_id": "seia-planta",
+      "delta_p50_final": 0.0
+     }
+    ]
+   }
+  },
+  "sin-seia-planta": {
+   "cerrillos": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.72
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "cerro-navia": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -4.17
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "el-bosque": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.82
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "la-florida": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.2
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "las-condes": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -2.59
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "pudahuel": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.98
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "puente-alto": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -2.95
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "quilicura": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.38
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "santiago": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.29
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   },
+   "talagante": {
+    "pm25_invierno": [
+     {
+      "politica_id": "ppda-lena",
+      "delta_p50_final": -3.42
+     },
+     {
+      "politica_id": "ppda-transporte",
+      "delta_p50_final": -2.06
+     }
+    ]
+   }
+  }
+ },
+ "flujos": {
+  "base": [
+   {
+    "anio": 2026,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 64
+   },
+   {
+    "anio": 2026,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 537
+   },
+   {
+    "anio": 2026,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 341
+   },
+   {
+    "anio": 2026,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 443
+   },
+   {
+    "anio": 2027,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 612
+   },
+   {
+    "anio": 2027,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 660
+   },
+   {
+    "anio": 2027,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 880
+   },
+   {
+    "anio": 2027,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 627
+   },
+   {
+    "anio": 2028,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 592
+   },
+   {
+    "anio": 2028,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 160
+   },
+   {
+    "anio": 2028,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 810
+   },
+   {
+    "anio": 2028,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 172
+   },
+   {
+    "anio": 2029,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 398
+   },
+   {
+    "anio": 2029,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 120
+   },
+   {
+    "anio": 2029,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 485
+   },
+   {
+    "anio": 2029,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 315
+   },
+   {
+    "anio": 2030,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 163
+   },
+   {
+    "anio": 2030,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 53
+   },
+   {
+    "anio": 2030,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 657
+   },
+   {
+    "anio": 2030,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 472
+   },
+   {
+    "anio": 2031,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 185
+   },
+   {
+    "anio": 2031,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 332
+   },
+   {
+    "anio": 2031,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 561
+   },
+   {
+    "anio": 2031,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 126
+   },
+   {
+    "anio": 2032,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 88
+   },
+   {
+    "anio": 2032,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 763
+   },
+   {
+    "anio": 2032,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 177
+   },
+   {
+    "anio": 2032,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 97
+   },
+   {
+    "anio": 2033,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 746
+   },
+   {
+    "anio": 2033,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 632
+   },
+   {
+    "anio": 2033,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 388
+   },
+   {
+    "anio": 2033,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 228
+   },
+   {
+    "anio": 2034,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 274
+   },
+   {
+    "anio": 2034,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 649
+   },
+   {
+    "anio": 2034,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 122
+   },
+   {
+    "anio": 2034,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 781
+   },
+   {
+    "anio": 2035,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 816
+   },
+   {
+    "anio": 2035,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 273
+   },
+   {
+    "anio": 2035,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 564
+   },
+   {
+    "anio": 2035,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 649
+   },
+   {
+    "anio": 2036,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 889
+   },
+   {
+    "anio": 2036,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 441
+   },
+   {
+    "anio": 2036,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 713
+   },
+   {
+    "anio": 2036,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 676
+   }
+  ],
+  "sin-ppda-lena": [
+   {
+    "anio": 2026,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 488
+   },
+   {
+    "anio": 2026,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 139
+   },
+   {
+    "anio": 2026,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 800
+   },
+   {
+    "anio": 2026,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 45
+   },
+   {
+    "anio": 2027,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 438
+   },
+   {
+    "anio": 2027,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 521
+   },
+   {
+    "anio": 2027,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 472
+   },
+   {
+    "anio": 2027,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 516
+   },
+   {
+    "anio": 2028,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 345
+   },
+   {
+    "anio": 2028,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 83
+   },
+   {
+    "anio": 2028,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 590
+   },
+   {
+    "anio": 2028,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 516
+   },
+   {
+    "anio": 2029,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 280
+   },
+   {
+    "anio": 2029,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 505
+   },
+   {
+    "anio": 2029,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 42
+   },
+   {
+    "anio": 2029,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 134
+   },
+   {
+    "anio": 2030,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 44
+   },
+   {
+    "anio": 2030,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 556
+   },
+   {
+    "anio": 2030,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 718
+   },
+   {
+    "anio": 2030,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 237
+   },
+   {
+    "anio": 2031,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 197
+   },
+   {
+    "anio": 2031,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 828
+   },
+   {
+    "anio": 2031,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 274
+   },
+   {
+    "anio": 2031,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 536
+   },
+   {
+    "anio": 2032,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 807
+   },
+   {
+    "anio": 2032,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 366
+   },
+   {
+    "anio": 2032,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 146
+   },
+   {
+    "anio": 2032,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 425
+   },
+   {
+    "anio": 2033,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 176
+   },
+   {
+    "anio": 2033,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 398
+   },
+   {
+    "anio": 2033,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 816
+   },
+   {
+    "anio": 2033,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 447
+   },
+   {
+    "anio": 2034,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 603
+   },
+   {
+    "anio": 2034,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 624
+   },
+   {
+    "anio": 2034,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 499
+   },
+   {
+    "anio": 2034,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 717
+   },
+   {
+    "anio": 2035,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 590
+   },
+   {
+    "anio": 2035,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 421
+   },
+   {
+    "anio": 2035,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 523
+   },
+   {
+    "anio": 2035,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 777
+   },
+   {
+    "anio": 2036,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 596
+   },
+   {
+    "anio": 2036,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 756
+   },
+   {
+    "anio": 2036,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 385
+   },
+   {
+    "anio": 2036,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 874
+   }
+  ],
+  "sin-ppda-transporte": [
+   {
+    "anio": 2026,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 273
+   },
+   {
+    "anio": 2026,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 570
+   },
+   {
+    "anio": 2026,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 654
+   },
+   {
+    "anio": 2026,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 562
+   },
+   {
+    "anio": 2027,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 721
+   },
+   {
+    "anio": 2027,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 123
+   },
+   {
+    "anio": 2027,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 232
+   },
+   {
+    "anio": 2027,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 119
+   },
+   {
+    "anio": 2028,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 84
+   },
+   {
+    "anio": 2028,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 826
+   },
+   {
+    "anio": 2028,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 161
+   },
+   {
+    "anio": 2028,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 483
+   },
+   {
+    "anio": 2029,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 546
+   },
+   {
+    "anio": 2029,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 695
+   },
+   {
+    "anio": 2029,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 369
+   },
+   {
+    "anio": 2029,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 616
+   },
+   {
+    "anio": 2030,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 812
+   },
+   {
+    "anio": 2030,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 887
+   },
+   {
+    "anio": 2030,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 87
+   },
+   {
+    "anio": 2030,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 325
+   },
+   {
+    "anio": 2031,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 279
+   },
+   {
+    "anio": 2031,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 644
+   },
+   {
+    "anio": 2031,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 142
+   },
+   {
+    "anio": 2031,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 674
+   },
+   {
+    "anio": 2032,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 547
+   },
+   {
+    "anio": 2032,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 53
+   },
+   {
+    "anio": 2032,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 392
+   },
+   {
+    "anio": 2032,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 619
+   },
+   {
+    "anio": 2033,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 813
+   },
+   {
+    "anio": 2033,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 176
+   },
+   {
+    "anio": 2033,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 236
+   },
+   {
+    "anio": 2033,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 368
+   },
+   {
+    "anio": 2034,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 526
+   },
+   {
+    "anio": 2034,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 194
+   },
+   {
+    "anio": 2034,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 597
+   },
+   {
+    "anio": 2034,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 60
+   },
+   {
+    "anio": 2035,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 594
+   },
+   {
+    "anio": 2035,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 247
+   },
+   {
+    "anio": 2035,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 140
+   },
+   {
+    "anio": 2035,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 474
+   },
+   {
+    "anio": 2036,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 840
+   },
+   {
+    "anio": 2036,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 696
+   },
+   {
+    "anio": 2036,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 373
+   },
+   {
+    "anio": 2036,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 478
+   }
+  ],
+  "sin-seia-planta": [
+   {
+    "anio": 2026,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 481
+   },
+   {
+    "anio": 2026,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 764
+   },
+   {
+    "anio": 2026,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 672
+   },
+   {
+    "anio": 2026,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 241
+   },
+   {
+    "anio": 2027,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 840
+   },
+   {
+    "anio": 2027,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 124
+   },
+   {
+    "anio": 2027,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 323
+   },
+   {
+    "anio": 2027,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 718
+   },
+   {
+    "anio": 2028,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 797
+   },
+   {
+    "anio": 2028,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 302
+   },
+   {
+    "anio": 2028,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 200
+   },
+   {
+    "anio": 2028,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 207
+   },
+   {
+    "anio": 2029,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 75
+   },
+   {
+    "anio": 2029,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 153
+   },
+   {
+    "anio": 2029,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 145
+   },
+   {
+    "anio": 2029,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 113
+   },
+   {
+    "anio": 2030,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 427
+   },
+   {
+    "anio": 2030,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 661
+   },
+   {
+    "anio": 2030,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 360
+   },
+   {
+    "anio": 2030,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 176
+   },
+   {
+    "anio": 2031,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 458
+   },
+   {
+    "anio": 2031,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 736
+   },
+   {
+    "anio": 2031,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 150
+   },
+   {
+    "anio": 2031,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 507
+   },
+   {
+    "anio": 2032,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 99
+   },
+   {
+    "anio": 2032,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 75
+   },
+   {
+    "anio": 2032,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 93
+   },
+   {
+    "anio": 2032,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 452
+   },
+   {
+    "anio": 2033,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 442
+   },
+   {
+    "anio": 2033,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 277
+   },
+   {
+    "anio": 2033,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 737
+   },
+   {
+    "anio": 2033,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 518
+   },
+   {
+    "anio": 2034,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 845
+   },
+   {
+    "anio": 2034,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 836
+   },
+   {
+    "anio": 2034,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 833
+   },
+   {
+    "anio": 2034,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 543
+   },
+   {
+    "anio": 2035,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 351
+   },
+   {
+    "anio": 2035,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 857
+   },
+   {
+    "anio": 2035,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 522
+   },
+   {
+    "anio": 2035,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 620
+   },
+   {
+    "anio": 2036,
+    "origen": "cerrillos",
+    "destino": "la-florida",
+    "hogares": 716
+   },
+   {
+    "anio": 2036,
+    "origen": "cerro-navia",
+    "destino": "las-condes",
+    "hogares": 692
+   },
+   {
+    "anio": 2036,
+    "origen": "el-bosque",
+    "destino": "pudahuel",
+    "hogares": 763
+   },
+   {
+    "anio": 2036,
+    "origen": "las-condes",
+    "destino": "cerrillos",
+    "hogares": 749
+   }
+  ]
+ }
+}
