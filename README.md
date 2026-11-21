@@ -81,6 +81,17 @@ make test       # 112 pruebas del núcleo y de los datos
 make simulate   # calibra, simula y escribe viz/datos/simulacion.json (~15 s)
 ```
 
+Para ver el resultado en el mapa en relieve (la interfaz de `viz/`, no la landing de `web/`):
+
+```bash
+cd viz
+npm install     # hace falta de nuevo si cambió package-lock.json
+npm run dev     # abre la dirección que imprime, normalmente http://localhost:5173
+```
+
+El mapa en relieve necesita internet y WebGL; si falta alguno, la interfaz pasa sola al mapa plano
+(detalle y respaldos sin conexión en [`viz/README.md`](viz/README.md)).
+
 Para volver a descargar los datos crudos: `pip install -e ".[datos]"` y correr el script de
 `datos/` de cada fuente (ver «Fuentes de datos»).
 

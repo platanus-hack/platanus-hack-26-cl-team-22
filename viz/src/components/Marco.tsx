@@ -14,6 +14,8 @@ interface LeyendaProps {
   baseNombre?: string
   lena: Lena | null
   hayPiezas: boolean
+  /** el mapa pinta posición de riesgo (0 a 100) en vez de un valor con unidad */
+  riesgo?: { titulo: string; total: number } | null
 }
 
 export function Leyenda(p: LeyendaProps) {
@@ -74,6 +76,30 @@ export function Leyenda(p: LeyendaProps) {
       </div>
     )
   }
+  if (p.riesgo)
+    return (
+      <div className="leyenda" aria-label="Leyenda del mapa">
+        <p className="leyenda-titulo">{p.riesgo.titulo}</p>
+        <ul className="leyenda-riesgo">
+          <li>
+            <Muestra clase="nivel-0" />
+            <Muestra clase="nivel-1" /> Bajo, hasta 33
+          </li>
+          <li>
+            <Muestra clase="nivel-2" />
+            <Muestra clase="nivel-3" /> Medio, 34 a 66
+          </li>
+          <li>
+            <Muestra clase="nivel-4" />
+            <Muestra clase="nivel-5" /> Alto, 67 o más
+          </li>
+          <li>
+            <Muestra clase="sin-dato" /> Sin dato
+          </li>
+        </ul>
+        <p className="leyenda-nota">Posición entre las {p.riesgo.total} comunas: 0 es la mejor; 100, la peor.</p>
+      </div>
+    )
   return (
     <div className="leyenda" aria-label="Leyenda del mapa">
       <p className="leyenda-titulo">

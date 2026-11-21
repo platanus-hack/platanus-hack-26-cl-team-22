@@ -15,9 +15,9 @@ describe('teclas', () => {
     expect(accionDeTecla('d', 4, 3)).toEqual({ tipo: 'diferencia' })
     expect(accionDeTecla('x', 4, 3)).toBeNull()
   })
-  it('la quinta vista solo existe con validación', () => {
-    expect(vistasDisponibles(false).map((v) => v.id)).toEqual(['cuenca', 'plan', 'lena', 'comuna'])
-    expect(vistasDisponibles(true)).toHaveLength(5)
+  it('la última vista solo existe con validación', () => {
+    expect(vistasDisponibles(false).map((v) => v.id)).toEqual(['riesgo', 'plan', 'lena'])
+    expect(vistasDisponibles(true)).toHaveLength(4)
   })
 })
 
@@ -39,11 +39,11 @@ describe('resumirDiferencias', () => {
 })
 
 describe('pasoDemo', () => {
-  const vistas = ['cuenca', 'plan', 'lena', 'comuna'] as const
+  const vistas = ['riesgo', 'plan', 'lena'] as const
   it('recorre vistas y años en orden', () => {
     expect(pasoDemo(0, vistas, 11, 2)).toEqual({ vista: 0, anio: 0, alternar: null })
     expect(pasoDemo(PASOS_POR_VISTA, vistas, 11, 2).vista).toBe(1)
-    expect(pasoDemo(4 * PASOS_POR_VISTA, vistas, 11, 2).vista).toBe(0)
+    expect(pasoDemo(3 * PASOS_POR_VISTA, vistas, 11, 2).vista).toBe(0)
     expect(pasoDemo(12, vistas, 11, null).anio).toBe(1)
   })
   it('en el plan despega y vuelve a pegar la misma política (número par de cambios)', () => {

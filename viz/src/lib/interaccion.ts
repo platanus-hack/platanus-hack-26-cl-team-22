@@ -2,7 +2,7 @@ import type { Diferencia } from './diferencia'
 import { pasoDiferencia } from './niveles'
 import type { Mejor } from './types'
 
-export type VistaId = 'cuenca' | 'plan' | 'lena' | 'comuna' | 'prueba'
+export type VistaId = 'riesgo' | 'plan' | 'lena' | 'prueba'
 
 export interface DefVista {
   id: VistaId
@@ -10,14 +10,13 @@ export interface DefVista {
 }
 
 const TODAS: DefVista[] = [
-  { id: 'cuenca', nombre: 'La cuenca' },
+  { id: 'riesgo', nombre: 'Riesgo' },
   { id: 'plan', nombre: 'El plan' },
   { id: 'lena', nombre: 'La leña' },
-  { id: 'comuna', nombre: 'Mi comuna' },
   { id: 'prueba', nombre: 'La prueba' },
 ]
 
-/** Vistas en orden; la quinta ("La prueba") solo existe si el archivo trae validación. La tecla es su posición. */
+/** Vistas en orden; la última ("La prueba") solo existe si el archivo trae validación. La tecla es su posición. */
 export function vistasDisponibles(hayValidacion: boolean): DefVista[] {
   return TODAS.filter((v) => v.id !== 'prueba' || hayValidacion)
 }
