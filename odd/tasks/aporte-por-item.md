@@ -15,12 +15,15 @@ Branch: `feat/aporte-por-item`. Delivery: ask-on-risk. Test runner: `make test` 
 
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
-| T1 | S1-S3 | delegated (user asked to delegate; disjoint from T2) | pending | |
+| T1 | S1-S3 | delegated (user asked to delegate; disjoint from T2) | done (329 tests pass; aggregates byte-identical; recomputed means == simulacion.json) | feat(datos) per-tender commit |
 | T2 | S4 | delegated (user asked to delegate; disjoint from T1) | done (43 inversion tests pass; 1042 project entries == inversion_evaluada) | see git log |
-| T3 | S5 | inline (parent, after T1/T2 schemas exist) | pending | |
+| T3 | S5 | inline (parent) | done (issue text delivered; user created the issue) | PR #37 merged |
 
 ## Log
 
 - **L1** (2026-11-21, user, verbatim): "okay esta ultima esta es bien relevante asi que hay qe tener algo de cuidado, que pasa queiro tener data en si de como aporto cada factor individual es decir cada licitacion o documento de un proyecto en una comuna que si se seleciona en si al ver las licitaciones de un area se vea cuanto afecto esa licitacion en particular crees que es posible? delega la mayor cantidad de trabao a claude"
 - **L2** (2026-11-21, user, verbatim): "monta como la informacion al respecto y que use datos de la simulacion pero lo de ui monta un Isuue para gabriel castellano en github"
 - **L3** Analysis: licitaciones enter the model only as awarded/closed counts (2024) for the 5 highest-DMCS comunas → `Beta(1.4+40a/c, 2.6+40f/c)` (`core/licitaciones.py:150-157`, `experiments/simular.py:445-462`). Per-tender data exists only in the LFS ZIPs (`data/raw/licitaciones/`). SEIA projects feed `inversion_evaluada` as a plain count (+1 each). Decision: no model change; exact attribution of what the model actually uses.
+- **L4** T1 done. Sign: `aporte = media_con − media_sin` (awarded > 0, failed < 0), documented in `meta.metodo`. JSON kept as one object per tender (4.7 MB, 591 KB gzipped). Each target comuna has 2 non-zero values (awarded/failed) + 0 for open.
+- **L5** (2026-11-21, user, verbatim): "sube lo de licitaciones .son y edmas para que lo tenan para desplegar"
+- **L6** (2026-11-21, user, verbatim): "no ya lo cree de una" — feature closed; PR #37 merged to main, branch kept.
