@@ -134,7 +134,9 @@ export function decimales(v: number): number {
 
 /** El valor redondeado como se muestra, para que un texto que lo cite diga lo mismo que la tarjeta. */
 export function redondear(v: number): number {
-  return Number(v.toFixed(decimales(v)))
+  // Parsed back from fmt itself: toFixed rounds the binary value (23.95 → 23.9) while the card's
+  // Intl formatter rounds the decimal one (24,0), so only fmt guarantees the same number.
+  return Number(fmt(v, decimales(v)).replace(/\./g, '').replace(',', '.').replace('−', '-'))
 }
 
 /** Veredicto del índice general: nivel, puesto y hacia dónde va al final de la proyección. */

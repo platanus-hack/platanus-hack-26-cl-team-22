@@ -8,6 +8,13 @@ describe('redondear', () => {
     expect(redondear(1.216)).toBe(1.2)
     expect(redondear(-0.04)).toBe(-0)
   })
+
+  it('redondea igual que la tarjeta en los valores que terminan en 5', () => {
+    expect(redondear(23.95)).toBe(24)
+    expect(redondear(3.05)).toBe(3.1)
+    expect(redondear(0.85)).toBe(0.9)
+    expect(redondear(-22.65)).toBe(-22.7)
+  })
 })
 import type { Variable } from './types'
 
