@@ -20,6 +20,7 @@ results/*
 !results/aire_v1_pruebas.json
 !results/seguridad_calibracion.json
 !results/poblacion_validacion.json
+!results/validacion.json
 !results/vivienda_validacion.json
 !results/redes_validacion.json
 

@@ -179,3 +179,15 @@ def test_computing_a_transformation_does_not_mutate_its_inputs():
                                     "menor", act, ref, codes, lat, lon)
     for original, now in zip(before, (act, ref, lat, lon), strict=True):
         assert np.array_equal(original, now)
+
+
+def test_scenarios_that_remove_policies_are_not_labelled_as_emission_cuts():
+    data = json.loads((ROOT / "viz" / "datos" / "simulacion.json").read_text(encoding="utf-8"))
+    active = {s["id"]: set(s["politicas_activas"]) for s in data["escenarios"]}
+    por_esc = data["transformaciones"]["por_escenario"]
+    for sid, tr in por_esc.items():
+        if tr["variable"] == "pm25_anual" and tr["tipo"] in ("reduccion_emisiones",
+                                                              "retiro_politicas"):
+            removes = active[sid] < active[tr["referencia"]] if tr["referencia"] in active else False
+            assert tr["tipo"] == ("retiro_politicas" if removes else "reduccion_emisiones"), sid
+    assert por_esc["sin-politicas"]["tipo"] == "retiro_politicas"

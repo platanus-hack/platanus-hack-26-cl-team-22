@@ -21,11 +21,16 @@ DEFAULT_COMMUNES_CSV = ROOT / "data" / "comunas_rm.csv"
 CHILECOMPRA_URL_TEMPLATE = (
     "https://transparenciachc.blob.core.windows.net/lic-da/{year}-{month}.zip"
 )
+# Amounts in another currency (UF, Dolar, Euro, "Moneda revisar") are not summed as pesos: the
+# tender still counts, its amount is left out. An empty currency column counts as pesos.
+PESO_CURRENCY = "peso chileno"
 # Exclude extreme reporting typos (> 1 trillion CLP) documented in ChileCompra dumps.
 MAX_REASONABLE_AMOUNT_CLP = 1_000_000_000_000.0
 
-AWARDED_STATUS_CODES = frozenset({"8"})
-FAILED_STATUS_CODES = frozenset({"7", "18", "19"})  # 7=Desierta, 18=Revocada, 19=Suspendida
+# Codes as they appear in the 2024 dumps (CodigoEstado -> Estado): 8 and 9 = Adjudicada,
+# 7 = Desierta, 15 = Revocada, 16 = Suspendida; 6 and 11-14 = Cerrada (not yet resolved).
+AWARDED_STATUS_CODES = frozenset({"8", "9"})
+FAILED_STATUS_CODES = frozenset({"7", "15", "16"})
 AWARDED_STATUS_TEXTS = frozenset({"adjudicada"})
 FAILED_STATUS_TEXTS = frozenset({"desierta", "revocada", "suspendida"})
 
@@ -373,6 +378,16 @@ def iter_records_from_csv_stream(
         monto_adjudicado = parse_chilecompra_float(
             _field_lookup(row, "MontoLineaAdjudica", "MontoAdjudicado")
         )
+        estimado_no_clp = normalize_text(
+            _field_lookup(row, "Moneda Adquisicion")) not in ("", PESO_CURRENCY)
+        oferta_no_clp = normalize_text(
+            _field_lookup(row, "Moneda de la Oferta")) not in ("", PESO_CURRENCY)
+        if estimado_no_clp:
+            monto_estimado = None
+        if oferta_no_clp:
+            monto_adjudicado = None
+        if (estimado_no_clp or oferta_no_clp) and diagnostics is not None:
+            diagnostics["filas_moneda_no_clp"] = diagnostics.get("filas_moneda_no_clp", 0) + 1
         outlier_monto = False
         if monto_estimado is not None and monto_estimado > MAX_REASONABLE_AMOUNT_CLP:
             outlier_monto = True

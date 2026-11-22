@@ -1,6 +1,6 @@
 # Simulación de mudanzas por agentes: saturación y derrame
 
-Estado al 21 de noviembre de 2026. Es la simulación del laboratorio de mudanzas (vista 6). Reemplaza
+Estado al 21 de noviembre de 2026. Es la simulación de la sección «Desarrollo urbano: quién se muda a dónde» (pestaña Social). Reemplaza
 el prototipo determinista de `viz/src/lib/demografia.ts`, que solo multiplicaba tasas.
 
 ## Pregunta

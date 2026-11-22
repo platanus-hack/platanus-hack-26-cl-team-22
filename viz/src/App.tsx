@@ -16,7 +16,7 @@ import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, } from './lib/interaccion'
 import { leerLena, type Zona } from './lib/lena'
-import { bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
+import { CORTES_OCUPACION, bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
 import { useSimulacionAbm } from './lib/useSimulacionAbm'
 import { VistaMudanzas, type OpcionesMudanzas } from './components/VistaMudanzas'
 import { estadoAire, TEXTO_ESTADO, veredictoComuna } from './lib/estado'
@@ -66,7 +66,6 @@ interface Props {
 const PASO_AGUA_MS = 520
 
 /** Ocupación de la vivienda (población / capacidad, %): cortes del mapa en la vista de mudanzas. */
-const CORTES_OCUPACION: readonly number[] = [85, 90, 95, 100, 105]
 const VARIABLE_OCUPACION = { id: 'ocupacion_vivienda', nombre: 'Ocupación de la vivienda', unidad: '% de la capacidad', mejor: 'menor' as const }
 
 const ESPERA_DEMO_MS = 45_000
@@ -1011,6 +1010,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
         onOpciones={setOpcionesAbm}
         anio={anio}
         seleccionada={seleccionada ? demografia.comunas.findIndex((c) => c.codigo === seleccionada) : -1}
+        onSeleccionar={setSeleccionada}
       />
     )
 
@@ -1071,6 +1071,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
                 : null
             }
             hayPiezas={aportesMapa.size > 0}
+            ocupacion={mapaMudanzas}
             riesgo={
               mapaRiesgo && modoMapa === 'valor'
                 ? { titulo: general ? 'Riesgo general, de 0 a 100' : `Riesgo en ${variableCorta(variable).nombre.toLowerCase()}, de 0 a 100`, total: riesgo.total }

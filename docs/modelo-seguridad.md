@@ -73,7 +73,7 @@ Cifras leídas en los textos primarios.
 | Supuesto | Valor | Por qué |
 |---|---|---|
 | Cobertura de cada política | 25 % de los delitos contra la propiedad de la comuna | Decisión del escenario: es parte de la definición de la política, no un dato |
-| Credibilidad municipal | Media 0,35, concentración 4 (banda ancha) | No hay historial de ejecución municipal; el contexto pide «credibilidad baja y banda ancha». La media toma como referencia la tasa observada del PPDA |
+| Credibilidad municipal | Prior: media 0,35, concentración 4 (banda ancha), actualizado con las licitaciones 2024 de cada municipalidad (ChileCompra: adjudicadas / cerradas, tamaño efectivo máximo 40) | El prior toma como referencia la tasa observada del PPDA. La tasa de adjudicación es un **proxy** de capacidad de ejecución municipal, no prueba de que un plan de seguridad se cumpla. En las 5 comunas intervenidas la media sube a 0,79–0,85 (`politicas[].credibilidad_por_comuna`) |
 | Efecto sobre vecinas | `s` entre −0,1 y +0,2, comunas a menos de 6 km (centroides) | Bowers et al. (2011) encuentran que la difusión es más probable que el desplazamiento, pero en áreas de unos cientos de metros: se cita solo para el signo. No hay polígonos de comunas en el repo, así que la vecindad es por distancia |
 | Rampa | 10 años de ejecución para el efecto completo | Igual que en el aire, para que la credibilidad signifique «fracción cumplida» |
 
@@ -115,16 +115,20 @@ Aporte de cada política en 2036 (mediana de la diferencia pareada por réplica,
 
 | Política | En las comunas intervenidas | En las comunas vecinas |
 |---|---|---|
-| Cámaras con monitoreo activo | −0,6 % a −1,0 % de la tasa DMCS | Hasta −3,5 casos por 100.000 (San Miguel) |
-| Iluminación | −0,2 % a −0,6 % | Hasta −1,0 caso por 100.000 |
+| Cámaras con monitoreo activo | −1,8 % a −2,4 % de la tasa DMCS | Hasta −10,3 casos por 100.000 (San Miguel) |
+| Iluminación | −0,9 % a −1,7 % | Hasta −3,2 casos por 100.000 (San Miguel) |
+
+Con la credibilidad municipal actualizada por ChileCompra (media 0,79–0,85 en vez del supuesto
+0,35), el efecto es unas 2,5 veces el de la versión anterior (−0,6 % a −1,0 % y −0,2 % a −0,6 %).
 
 Qué significa:
 
 - **Con estos supuestos, las políticas de seguridad casi no mueven la tasa comunal**: el efecto
   queda muy dentro de la banda de un año a otro (en Providencia, la banda 2036 sin políticas va
   de 5.982 a 7.738). Es la combinación de tres cosas que el modelo no esconde: solo los delitos
-  contra la propiedad responden (35 % de los DMCS), la cobertura es 25 % y la credibilidad
-  municipal es baja.
+  contra la propiedad responden (35 % de los DMCS), la cobertura es 25 % y la ejecución es
+  gradual (10 años). Con la credibilidad actualizada por ChileCompra (media cercana a 0,83) el
+  efecto crece, pero sigue siendo chico frente a la banda.
 - Sí existe interacción entre comunas: las vecinas reciben parte del efecto, con signo abierto.
 - Para la demo, la lectura honesta es «cuánto haría falta»: con cobertura 25 % y la ejecución
   municipal esperada, una política de cámaras no se nota en la tasa comunal. No se subió la

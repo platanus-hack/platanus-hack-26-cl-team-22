@@ -1,6 +1,6 @@
 PY := .venv/bin/python
 
-.PHONY: setup test lint experiments licitaciones simulate web web-build clean
+.PHONY: setup test lint experiments licitaciones simulate validate web web-build clean
 
 setup:            ## create .venv and install dev dependencies
 	python3 -m venv .venv
@@ -19,12 +19,21 @@ experiments:      ## replicas for the reference model -> results/*.csv
 licitaciones:     ## download and aggregate ChileCompra procurement data -> data/licitaciones/
 	$(PY) -m datos.licitaciones.fetch_licitaciones --desde 2024-01 --hasta 2024-12
 
-simulate:         ## calibrate air and households -> promises -> viz/datos/simulacion.json
+simulate:         ## calibrate, validate out of sample -> promises -> climate risk -> viz/datos/simulacion.json
 	$(PY) -m experiments.calibrar_aire
 	$(PY) -m experiments.calibrar_hogares
 	$(PY) -m experiments.calibrar_seguridad
+	$(PY) -m experiments.validar_poblacion
+	$(PY) -m experiments.validar
 	$(PY) -m experiments.promesas
 	$(PY) -m experiments.simular
+
+validate:         ## out-of-sample test vs no change and trend, water risk vs DGA decrees -> docs/validacion.md, README table
+	$(PY) -m experiments.calibrar_aire
+	$(PY) -m experiments.calibrar_hogares
+	$(PY) -m experiments.calibrar_seguridad
+	$(PY) -m experiments.validar_poblacion
+	$(PY) -m experiments.validar
 
 web:              ## run the landing page dev server (http://localhost:5173)
 	cd web && npm install && npm run dev

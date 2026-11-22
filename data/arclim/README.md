@@ -34,6 +34,10 @@ modelos reales, no de una banda inventada.
 Santiago queda sobre lo observado. Usar cambios respecto de 1991–2020 de la misma corrida,
 no niveles absolutos.
 
+**`spi` tiene huecos.** Los archivos `series_spi_*` traen 8.958 celdas vacías (corrida × año),
+repartidas en 26 modelos climáticos y en todas las comunas; vienen así de la API. Al muestrear
+una corrida por réplica hay que saltar los años vacíos o elegir otra corrida.
+
 ## Componentes de riesgo de ARClim
 
 `componentes_comuna.csv`: amenaza, exposición, vulnerabilidad y riesgo que ARClim publica por
