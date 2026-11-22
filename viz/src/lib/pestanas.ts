@@ -6,7 +6,7 @@ import type { VistaId } from './interaccion'
  * y la variable que muestra si corresponde.
  */
 export type PestanaId = 'resumen' | 'clima' | 'legal' | 'social' | 'referencias'
-export type SeccionId = 'aire' | 'lena' | 'seguridad' | 'crecimiento' | 'urbano' | 'fuentes' | 'validacion'
+export type SeccionId = 'aire' | 'lena' | 'agua' | 'seguridad' | 'crecimiento' | 'urbano' | 'fuentes' | 'validacion'
 
 export interface DefPestana {
   id: PestanaId
@@ -18,7 +18,7 @@ export interface DefPestana {
 
 export const PESTANAS: readonly DefPestana[] = [
   { id: 'resumen', nombre: 'Resumen' },
-  { id: 'clima', nombre: 'Climático', titulo: 'Riesgo climático y ambiental', subtitulo: 'El aire que tendrá cada comuna hasta 2036 y la fuente que más pesa en él.' },
+  { id: 'clima', nombre: 'Climático', titulo: 'Riesgo climático y ambiental', subtitulo: 'El aire de cada comuna año a año, su fuente principal y el agua de sus ríos.' },
   { id: 'legal', nombre: 'Legal', titulo: 'Marco legal y planes públicos', subtitulo: 'Qué planes afectan a cada comuna y con qué probabilidad se cumplen.' },
   { id: 'social', nombre: 'Social', titulo: 'Riesgo social', subtitulo: 'Seguridad, población y desarrollo urbano de cada comuna.' },
   { id: 'referencias', nombre: 'Referencias', titulo: 'Referencias y validación', subtitulo: 'De dónde salen los datos y cómo le fue al modelo contra lo que no había visto.' },
@@ -32,11 +32,14 @@ export interface DefSeccion {
 /** Variable de la simulación que muestra cada sección, por su papel (el id real lo resuelve quien llama). */
 export type Papel = 'aire' | 'seguridad' | 'crecimiento'
 
-const SECCIONES: Record<PestanaId, readonly (DefSeccion & { pide?: 'lena' | 'urbano' | 'validacion' | Papel })[]> = {
+type Pide = 'lena' | 'agua' | 'urbano' | 'validacion' | Papel
+
+const SECCIONES: Record<PestanaId, readonly (DefSeccion & { pide?: Pide })[]> = {
   resumen: [],
   clima: [
     { id: 'aire', titulo: 'Calidad del aire', pide: 'aire' },
     { id: 'lena', titulo: 'La leña, su fuente principal', pide: 'lena' },
+    { id: 'agua', titulo: 'El agua: caudal de los ríos', pide: 'agua' },
   ],
   legal: [],
   social: [
@@ -51,12 +54,12 @@ const SECCIONES: Record<PestanaId, readonly (DefSeccion & { pide?: 'lena' | 'urb
 }
 
 /** Secciones de una pestaña que tienen con qué mostrarse. */
-export function seccionesDe(p: PestanaId, hay: Readonly<Partial<Record<'lena' | 'urbano' | 'validacion' | Papel, boolean>>>): DefSeccion[] {
+export function seccionesDe(p: PestanaId, hay: Readonly<Partial<Record<Pide, boolean>>>): DefSeccion[] {
   return SECCIONES[p].filter((s) => !s.pide || hay[s.pide]).map(({ id, titulo }) => ({ id, titulo }))
 }
 
 export interface Modo {
-  vista: VistaId | 'fuentes'
+  vista: VistaId | 'fuentes' | 'agua'
   /** papel de la variable en detalle; null = índice general o no aplica */
   papel: Papel | null
 }
@@ -64,6 +67,7 @@ export interface Modo {
 const MODOS: Partial<Record<SeccionId, Modo>> = {
   aire: { vista: 'riesgo', papel: 'aire' },
   lena: { vista: 'lena', papel: null },
+  agua: { vista: 'agua', papel: null },
   seguridad: { vista: 'riesgo', papel: 'seguridad' },
   crecimiento: { vista: 'riesgo', papel: 'crecimiento' },
   urbano: { vista: 'mudanzas', papel: null },

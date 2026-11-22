@@ -23,9 +23,11 @@ pintadas encima con el color de su nivel. `src/components/Mapa.tsx` elige solo c
 | Mapa | De dónde sale | Cuándo se usa |
 |---|---|---|
 | Relieve en línea | Calles de OpenFreeMap y relieve de Mapterhorn (gratis, sin clave) | Siempre que haya internet |
-| Relieve local | Paquete predescargado en `viz/public/mapas/` (`npm run mapas`, unos 67 MB, fuera de git) | Si el estilo en línea no responde en 4 s |
+| Relieve local | Paquete predescargado en `viz/public/mapas/` (`npm run mapas`, unos 67 MB, fuera de git) | Si el estilo en línea no responde en dos intentos de 8 s |
 | Plano («Capas de papel») | SVG propio, sin teselas ni red (`MapaPapel.tsx`) | Si no hay red ni paquete, o si WebGL falla |
 
+- **Una red lenta no cambia de mapa:** el relieve se queda y pinta las teselas a medida que llegan. Solo se
+  pasa al respaldo si el estilo no carga (sin red) o si WebGL no arranca.
 - **Antes de presentar:** correr `npm run mapas` una vez con internet. Se puede repetir; salta lo ya bajado.
 - **Forzar un respaldo:** abrir con `?mapa=local` o `?mapa=plano`, o apretar `L` en plena presentación
   (en línea → local → plano).
@@ -47,12 +49,40 @@ tienen varias secciones las muestran como acordeón con una sola abierta, que ta
 | Pestaña | Secciones | Qué pinta el mapa |
 |---|---|---|
 | Resumen | El índice de riesgo de 0 a 100, las tres de menor riesgo y una fila por variable | El índice |
-| Climático | Calidad del aire · La leña, su fuente principal | PM2,5 frente a la norma · zonas y emisiones de leña |
+| Climático | Calidad del aire · La leña, su fuente principal · El agua: caudal de los ríos | PM2,5 frente a la norma · zonas y emisiones de leña · ríos y estaciones de caudal |
 | Legal | Los planes públicos, su probabilidad de cumplirse y el efecto de encender o apagar cada uno | Valor o diferencia |
 | Social | Seguridad ciudadana · Crecimiento poblacional · Desarrollo urbano (la simulación de mudanzas) | Posición de riesgo · flujos |
 | Referencias | Fuentes de datos y normas · El modelo contra datos que no vio | Sin cambio |
 
 En el resumen, cada fila de variable lleva a su pestaña y sección.
+
+**El agua** (`src/lib/agua.ts`, `src/components/VistaAgua.tsx`): caudal medio mensual medido por las estaciones
+de la DGA entre 1980 y 2017. Es medición histórica, no sale del modelo y no cambia con el año de la simulación.
+Todo reacciona al **estado del caudal**: el de lo que se mira dividido por lo normal de esa estación (su
+promedio 1980–2009). Con 85 % o más es normal (azul); entre 60 y 85 %, bajo (naranja); con menos, crítico
+(rojo). Ese color lo llevan el río, el punto de su estación, la cifra y cada barra de la serie. El mapa dibuja
+cada cauce con un ancho que crece con la raíz de su caudal y un brillo que corre aguas abajo y se apaga cuando
+el caudal es crítico; cada punto es una estación de la DGA y **late solo si su caudal está en nivel crítico**
+(la leyenda lo dice). Se puede mirar la megasequía 2010–2017 (lo primero que se ve), el promedio 1980–2017 o
+un año, y «Ver año por año» los recorre. La hoja muestra además el régimen (de deshielo o de lluvia, por el
+mes de más agua) y la variabilidad. En el mapa en relieve los ríos con nombre salen de `geo/rios_rm.geojson` y no de las teselas del mapa base,
+que a algunos niveles de zoom traen esos cauces sin nombre; la red fina de fondo sí es la de las teselas. Ancho,
+color y elegido son estado de cada tramo y de cada estación (`setFeatureState`), y las capas del agua se
+ocultan por opacidad: sobre el terreno, ocultar una capa o vaciar su fuente deja restos dibujados.
+Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
+tiene. Cada río con nombre trae las comunas por donde pasa, de aguas arriba a aguas abajo (`cauces` en
+`caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el caso «Energía hidráulica» el resumen ofrece un botón directo a esta sección. El caudal no entra
+al índice de riesgo: solo 14 estaciones cumplen el filtro y no hay un valor por comuna.
+
+**«¿Y si sigue la megasequía?»** (`src/lib/aguaSim.ts`): la parte del agua que sí es simulación. Para cada
+escenario se sortean 500 décadas posibles de 2026 a 2036 por remuestreo en bloques de tres años seguidos de
+los años medidos: «Sigue la megasequía» sortea de 2010–2017, «Todo el registro» de 1980–2017 y «Vuelve lo
+normal» de 1980–2009. Los bloques conservan que a un año seco suele seguirle otro, y el mismo año real se usa
+en todas las estaciones de una década, así un año seco lo es en toda la cuenca. La hoja muestra una década
+concreta (se reproduce sola en el mapa con la línea de tiempo; «Otra década posible» cambia a la siguiente)
+sobre la banda p10–p90 de las 500, cuántos de los 11 años quedan en caudal crítico en promedio y en qué parte
+de las décadas hay tres años críticos seguidos. La semilla es fija: los números se repiten. No es un modelo
+climático: supone que la próxima década se parece al período elegido, y la hoja lo dice.
 
 **Unidad del índice** (`src/lib/riesgo.ts`): en cada variable, el riesgo de una comuna es el porcentaje de las
 otras comunas que están mejor que ella en ese año (0 = la mejor, 100 = la peor). El índice general es el promedio
@@ -64,17 +94,17 @@ la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición
 
 ### Entrada guiada
 
-Al abrir, dos pantallas sobre el mapa (`src/components/Onboarding.tsx`):
+Al abrir, una sola pantalla sobre el mapa (`src/components/Onboarding.tsx`): **el caso, en texto libre**.
+`leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía hidráulica, vivienda, industria
+o evaluación general, y de ahí salen solos los pesos de las tres variables simuladas; no hay más preguntas.
+Los criterios propios del caso que el modelo no mide (caída disponible, precio del suelo, etc.) **no entran al
+cálculo ni muestran número**: la guía los nombra como «aún sin datos», porque para usarlos hace falta un valor
+por comuna que hoy no existe. El caudal sí tiene datos y se ve en Climático › El agua.
 
-1. **El caso, en texto libre.** `leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía
-   hidráulica, vivienda, industria o evaluación general; la persona ve cómo se leyó y puede cambiarlo.
-2. **Los criterios.** Los tres que simula el modelo llevan peso (cinco grados) y un rango aceptado: para el aire,
-   la norma chilena o las metas de la OMS; para seguridad y crecimiento, cortes sobre los datos de la región.
-   Debajo van los criterios propios de ese caso (caudal, caída, etc.) y los que agregue la persona: **no tienen
-   datos en esta versión, no entran al cálculo y no muestran ningún número**.
-
-Al terminar se abre la hoja Riesgo: las tres de menor riesgo salen solo de las comunas que cumplen todos los
-rangos, y la ficha marca «Fuera de tu rango» donde corresponde. Con `?directo` en la dirección no aparece.
+Ya en el mapa, «Ajustar pesos» abre el peso de cada variable (0 a 10) y el rango que se acepta: para el aire,
+la norma chilena o las metas de la OMS; para seguridad y crecimiento, cortes sobre los datos de la región. Las
+tres de menor riesgo salen solo de las comunas que cumplen todos los rangos, y la ficha marca «Fuera de tu
+rango» donde corresponde. Con `?directo` en la dirección la entrada no aparece.
 
 La explicación la arma la propia interfaz con los números del índice (`src/lib/onboarding.ts`). Si al construir
 se define `VITE_GUIA_URL` con la dirección de un intermediario propio y la persona escribió su caso, se le pide
@@ -134,6 +164,38 @@ Sin uso durante 45 s, la pantalla se demuestra sola (recorre años y vistas y de
 política) con la etiqueta «Demostración automática». Cualquier tecla, clic o movimiento la detiene.
 Con `prefers-reduced-motion` los cambios son instantáneos.
 
+### Horizonte de 10 o 15 años
+
+Abajo a la derecha se elige «10 años» (2026–2036, el período que cubren los supuestos documentados del modelo)
+o «15 años» (hasta 2040). El segundo carga `viz/datos/simulacion-15.json` y `viz/public/datos/demografia-15.json`,
+que salen de la misma simulación con `python -m experiments.simular --hasta 2040 --salida viz/datos/simulacion-15.json`
+y `python -m experiments.exportar_demografia --hasta 2040 --salida viz/public/datos/demografia-15.json`. Los años
+2037–2040 vienen marcados en `meta.anios_extrapolados`: sus pestañas van rayadas y el pie dice «extrapolación,
+fuera del período validado», porque ahí el modelo sigue con las mismas tasas y nada lo valida. Cambiar de
+horizonte no borra el caso, los pesos ni la comuna elegida. También se puede abrir con `?horizonte=15`.
+
+### Las siete variables de quien invierte
+
+Si el caso se lee como energía hidráulica o industria, la ficha del resumen muestra siete filas: las tres
+simuladas y cuatro más (`src/lib/inversion.ts`), que **no entran al índice** y se comparan aparte por posición:
+
+| Variable | De dónde sale |
+|---|---|
+| Sequía futura | Simulada: cambio de la frecuencia de sequía del año elegido, bloque `clima` de la simulación (ARClim) |
+| Escasez hídrica | Dato real: años con decreto de escasez de la DGA, 2008–2023 |
+| Red eléctrica | Dato real: MVA de subestaciones en operación (Coordinador Eléctrico) |
+| Inversión evaluada | Dato real: proyectos aprobados en el SEIA desde 2015 |
+
+Las tres reales vienen de `viz/public/datos/inversion.json` (`python -I datos/viz/build_inversion.py`). Un
+indicador que cubre menos de la mitad de las comunas o vale lo mismo en todas no se muestra (por eso no se usa
+la amenaza de sequía de ARClim de ese archivo: solo 9 comunas, todas en 1,0).
+
+### Pantalla de espera
+
+Entre la entrada y el mapa (`src/components/Cargando.tsx`) se listan cinco pasos y la región se dibuja al ritmo
+de ellos: contornos, ríos, comunas con plan y color de riesgo. Dos pasos esperan algo real (la lectura del caso
+y que el mapa tenga algo que mostrar); el tope es de 14 s.
+
 ### Dónde van los datos
 
 | Archivo | Quién lo pone | Qué pasa si falta |
@@ -141,6 +203,7 @@ Con `prefers-reduced-motion` los cambios son instantáneos.
 | `viz/datos/simulacion.json` (lo sirve y empaqueta `vite.config.ts` como `datos/simulacion.json`) | El modelo: `python -m experiments.simular` | Se usa `viz/ejemplo/simulacion.json` (se sirve como `datos/ejemplo.json` por un plugin de `vite.config.ts`) y aparece «Datos de ejemplo» si `meta.es_ejemplo` es true |
 | `viz/public/datos/lena.json` | `datos/viz/build_lena.py` | La vista La leña lo dice en palabras |
 | `viz/public/datos/demografia.json` | `python -m experiments.exportar_demografia` | La vista Las mudanzas no aparece. Es la simulación por agentes de `docs/modelo-mudanzas-abm.md`: corre en un Web Worker (`src/lib/abm.worker.ts`), 20 corridas por cambio, y el mapa pinta la ocupación de la vivienda |
+| `viz/public/datos/caudales.json` y `viz/public/geo/rios_rm.geojson` | `python -m datos.dga.fetch_caudales` y después `python -m datos.dga.rios_teselas` (DGA compilado por CR2, CC0; cauces de OpenStreetMap, ODbL, leídos de las teselas de OpenFreeMap) | La sección El agua no aparece; sin el segundo archivo se ven las estaciones sin ríos |
 | `viz/public/geo/comunas_rm.geojson` | Frente de cartografía | Cada comuna se dibuja como un círculo en su lat/lon |
 
 Si el JSON no cumple el contrato (`docs/plan-comunas.md`), la página muestra un estado de error con la

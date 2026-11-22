@@ -61,7 +61,12 @@ const FUENTES: readonly { sigla: string; que: string }[] = [
   { sigla: 'INE', que: 'Censos 2017 y 2024.' },
   { sigla: 'CEAD', que: 'Delitos de mayor connotación social por comuna.' },
   { sigla: 'ECOS-Chile y SMA', que: 'Cumplimiento del plan de descontaminación.' },
+  { sigla: 'DGA, compilación (CR)2', que: 'Caudal medio mensual por estación, 1980–2017 (CC0).' },
+  { sigla: 'OpenStreetMap', que: 'Trazado de los ríos (ODbL).' },
 ]
+
+/** Quita las rutas internas del repo que algunas citas traen entre paréntesis: no le dicen nada a quien lee. */
+const limpiarCita = (c: string | undefined): string => (c ?? '').replace(/\s*\((?:data|docs|results)\/[^)]*\)/g, '')
 
 /** Bibliografía: fuentes de datos y la cita de cada plan o medida que el modelo usa. */
 export function VistaFuentes({ politicas }: { politicas: Politica[] }) {
@@ -88,10 +93,10 @@ export function VistaFuentes({ politicas }: { politicas: Politica[] }) {
                   <span>
                     {url ? (
                       <a href={url} target="_blank" rel="noopener noreferrer">
-                        {p.cita}
+                        {limpiarCita(p.cita)}
                       </a>
                     ) : (
-                      p.cita
+                      limpiarCita(p.cita)
                     )}
                   </span>
                 </li>

@@ -4,7 +4,7 @@ import { MapaPapel, type PropsMapa } from './MapaPapel'
 
 const MapaRelieve = lazy(() => import('./MapaRelieve'))
 
-const ESPERA_ESTILO_MS = 4000
+const ESPERA_ESTILO_MS = 8000
 
 async function leerEstilo(url: string): Promise<unknown | null> {
   const corte = new AbortController()
@@ -22,7 +22,8 @@ async function leerEstilo(url: string): Promise<unknown | null> {
 }
 
 const sondas = {
-  linea: () => leerEstilo(ESTILO_LINEA),
+  // Un segundo intento antes de dar la red por caída: un tropiezo al abrir no debe dejar el mapa plano.
+  linea: async () => (await leerEstilo(ESTILO_LINEA)) ?? (await leerEstilo(ESTILO_LINEA)),
   local: async () => {
     const e = await leerEstilo(ESTILO_LOCAL)
     return e ? resolverBase(e, new URL('mapas', document.baseURI).href) : null

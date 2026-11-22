@@ -294,6 +294,9 @@ export function validarSimulacion(raw: unknown): Resultado {
       version: String(meta.version ?? ''),
       es_ejemplo: meta.es_ejemplo === true,
       anios: anios as number[],
+      // solo años que de verdad están en la serie: el aviso de extrapolación no puede marcar otros
+      anios_extrapolados: arrNum(meta.anios_extrapolados) ? meta.anios_extrapolados.filter((a) => (anios as number[]).includes(a)) : undefined,
+      anio_fin_validado: esNum(meta.anio_fin_validado) ? meta.anio_fin_validado : undefined,
       anio_base: esNum(meta.anio_base) ? meta.anio_base : undefined,
       aviso: texto(meta.aviso),
       modelo: texto(meta.modelo),
@@ -312,6 +315,9 @@ export function validarSimulacion(raw: unknown): Resultado {
     validacion: leerValidacion(raw.validacion),
     transformaciones: leerTransformaciones(raw.transformaciones, (anios as number[]).length),
   }
+
+  // El bloque de clima pasa tal cual: quien lo usa valida cada campo que lee.
+  if (esObj(raw.clima)) out.clima = raw.clima
 
   // Opcionales: se limpian sin fallar.
   if (esObj(raw.flujos)) {

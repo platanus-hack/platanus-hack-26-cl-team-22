@@ -2756,3 +2756,883 @@ body:has(.estado) {
 .fuentes a {
   color: var(--tinta-2);
 }
+
+/* ---------- El agua: caudal de los ríos ---------- */
+.agua-tono-sin { fill: var(--tinta-2); background: var(--tinta-2); color: var(--papel); }
+.agua-tono-estable { fill: var(--agua); background: var(--agua); color: var(--agua-txt); }
+.agua-tono-baja { fill: var(--nivel-1); background: var(--nivel-1); color: var(--nivel-txt-1); }
+.agua-tono-fuerte { fill: var(--nivel-3); background: var(--nivel-3); color: var(--nivel-txt-3); }
+.agua-tono-critica { fill: var(--nivel-5); background: var(--nivel-5); color: var(--nivel-txt-5); }
+
+/* Mapa plano: cauce, filo y un brillo de trazos que corre aguas abajo */
+.rio,
+.rio-filo,
+.rio-flujo {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke-width 380ms var(--ease);
+}
+.rio { stroke: var(--agua); }
+.rio-filo { stroke: var(--papel); opacity: 0.85; }
+.rio-flujo {
+  stroke: var(--agua-clara);
+  stroke-linecap: butt;
+  stroke-dasharray: 9 12;
+  animation: rio-corre 1.1s linear infinite;
+}
+@keyframes rio-corre {
+  to { stroke-dashoffset: -21; }
+}
+.quieto .rio-flujo { animation: none; }
+.estacion {
+  stroke: var(--papel);
+  stroke-width: 1.8px;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+}
+.estacion-elegida {
+  stroke: var(--tinta);
+  stroke-width: 3.5px;
+}
+.estacion:focus-visible {
+  outline: none;
+  stroke: var(--tinta);
+  stroke-width: 4px;
+}
+.leyenda .leyenda-agua {
+  grid-template-columns: repeat(2, auto);
+}
+.leyenda-agua li:first-child {
+  grid-column: 1 / -1;
+}
+.leyenda-rio {
+  display: inline-block;
+  width: 2.2em;
+  height: 0.5em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  border-radius: 0.25em;
+  background: linear-gradient(90deg, var(--agua) 0 45%, var(--agua-clara) 45% 60%, var(--agua) 60%);
+}
+
+/* Hoja del agua */
+.v-agua {
+  display: grid;
+  gap: calc(var(--u) * 0.5);
+}
+.v-agua .etiqueta-real {
+  justify-self: start;
+  margin-bottom: 0;
+}
+.v-agua h4 {
+  font-size: var(--t-m);
+  font-weight: 800;
+  line-height: 1.15;
+}
+.agua-cabeza {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: calc(var(--u) * 1.2);
+  align-items: center;
+}
+.agua-cifra {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 0.35em;
+  min-width: calc(var(--u) * 8.5);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 0.9) calc(var(--u) * 0.45);
+  box-shadow: var(--alzado);
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-cifra b {
+  font-size: calc(var(--u) * 3.6);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.agua-cifra span {
+  font-size: var(--t-m);
+  font-weight: 800;
+}
+.agua-cifra small {
+  grid-column: 1 / -1;
+  margin-top: calc(var(--u) * 0.25);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.agua-titulo h3 {
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.agua-lugar {
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.agua-veredicto > span:last-child {
+  flex-basis: 100%;
+}
+.agua-veredicto .agua-lugar {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.agua-veredicto {
+  margin-top: calc(var(--u) * 0.35);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 0.25) calc(var(--u) * 0.6);
+  font-size: var(--t-s);
+}
+.agua-sello {
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.6);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.agua-serie-cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 0.8);
+  margin-bottom: calc(var(--u) * 0.3);
+}
+.agua-serie-botones {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+}
+.accion-ligera {
+  display: inline-block;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+  color: var(--tinta);
+  text-decoration: none;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
+  white-space: nowrap;
+  transition: background-color var(--t-capa) var(--ease), color var(--t-capa) var(--ease);
+}
+.accion-ligera:hover {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.agua-jugar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  border: 0;
+  cursor: pointer;
+  background: var(--agua);
+  color: var(--agua-txt);
+  font-size: var(--t-s);
+  font-weight: 800;
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.9);
+  box-shadow: var(--alzado);
+  white-space: nowrap;
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-jugar:hover,
+.agua-jugar[aria-pressed='true'] {
+  background: var(--tinta);
+}
+.agua-jugar .icono {
+  width: 0.9em;
+  height: 0.9em;
+  fill: currentColor;
+}
+.agua-jugar:focus-visible,
+.accion-ligera:focus-visible,
+.agua-otra:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.agua-barras {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.agua-franja { fill: var(--empeora-1); opacity: 0.55; }
+.agua-franja-texto,
+.agua-linea-texto,
+.agua-eje {
+  font-size: 8.5px;
+  font-weight: 600;
+  fill: var(--tinta-2);
+}
+.agua-franja-texto { fill: var(--nivel-5); font-weight: 800; }
+.agua-barra { cursor: pointer; }
+.agua-barra-zona { fill: transparent; }
+.agua-barra-cuerpo {
+  fill: var(--agua);
+  transition: fill var(--t-capa) var(--ease);
+}
+.agua-barra-seca .agua-barra-cuerpo { fill: var(--nivel-3); }
+.agua-barra-vacia .agua-barra-cuerpo { fill: var(--corte); }
+.agua-barra:hover .agua-barra-zona { fill: var(--tinta); opacity: 0.08; }
+.agua-barra-elegida .agua-barra-cuerpo { fill: var(--tinta); }
+.agua-barra-elegida .agua-barra-zona { fill: var(--tinta); opacity: 0.1; }
+.agua-linea-base {
+  stroke: var(--tinta);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+.agua-linea-texto {
+  fill: var(--tinta);
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: var(--hoja);
+  stroke-width: 3px;
+}
+.agua-doble {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: calc(var(--u) * 1.4);
+  align-items: start;
+}
+.agua-meses {
+  list-style: none;
+  padding: 0;
+  margin-top: calc(var(--u) * 0.45);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  height: calc(var(--u) * 1.7);
+}
+.agua-meses li {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  text-align: center;
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.agua-meses i {
+  display: block;
+  background: var(--mejora-2);
+}
+.agua-mes-alto i { background: var(--agua); }
+.agua-mes-alto span { color: var(--tinta); font-weight: 800; }
+.agua-variable p {
+  margin: calc(var(--u) * 0.15) 0 calc(var(--u) * 0.3);
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.agua-otras ul {
+  list-style: none;
+  padding: 0;
+  margin-top: calc(var(--u) * 0.4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.3);
+}
+.agua-otra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  border: 0;
+  cursor: pointer;
+  background: var(--papel-2);
+  color: var(--tinta);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-otra:hover { background: var(--corte); }
+.agua-otra b { font-weight: 800; font-variant-numeric: tabular-nums; }
+.agua-punto {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  flex: none;
+}
+.agua-pie {
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.lectura.ajustar.ajustar-agua {
+  background: var(--agua);
+  color: var(--agua-txt);
+  box-shadow: none;
+}
+
+/* Por dónde pasa el río: las comunas en fila, de aguas arriba a aguas abajo, unidas por el cauce */
+.agua-pasa h4 small {
+  font-weight: 600;
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+.agua-pasa ol {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.22) 0;
+}
+.agua-pasa .agua-pasa-titulo {
+  font-size: var(--t-s);
+  font-weight: 800;
+  margin-right: calc(var(--u) * 0.5);
+}
+.agua-pasa .agua-pasa-titulo + li::before {
+  display: none;
+}
+.agua-estacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  margin-bottom: calc(var(--u) * 0.3);
+}
+.agua-pasa li {
+  display: flex;
+  align-items: center;
+}
+.agua-pasa li + li::before {
+  content: '';
+  width: calc(var(--u) * 0.45);
+  height: 3px;
+  background: var(--agua);
+}
+.agua-pasa button {
+  border: 0;
+  cursor: pointer;
+  background: var(--mejora-1);
+  color: var(--tinta);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.12) calc(var(--u) * 0.4);
+  white-space: nowrap;
+  transition: background-color var(--t-capa) var(--ease), color var(--t-capa) var(--ease);
+}
+.agua-pasa button:hover {
+  background: var(--agua);
+  color: var(--agua-txt);
+}
+.agua-pasa button:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.agua-pasa-estacion button {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.pliegue-cuerpo:has(> .v-agua) {
+  padding: calc(var(--u) * 0.7) 0 calc(var(--u) * 0.2);
+}
+
+/* Ajustar pesos: cada variable con su peso y el rango que se acepta */
+.peso-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 0.9);
+}
+.peso-fila .desplegable-lista {
+  right: 0;
+  left: auto;
+}
+
+/* ---------- El agua reacciona al caudal: normal, bajo o crítico frente a lo habitual ---------- */
+.agua-estado-sin { fill: var(--tinta-2); background: var(--tinta-2); color: var(--papel); }
+.agua-estado-normal { fill: var(--agua); background: var(--agua); color: var(--agua-txt); }
+.agua-estado-bajo { fill: var(--agua-baja); background: var(--agua-baja); color: #111111; }
+.agua-estado-critico { fill: var(--agua-critica); background: var(--agua-critica); color: #fafaf7; }
+.agua-cifra,
+.agua-sello {
+  transition: background-color var(--t-capa) var(--ease), color var(--t-capa) var(--ease);
+}
+.agua-barra.agua-estado-normal,
+.agua-barra.agua-estado-bajo,
+.agua-barra.agua-estado-critico,
+.agua-barra.agua-estado-sin {
+  background: none;
+}
+.agua-barra.agua-estado-normal .agua-barra-cuerpo { fill: var(--agua); }
+.agua-barra.agua-estado-bajo .agua-barra-cuerpo { fill: var(--agua-baja); }
+.agua-barra.agua-estado-critico .agua-barra-cuerpo { fill: var(--agua-critica); }
+.agua-barra.agua-estado-sin .agua-barra-cuerpo { fill: var(--corte); }
+.agua-barra.agua-barra-elegida .agua-barra-cuerpo { stroke: var(--tinta); stroke-width: 2px; }
+.agua-barra-elegida .agua-barra-zona { fill: var(--tinta); opacity: 0.16; }
+.agua-franja-activa { opacity: 0.95; }
+.agua-periodos {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.3);
+}
+.agua-periodos .accion-ligera[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.agua-anio-actual {
+  margin-left: calc(var(--u) * 0.4);
+  font-size: var(--t-l);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.agua-variable h4 {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 0.5);
+}
+/* mapa plano: el cauce toma el color de su estado y el brillo se apaga cuando casi no corre */
+.rio-bajo .rio { stroke: var(--agua-baja); }
+.rio-critico .rio { stroke: var(--agua-critica); }
+.rio-bajo .rio-flujo { opacity: 0.55; animation-duration: 2s; }
+.rio-critico .rio-flujo { opacity: 0.2; animation-duration: 4s; }
+.rio { transition: stroke var(--t-capa) var(--ease), stroke-width 380ms var(--ease); }
+.estacion-late {
+  animation: estacion-late 1.6s ease-in-out infinite;
+}
+@keyframes estacion-late {
+  50% { fill-opacity: 0.35; }
+}
+.quieto .estacion-late { animation: none; }
+.leyenda .leyenda-agua li:first-child {
+  grid-column: auto;
+}
+.leyenda-late {
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  margin: 0 0.75em 0 0.3em;
+  vertical-align: middle;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.3em color-mix(in srgb, var(--agua-critica) 35%, transparent);
+}
+
+/* ---------- Pantalla de espera: lo que se está preparando, paso a paso ---------- */
+.carga {
+  background: color-mix(in srgb, var(--papel) 88%, transparent);
+  animation: none;
+}
+.carga-marco {
+  width: min(calc(var(--u) * 46), 92vw);
+}
+.carga-titulo {
+  margin-top: calc(var(--u) * 2);
+  color: var(--marca);
+  font-weight: 800;
+  font-size: calc(var(--u) * 3.4);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.carga-barra {
+  margin: calc(var(--u) * 1.2) 0 calc(var(--u) * 1.4);
+  height: calc(var(--u) * 0.45);
+  background: var(--corte);
+  overflow: hidden;
+}
+.carga-barra i {
+  display: block;
+  height: 100%;
+  background: var(--marca);
+  transform-origin: left;
+  transition: transform 520ms var(--ease);
+}
+.carga-pasos {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: calc(var(--u) * 0.55);
+}
+.carga-pasos li {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.7);
+  font-size: var(--t-l);
+  font-weight: 600;
+  transition: opacity 320ms var(--ease), color 320ms var(--ease);
+}
+.carga-pasos svg {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.carga-pendiente {
+  opacity: 0.32;
+}
+.carga-hecho {
+  color: var(--tinta-2);
+}
+.carga-hecho svg {
+  stroke: var(--pol-3);
+}
+.carga-actual {
+  color: var(--tinta);
+  font-weight: 800;
+}
+.carga-actual svg {
+  stroke-dasharray: 8 6;
+  animation: carga-gira 900ms linear infinite;
+  transform-origin: center;
+}
+@keyframes carga-gira {
+  to { transform: rotate(360deg); }
+}
+.quieto .carga-actual svg { animation: none; }
+
+/* ---------- ¿Qué pasaría si…? del agua: una década posible sobre la banda de las 500 ---------- */
+.agua-anios {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-variant-numeric: tabular-nums;
+}
+.agua-anios .icono {
+  width: 0.8em;
+  height: 0.8em;
+  fill: currentColor;
+}
+.agua-periodos .accion-ligera[aria-checked='true'] {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.agua-zona-critica { fill: var(--empeora-1); opacity: 0.6; }
+.agua-banda { fill: var(--mejora-1); opacity: 0.9; }
+.agua-linea-decada {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.agua-punto-anio { cursor: pointer; background: none; }
+.agua-punto-anio circle {
+  stroke: var(--hoja);
+  stroke-width: 1.2;
+  transition: r 200ms var(--ease);
+}
+.agua-punto-anio.agua-estado-normal circle { fill: var(--agua); }
+.agua-punto-anio.agua-estado-bajo circle { fill: var(--agua-baja); }
+.agua-punto-anio.agua-estado-critico circle { fill: var(--agua-critica); }
+.agua-punto-elegido circle { stroke: var(--tinta); stroke-width: 2; }
+.agua-punto-elegido .agua-barra-zona { fill: var(--tinta); opacity: 0.1; }
+.agua-punto-elegido .agua-eje { fill: var(--tinta); font-weight: 800; }
+.agua-punto-anio:hover .agua-barra-zona { fill: var(--tinta); opacity: 0.07; }
+.agua-decada .agua-eje { font-size: 7.5px; }
+.agua-dato {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--u) * 0.7);
+  font-size: var(--t-s);
+  color: var(--tinta-2);
+}
+.agua-dato b {
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.agua-sim-pie {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--u) * 0.9);
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+}
+
+/* Río elegido: contorno de tinta para distinguirlo de los demás */
+.rio-elegido {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.leyenda-rio-elegido {
+  box-shadow: 0 0 0 2px var(--tinta);
+  background: var(--agua);
+}
+
+/* ---------- La región se dibuja sola mientras se espera ---------- */
+/* Fondo opaco: desenfocar el mapa 3D de atrás mientras se anima el dibujo cuesta demasiados cuadros */
+.carga.carga-con-mapa {
+  background: var(--papel);
+  backdrop-filter: none;
+}
+.carga-con-mapa .carga-marco {
+  width: min(calc(var(--u) * 92), 94vw);
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--u) * 4);
+}
+.carga-mapa {
+  width: 100%;
+  max-height: 74vh;
+  overflow: visible;
+}
+.carga-mapa path {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+/* Comunas: el contorno se traza desde Santiago hacia afuera */
+.carga-comunas path {
+  fill: var(--hoja);
+  fill-opacity: 0;
+  stroke: var(--marca);
+  stroke-width: calc(var(--px) * 1.2);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition:
+    stroke-dashoffset 900ms var(--ease) calc(var(--r) * 420ms),
+    fill 700ms var(--ease) calc(var(--r) * 520ms),
+    fill-opacity 700ms var(--ease) calc(var(--r) * 520ms);
+}
+.carga-e-comunas .carga-comunas path {
+  stroke-dashoffset: 0;
+  fill-opacity: 0.55;
+}
+/* Ríos: corren desde la cordillera */
+.carga-rios path {
+  fill: none;
+  stroke: var(--agua);
+  stroke-width: calc(var(--px) * 1.3);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1100ms var(--ease);
+}
+.carga-rios .carga-rio-medido {
+  stroke-width: calc(var(--px) * 3.2);
+}
+.carga-e-rios .carga-rios path {
+  stroke-dashoffset: 0;
+}
+/* Planes: las comunas con plan vigente se marcan un momento */
+.carga-e-planes .carga-comunas .carga-plan {
+  fill: var(--mejora-1);
+  fill-opacity: 0.9;
+}
+/* Riesgo: cada comuna toma su color, en ola desde el centro */
+.carga-e-riesgo .carga-comunas path {
+  fill-opacity: 0.95;
+  stroke: var(--hoja);
+}
+.carga-e-riesgo .carga-comunas .nivel-0 { fill: var(--nivel-0); }
+.carga-e-riesgo .carga-comunas .nivel-1 { fill: var(--nivel-1); }
+.carga-e-riesgo .carga-comunas .nivel-2 { fill: var(--nivel-2); }
+.carga-e-riesgo .carga-comunas .nivel-3 { fill: var(--nivel-3); }
+.carga-e-riesgo .carga-comunas .nivel-4 { fill: var(--nivel-4); }
+.carga-e-riesgo .carga-comunas .nivel-5 { fill: var(--nivel-5); }
+.carga-e-riesgo .carga-comunas .sin-dato { fill: var(--papel-2); }
+.carga-con-mapa .carga-titulo {
+  font-size: calc(var(--u) * 3);
+}
+
+/* ---------- Horizonte de 10 o 15 años: los años extrapolados se marcan ---------- */
+.anios-horizonte {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: calc(var(--u) * 0.2);
+}
+.anios-horizonte .accion-ligera[aria-checked='true'] {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.anios-horizonte .accion-ligera:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.anio-extra {
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--tinta) 14%, transparent) 5px 7px);
+  font-style: italic;
+}
+
+/* ---------- Las variables de inversión, junto a las simuladas ---------- */
+.dimension-extra {
+  cursor: default;
+}
+.dimension-extra .dimension-nombre small {
+  display: block;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--tinta-2);
+}
+.sello-sin {
+  background: var(--papel-2);
+  color: var(--tinta-2);
+}
+
+/* Ficha con siete variables: filas más bajas y el índice más chico, para que quepa sin desplazarse */
+.ficha-compacta .ficha-cabeza {
+  gap: calc(var(--u) * 1);
+}
+.ficha-compacta .indice {
+  width: calc(var(--u) * 5.4);
+  height: calc(var(--u) * 5.4);
+  padding: calc(var(--u) * 0.4);
+}
+.ficha-compacta .indice b {
+  font-size: calc(var(--u) * 3);
+}
+.ficha-compacta h2 {
+  font-size: calc(var(--u) * 2.6);
+}
+.ficha-compacta .dimensiones {
+  margin-top: calc(var(--u) * 0.6);
+}
+.ficha-compacta .dimension {
+  padding: calc(var(--u) * 0.24) calc(var(--u) * 0.6);
+  min-height: 0;
+}
+.ficha-compacta .dimension-nombre {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ficha-compacta .dimension-extra .dimension-nombre small {
+  display: inline;
+  margin-left: 0.5em;
+}
+.ficha-compacta .dimension {
+  grid-template-columns: 13.5em minmax(2em, 1fr) 9.4em 7.6em 0.8em;
+}
+
+/* ---------- Ajustes tras la sesión de QA: menos piezas a la vista, nada cortado ---------- */
+.agua-pasa-mas button {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+}
+.agua-detalle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 1);
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  background: var(--papel-2);
+  color: var(--tinta);
+  font-size: var(--t-s);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.8);
+  text-align: left;
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-detalle:hover { background: var(--corte); }
+.agua-detalle span:last-child {
+  font-size: var(--t-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.agua-detalle:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.agua-resultado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+}
+.agua-resultado .agua-dato b {
+  font-size: calc(var(--u) * 3.4);
+}
+p.agua-sim-pie {
+  display: block;
+}
+.agua-estacion .desplegable-boton {
+  max-width: calc(var(--u) * 24);
+}
+.agua-estacion .desplegable-boton > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dimensiones-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 0.8);
+  margin-top: calc(var(--u) * 0.45);
+  font-size: var(--t-xs);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--tinta-2);
+}
+.dimensiones-titulo:first-child {
+  margin-top: 0;
+}
+.ficha-compacta .dimension {
+  grid-template-columns: 12.6em minmax(1.5em, 1fr) 11.8em 7.6em 0.8em;
+}
+.ficha-compacta .dimension-valor {
+  white-space: nowrap;
+}
+.pesos-ayuda {
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+  margin-bottom: calc(var(--u) * 0.3);
+}
+
+/* ---------- Segunda tanda tras el QA ---------- */
+.dimension-norma {
+  margin-left: 0.6em;
+  font-size: var(--t-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.dimension-norma-riesgo { color: var(--nivel-4); }
+.dimension-norma-limite { color: var(--cafe); }
+/* Teclas de los planes: a la vista solo al pasar o al enfocar con teclado */
+.plan-tecla {
+  opacity: 0;
+  transition: opacity var(--t-capa) var(--ease);
+}
+.plan-item:hover .plan-tecla,
+.plan-item:focus-within .plan-tecla,
+.plan-lista:focus-within .plan-tecla {
+  opacity: 1;
+}
+.g-txt-ref {
+  paint-order: stroke;
+  stroke: var(--hoja);
+  stroke-width: 3px;
+}
+/* Aire y leña: que los títulos de las otras secciones queden a la vista */
+.pliegue-cuerpo .v-lena .lena-titular {
+  font-size: calc(var(--u) * 1.25);
+  margin: calc(var(--u) * 0.4) 0;
+}
+.pliegue-cuerpo .v-lena .etiqueta-real {
+  margin-bottom: calc(var(--u) * 0.4);
+}
+.pliegue-cuerpo:has(> .v-lena),
+.pliegue-cuerpo:has(> .v-riesgo) {
+  padding: calc(var(--u) * 0.7) 0 calc(var(--u) * 0.3);
+}
+.agua-dato.agua-resultado {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: calc(var(--u) * 1);
+}
+.agua-dato.agua-resultado b {
+  font-size: calc(var(--u) * 3);
+}
+div.agua-sim-pie {
+  display: grid;
+}

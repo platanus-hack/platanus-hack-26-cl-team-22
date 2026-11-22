@@ -58,6 +58,14 @@
   --zona-b-txt: #111111;
   --disco: #ee7b22;
 
+  /* El agua: el cauce, el brillo que corre sobre él y la franja de la megasequía */
+  --agua: #1f6fb2;
+  --agua-clara: #d7ecfa;
+  --agua-txt: #fafaf7;
+  /* Estado del caudal frente a lo normal: el río se entibia al bajar y enrojece al quedar crítico */
+  --agua-baja: #e08a1e;
+  --agua-critica: #b8202e;
+
   /* Un alzado mínimo entre dos papeles: 1 px de corrimiento, sin desenfoque */
   --alzado: 1px 1px 0 rgba(9, 33, 34, 0.16);
 

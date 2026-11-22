@@ -1,0 +1,15 @@
+codigo_estacion,nombre,rio,latitud,longitud,altitud,codigo_comuna,subcuenca,anios_validos,medio_m3s,cambio_pct
+5710001,Río Maipo En El Manzano,Río Maipo,-33.5939,-70.3792,850,13203,Rio Maipo Medio,37,114.83,-35.0
+5704002,Río Maipo En San Alfonso,Río Maipo,-33.7347,-70.3008,1092,13203,Rio Maipo Alto,35,79.76,-40.6
+5737002,Río Mapocho Rinconada De Maipu,Río Mapocho,-33.4961,-70.8167,440,13119,Rio Mapocho Bajo,37,32.71,-41.9
+5707002,Río Colorado Antes Junta Río Maipo,Río Colorado,-33.5875,-70.3669,890,13203,Rio Maipo Alto (Hasta Despues Junta Rio Colorado),34,32.21,-38.6
+5716001,Río Angostura En Valdivia De Paine,Río Angostura,-33.8111,-70.8836,342,13404,Rio Maipo Medio,35,22.03,-63.3
+5746001,Estero Puangue En Ruta 78,Estero Puangue,-33.6614,-71.3372,93,13501,Rio Maipo Bajo (Entre Rio Mapocho Y Desembocadura),29,15.27,-24.1
+5705001,Río Colorado Antes Junta Río Olivares,Río Colorado,-33.49,-70.1342,1500,13203,Rio Maipo Alto,28,9.47,-61.5
+5702001,Río Volcan En Queltehues,Río Volcán,-33.8056,-70.2089,1365,13203,Rio Maipo Alto,34,7.6,-51.6
+5722002,Río Mapocho En Los Almendros,Río Mapocho,-33.3703,-70.4508,966,13115,Rio Mapocho Alto,37,6.24,-54.1
+6043001,Estero Alhue En Quilamuta,Estero Alhue,-34.0617,-71.2422,130,13502,Estero Alhue,31,6.02,-62.0
+5706001,Río Olivares Antes Junta Río Colorado,Río Olivares,-33.4878,-70.1367,1500,13203,Rio Maipo Alto,36,5.53,-73.7
+5722001,Estero Arrayan En La Montosa,Estero Arrayán,-33.3256,-70.4561,880,13115,Rio Mapocho Alto,36,1.59,-50.8
+5721001,Estero Yerba Loca Antes Junta San Francisco,Estero Yerba Loca,-33.3414,-70.3636,1350,13115,Rio Mapocho Alto,31,0.98,-32.9
+5730008,Quebrada Ramon En Recinto Emos,Quebrada Ramón,-33.4331,-70.5142,845,13114,Rio Mapocho Bajo,24,0.24,-84.5

@@ -21,3 +21,10 @@ Propiedades: `codigo` (CUT comunal, 5 dígitos), `nombre`, `provincia`.
 4. Coordenadas redondeadas a 5 decimales. Cambio de área máximo respecto al original: 0.14 %.
 
 Script: `datos/geo/build_comunas.py` (ver instrucciones de uso en su cabecera).
+
+## Ríos
+
+Archivo: `rios_rm.geojson` (LineString, orden de los vértices en el sentido del flujo; propiedades
+`nombre`, `clase` y `estacion`). Fuente: OpenStreetMap vía Overpass API, © OpenStreetMap
+contributors, licencia ODbL. Detalle y reglas en `data/dga/README.md`. Script:
+`datos/dga/fetch_caudales.py`.

@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Anios, ControlesMapa, Leyenda } from './components/Marco'
 import logoRoot from './assets/logo-root.png'
+import { Cargando } from './components/Cargando'
 import { Mapa } from './components/Mapa'
-import type { Cinta, Encuadre } from './components/MapaPapel'
+import type { AguaMapa, Cinta, Encuadre } from './components/MapaPapel'
+import { VistaAgua, type SimAgua } from './components/VistaAgua'
+import { decadaDe, ESCENARIOS_AGUA, REPLICAS_AGUA, resumirSim, sortearDecadas, type EscenarioAgua } from './lib/aguaSim'
+import { cauceDe, claveCauce, caudalEn, decimalesCaudal, estacionDeComuna, estadoCaudal, fraccionNormal, leerAgua, TEXTO_ESTADO as TEXTO_CAUDAL, type AnioAgua, type Estacion } from './lib/agua'
 import { VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
 import { GENERAL, PERSONALIZADO, VistaRiesgo } from './components/VistaRiesgo'
 import type { AportePolitica } from './lib/capas'
@@ -11,7 +15,9 @@ import { diferenciasPorComuna, maxAbsDiferencia } from './lib/diferencia'
 import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, } from './lib/interaccion'
+import { indicadoresInversion, leerInversion } from './lib/inversion'
 import { leerLena, type Zona } from './lib/lena'
+import type { Horizonte } from './lib/load'
 import { CORTES_OCUPACION, bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
 import { useSimulacionAbm } from './lib/useSimulacionAbm'
 import { VistaMudanzas, type OpcionesMudanzas } from './components/VistaMudanzas'
@@ -55,7 +61,16 @@ interface Props {
   geoRaw: unknown
   lenaRaw: unknown
   demografiaRaw?: unknown
+  aguaRaw?: { caudales: unknown; rios: unknown }
+  inversionRaw?: unknown
+  /** horizonte cargado y cómo pedir el otro; sin `onHorizonte` no se ofrece el cambio */
+  horizonte?: Horizonte
+  onHorizonte?: (h: Horizonte) => void
+  cambiandoHorizonte?: boolean
 }
+
+/** cada cuánto avanza un año la reproducción de los caudales */
+const PASO_AGUA_MS = 520
 
 /** Ocupación de la vivienda (población / capacidad, %): cortes del mapa en la vista de mudanzas. */
 const VARIABLE_OCUPACION = { id: 'ocupacion_vivienda', nombre: 'Ocupación de la vivienda', unidad: '% de la capacidad', mejor: 'menor' as const }
@@ -78,8 +93,9 @@ function useMovimientoReducido(): boolean {
   return r
 }
 
-export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
+export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inversionRaw, horizonte = '10', onHorizonte, cambiandoHorizonte = false }: Props) {
   const anios = data.meta.anios
+  const extrapolados = useMemo(() => new Set(data.meta.anios_extrapolados ?? []), [data.meta.anios_extrapolados])
   const conDato = useMemo(() => variablesConDato(data), [data])
   // El aire es la variable con norma, planes y validación; las demás hojas (plan, leña, prueba) hablan de ella.
   const varAire = data.variables.find((v) => conDato.has(v.id)) ?? data.variables[0]!
@@ -95,6 +111,18 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       return null
     }
   }, [demografiaRaw])
+  // Caudales reales de los ríos: medición histórica de la DGA, aparte de la simulación.
+  const agua = useMemo(() => leerAgua(aguaRaw?.caudales, aguaRaw?.rios), [aguaRaw])
+  const [aguaEstacion, setAguaEstacion] = useState<string | null>(null)
+  /** qué caudal se mira: la megasequía (lo primero que se ve), el promedio (null) o un año (índice de agua.anios) */
+  const [aguaAnio, setAguaAnio] = useState<AnioAgua>('sequia')
+  const [aguaJugando, setAguaJugando] = useState(false)
+  /** «¿qué pasaría si…?» del agua: escenario y década que se reproduce; null = se mira lo medido */
+  const [aguaSim, setAguaSim] = useState<{ escenario: EscenarioAgua; replica: number } | null>(null)
+  /** pantalla de espera entre la entrada y el mapa */
+  const [cargando, setCargando] = useState(false)
+  const [mapaListo, setMapaListo] = useState(false)
+  const alListoMapa = useCallback(() => setMapaListo(true), [])
   const vistas = PESTANAS
   const reducido = useMovimientoReducido()
 
@@ -103,7 +131,12 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const lecturas = useMemo(() => lecturasDisponibles(data.escenarios, defecto), [data.escenarios, defecto])
 
   const [vistaIdx, setVistaIdx] = useState(0)
-  const [idx, setIdx] = useState(0)
+  const [idx, setIdxCrudo] = useState(0)
+  const setIdx: typeof setIdxCrudo = setIdxCrudo
+  // Al pasar de 15 a 10 años el año elegido puede quedar fuera: se vuelve al último que existe.
+  useEffect(() => {
+    setIdxCrudo((i) => Math.min(i, anios.length - 1))
+  }, [anios.length])
   const [jugando, setJugando] = useState(false)
   // Políticas pegadas, lectura y escenario en un solo estado: cada cambio se calcula desde el anterior,
   // así dos teclas en el mismo instante se aplican las dos.
@@ -122,6 +155,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const [pesos, setPesos] = useState<Record<string, number>>(() => aPrioridades(data.tipos_hogar[0]?.pesos ?? {}))
   /** sección abierta de cada pestaña que tiene varias */
   const [secciones, setSecciones] = useState<Partial<Record<PestanaId, SeccionId>>>({})
+  /** pestañas cuya sección abierta se cerró a mano: quedan solo los títulos */
+  const [plegadas, setPlegadas] = useState<ReadonlySet<PestanaId>>(new Set())
   const [demo, setDemo] = useState(false)
   // Entrada guiada: se muestra al abrir, salvo con ?directo en la dirección (para ensayar o proyectar sin ella).
   const [onb, setOnb] = useState(() => !new URLSearchParams(window.location.search).has('directo'))
@@ -159,6 +194,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     seguridad: !!papelVar.seguridad,
     crecimiento: !!papelVar.crecimiento,
     lena: true,
+    agua: !!agua,
     urbano: !!demografia,
     validacion: !!data.validacion,
   })
@@ -172,6 +208,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     if (!papel) return
     const l = lugarDe(papel)
     setSecciones((x) => ({ ...x, [l.pestana]: l.seccion }))
+    setPlegadas((x) => new Set([...x].filter((k) => k !== l.pestana)))
     setVistaIdx(vistas.findIndex((v) => v.id === l.pestana))
   }
   // Una dimensión (el índice general) o una variable en detalle; fuera de la hoja de riesgo siempre es el aire.
@@ -318,16 +355,41 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
   const encuadrePrevio = useRef<Encuadre>('gran-santiago')
   const vistaPrevia = useRef(vista)
   useEffect(() => {
-    if (vista === 'lena' && vistaPrevia.current !== 'lena') {
+    // La leña y el agua se miran a escala de región: la Zona B es la periferia y los ríos nacen en la cordillera.
+    const amplia = (v: typeof vista) => v === 'lena' || v === 'agua'
+    if (amplia(vista) && !amplia(vistaPrevia.current)) {
       encuadrePrevio.current = encuadre
       setEncuadre('region')
-    } else if (vista !== 'lena' && vistaPrevia.current === 'lena') {
+    } else if (!amplia(vista) && amplia(vistaPrevia.current)) {
       setEncuadre(encuadrePrevio.current)
     }
+    if (vista !== 'agua') setAguaJugando(false)
     vistaPrevia.current = vista
     // solo al cambiar de vista: el encuadre que se guarda es el del momento del cambio
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vista])
+  // Reproducir los caudales: avanza un año por paso desde el principio y se detiene en el último.
+  useEffect(() => {
+    if (!aguaJugando || !agua) return
+    const t = window.setInterval(() => {
+      setAguaAnio((i) => {
+        const sig = typeof i === 'number' ? i + 1 : 0
+        if (sig >= agua.anios.length - 1) setAguaJugando(false)
+        return Math.min(sig, agua.anios.length - 1)
+      })
+    }, PASO_AGUA_MS)
+    return () => window.clearInterval(t)
+  }, [aguaJugando, agua])
+  const jugarAgua = (v: boolean) => {
+    if (v && agua && (typeof aguaAnio !== 'number' || aguaAnio >= agua.anios.length - 1)) setAguaAnio(0)
+    setAguaJugando(v)
+  }
+  const irAAgua = () => {
+    setSecciones((x) => ({ ...x, clima: 'agua' }))
+    setPlegadas((x) => new Set([...x].filter((k) => k !== 'clima')))
+    setVistaIdx(vistas.findIndex((v) => v.id === 'clima'))
+  }
+
   const irAVista = useCallback(
     (i: number) => {
       if (vistas[i]) setVistaIdx(i)
@@ -460,7 +522,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
 
   // ---- textos del mapa ----
   const u = variable.unidad
-  const modoMapa = vista === 'lena' ? 'lena' : vista === 'plan' && modoDif && puedeDiferencia ? 'diferencia' : 'valor'
+  const modoMapa = vista === 'agua' ? 'agua' : vista === 'lena' ? 'lena' : vista === 'plan' && modoDif && puedeDiferencia ? 'diferencia' : 'valor'
   const norma = data.impacto?.norma
   const textoComuna = (f: GeoFeature): Etiqueta => {
     const titulo = f.properties.nombre
@@ -470,6 +532,13 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       f.properties.codigo,
       sim,
     )
+    if (modoMapa === 'agua') {
+      const suyas = agua?.estaciones.filter((e) => e.comuna === f.properties.codigo) ?? []
+      const pasan = agua?.cauces.filter((c) => c.comunas.includes(f.properties.codigo)).map((c) => c.nombre) ?? []
+      const lineas = suyas.slice(0, 3).map((e) => `${e.rio}: ${fmt(e.medio, decimalesCaudal(e.medio))} m³/s`)
+      if (pasan.length > 0) lineas.push(`Pasan: ${pasan.slice(0, 4).join(', ')}`)
+      return { titulo, lineas: lineas.length > 0 ? lineas : ['Sin ríos mapeados'] }
+    }
     if (modoMapa === 'lena') {
       const c = lena?.comunas.find((x) => x.codigo === f.properties.codigo)
       if (!c) return { titulo, lineas: ['Sin dato'] }
@@ -599,6 +668,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
     const guiada = b.contexto !== '' || b.caso !== 'general' || b.sinDatos.length > 0 || Object.keys(b.rangos).length > 0
     setBusqueda(guiada ? b : null)
     setOnb(false)
+    setCargando(true)
     setGuiaIA(null)
     setLecturaCaso(null)
     const n = ++pedido.current
@@ -656,16 +726,148 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           guiaIA?.texto ??
           (guiaIA?.cargando || lecturaCaso?.cargando
             ? 'Leyendo tu caso…'
-            : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: busqueda.sinDatos })),
+            : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: agua ? busqueda.sinDatos.filter((x) => !/caudal/i.test(x)) : busqueda.sinDatos })),
         cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
         porIA: !!guiaIA?.texto,
         onCambiar: () => setOnb(true),
+        onAgua: agua && busqueda.caso === 'hidro' ? irAAgua : undefined,
         leyendo: !!lecturaCaso?.cargando,
         ajustes: ajustesGuia,
         notas: notasGuia,
         onAlternarAjuste: alternarAjuste,
       }
     : null
+
+  // ---- el agua: estación elegida y lo que el mapa dibuja ----
+  const nombreGeo = useCallback((codigo: string | null) => (codigo ? (features.find((f) => f.properties.codigo === codigo)?.properties.nombre ?? null) : null), [features])
+  const estacion: Estacion | null = agua ? ((aguaEstacion ? agua.porCodigo.get(aguaEstacion) : undefined) ?? agua.estaciones[0] ?? null) : null
+  // Al elegir una comuna en el mapa del agua se pasa a su río principal, si tiene estación.
+  const comunaGeo = seleccionada ? (features.find((f) => f.properties.simCodigo === seleccionada)?.properties.codigo ?? null) : null
+  useEffect(() => {
+    if (vista !== 'agua' || !agua) return
+    const suya = estacionDeComuna(agua.estaciones, comunaGeo)
+    if (suya) setAguaEstacion((actual) => (actual && agua.porCodigo.get(actual)?.comuna === comunaGeo ? actual : suya.codigo))
+    // solo al cambiar de comuna: elegir otra estación a mano no debe volver a la de la comuna
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comunaGeo, vista === 'agua'])
+  const cauce = agua && estacion ? cauceDe(agua, estacion) : null
+  const pasa = useMemo(() => new Set(cauce?.comunas ?? []), [cauce])
+  const cauceElegido = estacion ? claveCauce(estacion.rio) : null
+  /** caja del río elegido (sus tramos y su estación), para que el mapa vaya a él */
+  const focoAgua = useMemo<readonly [number, number, number, number] | null>(() => {
+    if (!agua || !estacion) return null
+    const pts: [number, number][] = [[estacion.lon, estacion.lat]]
+    for (const r of agua.rios) if (r.nombre && claveCauce(r.nombre) === cauceElegido) pts.push(...r.coords)
+    const xs = pts.map((q) => q[0])
+    const ys = pts.map((q) => q[1])
+    const h = pts.length > 1 ? 0.02 : 0.12
+    return [Math.min(...xs) - h, Math.min(...ys) - h, Math.max(...xs) + h, Math.max(...ys) + h]
+  }, [agua, estacion, cauceElegido])
+  // Simulación del agua: 500 décadas por escenario para los años de la línea de tiempo; se reproduce una.
+  const decadas = useMemo(() => (agua && aguaSim ? sortearDecadas(agua, aguaSim.escenario, anios.length) : null), [agua, aguaSim?.escenario, anios.length])
+  const decadaPorEstacion = useMemo(() => {
+    const m = new Map<string, number[]>()
+    if (agua && decadas && aguaSim) for (const e of agua.estaciones) m.set(e.codigo, decadaDe(agua, e, decadas, aguaSim.replica))
+    return m
+  }, [agua, decadas, aguaSim])
+  const simVista = useMemo<SimAgua | null>(
+    () =>
+      agua && estacion && decadas && aguaSim
+        ? {
+            escenario: aguaSim.escenario,
+            replica: aguaSim.replica,
+            replicas: REPLICAS_AGUA,
+            resumen: resumirSim(agua, estacion, decadas),
+            decada: decadaPorEstacion.get(estacion.codigo) ?? [],
+            anios,
+            idx,
+          }
+        : null,
+    [agua, estacion, decadas, aguaSim, decadaPorEstacion, anios, idx],
+  )
+  const fraccionAgua = useCallback(
+    (e: Estacion) => (aguaSim ? (decadaPorEstacion.get(e.codigo)?.[idx] ?? null) : fraccionNormal(e, aguaAnio)),
+    [aguaSim, decadaPorEstacion, idx, aguaAnio],
+  )
+  const textoCuandoAgua = !agua
+    ? ''
+    : aguaSim
+      ? `${anio}, simulado: ${ESCENARIOS_AGUA.find((s) => s.id === aguaSim.escenario)?.titulo.toLowerCase()}`
+      : aguaAnio === null
+        ? `promedio ${agua.anios[0]}–${agua.anios[agua.anios.length - 1]}`
+        : aguaAnio === 'sequia'
+          ? `megasequía ${agua.sequia[0]}–${agua.sequia[1]}`
+          : String(agua.anios[aguaAnio])
+  const aguaMapa = useMemo<AguaMapa | null>(
+    () =>
+      agua
+        ? {
+            rios: agua.rios,
+            estaciones: agua.estaciones,
+            cauces: agua.cauces,
+            pasa,
+            porCodigo: agua.porCodigo,
+            fraccionDe: fraccionAgua,
+            caudalDe: (e) => {
+              const f = fraccionAgua(e)
+              return aguaSim ? (f === null ? null : f * (e.base ?? e.medio)) : caudalEn(e, aguaAnio)
+            },
+            clave: aguaSim ? `sim-${aguaSim.escenario}-${aguaSim.replica}-${idx}` : `medido-${aguaAnio}`,
+            elegida: estacion?.codigo ?? null,
+            cauceElegido,
+            foco: focoAgua,
+            onElegir: setAguaEstacion,
+            etiqueta: (e) => {
+              const f = fraccionAgua(e)
+              const v = aguaSim ? (f === null ? null : f * (e.base ?? e.medio)) : caudalEn(e, aguaAnio)
+              const cuando = aguaSim ? `${anio}, simulado` : aguaAnio === null ? 'promedio' : aguaAnio === 'sequia' ? 'megasequía' : String(agua.anios[aguaAnio])
+              return {
+                titulo: e.nombre,
+                valor: v === null ? '—' : fmt(v, decimalesCaudal(v)),
+                unidad: `m³/s · ${cuando}`,
+                lineas: [f === null ? TEXTO_CAUDAL.sin : `${TEXTO_CAUDAL[estadoCaudal(f)]}: ${fmt(f * 100, 0)} % de lo normal`, 'Estación de medición de la DGA'],
+              }
+            },
+          }
+        : null,
+    [agua, aguaAnio, aguaSim, fraccionAgua, anio, idx, estacion?.codigo, pasa, cauceElegido, focoAgua],
+  )
+
+  // Lo que la pantalla de espera dibuja; se arma una vez al abrirla, no en cada render.
+  const riesgoRef = useRef(riesgo)
+  riesgoRef.current = riesgo
+  const mapaCarga = useMemo(
+    () => ({
+      features,
+      rios: agua?.rios ?? [],
+      clase: (f: GeoFeature) => {
+        const r = f.properties.simCodigo ? riesgoRef.current.porCodigo.get(f.properties.simCodigo) : undefined
+        return r && r.indice !== null ? `nivel-${papelNivel(nivel(r.indice, CORTES_RIESGO), CORTES_RIESGO)}` : null
+      },
+      conPlan: (f: GeoFeature) => !!f.properties.simCodigo && zonasSim.has(f.properties.simCodigo),
+    }),
+    // `cargando` entra para que cada apertura tome el riesgo del momento
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [features, agua, zonasSim, cargando],
+  )
+
+  const comunaGeoRiesgo = seleccionada ? (features.find((f) => f.properties.simCodigo === seleccionada)?.properties.codigo ?? seleccionada) : null
+  // Variables de inversión: solo para quien llegó con un caso de empresa o inversión (mentoría: «las 7 que más les interesan»).
+  const inversionReal = useMemo(() => leerInversion(inversionRaw), [inversionRaw])
+  const casoInversion = busqueda?.caso === 'hidro' || busqueda?.caso === 'industria'
+  const extras = useMemo(
+    () => (casoInversion ? indicadoresInversion(inversionReal, data.clima, anio) : []),
+    [casoInversion, inversionReal, data.clima, anio],
+  )
+  const extrasComuna = extras.map((x) => ({
+    id: x.id,
+    nombre: x.nombre,
+    que: `${x.que}. ${x.origen === 'real' ? 'Dato real' : 'Simulado'}: ${x.fuente}`,
+    unidad: x.unidad,
+    origen: x.origen,
+    valor: comunaGeoRiesgo ? (x.valores.get(comunaGeoRiesgo) ?? null) : null,
+    riesgo: comunaGeoRiesgo ? (x.riesgo.get(comunaGeoRiesgo) ?? null) : null,
+  }))
 
   let hoja: ReactNode = null
   if (vista === 'riesgo') {
@@ -693,6 +895,9 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         tipos={data.tipos_hogar}
         perfilId={perfilId}
         pesos={pesos}
+        extras={extrasComuna}
+        rangos={rangos}
+        onRango={(k, id) => setRangos((x) => ({ ...x, [k]: id }))}
         onPerfil={(id) => {
           setPerfilId(id)
           // otro perfil: una lectura del caso todavía en camino ya no aplica
@@ -784,6 +989,47 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
       />
     )
   else if (vista === 'lena') hoja = <VistaLena lena={lena} />
+  else if (vista === 'agua' && agua && estacion)
+    hoja = (
+      <VistaAgua
+        agua={agua}
+        estacion={estacion}
+        cauce={cauce}
+        onComuna={(codigo) => {
+          const sim = features.find((f) => f.properties.codigo === codigo)?.properties.simCodigo
+          if (sim) setSeleccionada(sim)
+        }}
+        anio={aguaAnio}
+        jugando={aguaJugando}
+        onAnio={(a) => {
+          setAguaJugando(false)
+          setAguaAnio(a)
+        }}
+        onJugar={jugarAgua}
+        onEstacion={setAguaEstacion}
+        nombreComuna={nombreGeo}
+        sim={simVista}
+        onSim={(esc) => {
+          setAguaJugando(false)
+          setAguaSim((s) => (esc ? { escenario: esc, replica: s?.replica ?? 0 } : null))
+          if (esc && !aguaSim) {
+            // al abrir la simulación la década se reproduce sola desde el primer año
+            setIdx(0)
+            setJugando(true)
+          }
+          if (!esc) setJugando(false)
+        }}
+        onOtraDecada={() => {
+          setAguaSim((s) => (s ? { ...s, replica: (s.replica + 1) % REPLICAS_AGUA } : s))
+          setIdx(0)
+          setJugando(true)
+        }}
+        onAnioSim={(i) => {
+          setJugando(false)
+          setIdx(i)
+        }}
+      />
+    )
   else if (vista === 'fuentes') hoja = <VistaFuentes politicas={data.politicas} />
   else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
   else if (vista === 'mudanzas' && demografia)
@@ -823,12 +1069,14 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           aportes={mapaRiesgo || mapaMudanzas ? sinAportes : aportesMapa}
           activas={activas}
           lena={lena}
+          agua={aguaMapa}
           seleccionada={seleccionada}
           cintas={cintas}
           encuadre={encuadre}
           reencuadre={reencuadre}
           reducido={reducido}
           onSeleccionar={setSeleccionada}
+          onListo={alListoMapa}
           etiqueta={textoComuna}
           nombreAccesible={nombreAccesible}
         >
@@ -846,6 +1094,14 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
             difMax={difMax}
             baseNombre={referencia.nombre}
             lena={lena}
+            agua={
+              modoMapa === 'agua' && agua
+                ? {
+                    cuando: textoCuandoAgua,
+                    normal: `${agua.base[0]}–${agua.base[1]}`,
+                  }
+                : null
+            }
             hayPiezas={aportesMapa.size > 0}
             ocupacion={mapaMudanzas}
             riesgo={
@@ -862,9 +1118,22 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
         </Mapa>
       </main>
 
-      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} />}
+      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} hasta={anios[anios.length - 1]!} />}
+      {cargando && !onb && (
+        <Cargando
+          onFin={() => setCargando(false)}
+          mapa={mapaCarga}
+          pasos={[
+            { texto: busqueda?.contexto ? 'Leyendo tu caso' : 'Preparando la región', listo: !lecturaCaso?.cargando },
+            { texto: `Ubicando las ${data.comunas.length} comunas en el mapa`, listo: mapaListo, etapa: 'comunas' },
+            ...(agua ? [{ texto: `Midiendo los ríos: ${agua.estaciones.length} estaciones de la DGA`, listo: true, etapa: 'rios' as const }] : []),
+            { texto: `Revisando ${data.politicas.length} planes y normas`, listo: true, etapa: 'planes' },
+            { texto: 'Ordenando las comunas por riesgo', listo: true, etapa: 'riesgo' },
+          ]}
+        />
+      )}
 
-      <section className="columna" aria-label="Lectura de la simulación" inert={onb}>
+      <section className="columna" aria-label="Lectura de la simulación" inert={onb || cargando}>
         <header className="cabecera">
           <h1 className="marca">
             {inicio ? (
@@ -903,7 +1172,22 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           ))}
         </nav>
         <div className="hoja" id="hoja" role="tabpanel" aria-labelledby={`tab-${pestana.id}`} key={pestana.id}>
-          <Hoja pestana={pestana} secciones={disponibles} abierta={modo.seccion} onSeccion={(id) => setSecciones((x) => ({ ...x, [pestana.id]: id }))}>
+          <Hoja
+            pestana={pestana}
+            secciones={disponibles}
+            abierta={plegadas.has(pestana.id) ? null : modo.seccion}
+            onSeccion={(id) => {
+              // tocar la sección abierta la cierra; tocar otra la abre
+              const cerrar = id === modo.seccion && !plegadas.has(pestana.id)
+              setPlegadas((x) => {
+                const y = new Set(x)
+                if (cerrar) y.add(pestana.id)
+                else y.delete(pestana.id)
+                return y
+              })
+              setSecciones((x) => ({ ...x, [pestana.id]: id }))
+            }}
+          >
             {hoja}
           </Hoja>
         </div>
@@ -916,7 +1200,17 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw }: Props) {
           jugando={jugando}
           onIdx={elegirAnio}
           onJugar={jugar}
-          escenario={vista === 'lena' ? 'La leña: inventario 2023, no cambia con el año' : `Escenario: ${escenario.nombre}`}
+          extrapolados={extrapolados}
+          horizonte={onHorizonte ? { valor: horizonte, cambiando: cambiandoHorizonte, onCambiar: onHorizonte } : null}
+          escenario={
+            vista === 'lena'
+              ? 'La leña: inventario 2023, no cambia con el año'
+              : vista === 'agua'
+                ? aguaSim
+                  ? `Agua simulada: ${ESCENARIOS_AGUA.find((s) => s.id === aguaSim.escenario)?.titulo.toLowerCase()} · década ${aguaSim.replica + 1} de ${REPLICAS_AGUA}`
+                  : 'Caudales: medición histórica, no cambia con el año'
+                : `Escenario: ${escenario.nombre}`
+          }
         />
       </footer>
     </div>

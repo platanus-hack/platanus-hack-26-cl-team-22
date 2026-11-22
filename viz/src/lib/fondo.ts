@@ -5,7 +5,7 @@ import type { Lena } from './lena'
 import { papelNivel, pasoDiferencia } from './niveles'
 import type { Mejor } from './types'
 
-export type ModoMapa = 'valor' | 'diferencia' | 'lena'
+export type ModoMapa = 'valor' | 'diferencia' | 'lena' | 'agua'
 
 export interface DatosFondo {
   modo: ModoMapa
@@ -15,6 +15,8 @@ export interface DatosFondo {
   difMax: number
   mejor: Mejor
   lena: Lena | null
+  /** modo agua: comunas por donde pasa el río elegido */
+  pasa?: ReadonlySet<string>
 }
 
 /**
@@ -22,6 +24,8 @@ export interface DatosFondo {
  * `codigo` es el del polígono; `sim`, el de la simulación (undefined = sin dato).
  */
 export function claseFondo(d: DatosFondo, codigo: string, sim: string | undefined): string {
+  // El mapa del agua deja ver el relieve: mandan los ríos, y solo se tiñen las comunas por donde pasa el elegido.
+  if (d.modo === 'agua') return d.pasa?.has(codigo) ? 'mejora-1' : 'sin-dato'
   if (d.modo === 'lena') {
     const z = d.lena?.comunas.find((c) => c.codigo === codigo)?.zona
     return z === 'A' ? 'zona-a' : z === 'B' ? 'zona-b' : 'sin-dato'
