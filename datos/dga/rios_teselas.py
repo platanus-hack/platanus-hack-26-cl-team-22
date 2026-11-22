@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import datetime as dt
 import gzip
+import itertools
 import json
 import math
 import re
@@ -174,7 +175,7 @@ def lineas_de_capa(tile: bytes, capa: str) -> list[tuple[dict, list[list[tuple[i
 def recortar(linea: list[tuple[float, float]], lado: float) -> list[list[tuple[float, float]]]:
     """Parte de una línea dentro del cuadro [0, lado]² (las teselas traen un margen que se repite en la vecina)."""
     tramos, actual = [], []
-    for (x0, y0), (x1, y1) in zip(linea, linea[1:]):
+    for (x0, y0), (x1, y1) in itertools.pairwise(linea):
         t0, t1, dx, dy = 0.0, 1.0, x1 - x0, y1 - y0
         fuera = False
         for p, q in ((-dx, x0), (dx, lado - x0), (-dy, y0), (dy, lado - y0)):
@@ -274,7 +275,7 @@ def cauces_de_teselas(
 def unir(lineas: list[list], tol: float = TOL_UNION) -> list[list]:
     """Une líneas cuando el fin de una cae sobre el inicio de otra (con tolerancia), sin cambiar el sentido."""
     lineas = [list(x) for x in lineas]
-    cerca = lambda a, b: abs(a[0] - b[0]) <= tol and abs(a[1] - b[1]) <= tol  # noqa: E731
+    cerca = lambda a, b: abs(a[0] - b[0]) <= tol and abs(a[1] - b[1]) <= tol
     cambio = True
     while cambio:
         cambio = False
@@ -301,7 +302,7 @@ def comunas_de(lineas: list[list], comunas: Comunas) -> tuple[list[str], float]:
     dx = sum(linea[-1][0] - linea[0][0] for linea in lineas)
     dy = sum(linea[-1][1] - linea[0][1] for linea in lineas)
     for linea in lineas:
-        for p, q in zip(linea, linea[1:]):
+        for p, q in itertools.pairwise(linea):
             largo = length_km([p, q])
             pasos = max(1, round(largo / PASO_MUESTRA_KM))
             for k in range(pasos):
@@ -317,7 +318,7 @@ def comunas_de(lineas: list[list], comunas: Comunas) -> tuple[list[str], float]:
 
 def recortar_a_region(linea: list, comunas: Comunas) -> list[list]:
     tramos, actual = [], []
-    for p, q in zip(linea, linea[1:]):
+    for p, q in itertools.pairwise(linea):
         if comunas.code_at((p[0] + q[0]) / 2, (p[1] + q[1]) / 2):
             actual = actual or [p]
             actual.append(q)

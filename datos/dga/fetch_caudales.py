@@ -23,6 +23,7 @@ import csv
 import datetime as dt
 import hashlib
 import io
+import itertools
 import json
 import math
 import re
@@ -121,7 +122,7 @@ class Comunas:
                 )
 
     @classmethod
-    def load(cls, path: Path = COMUNAS_GEO) -> "Comunas":
+    def load(cls, path: Path = COMUNAS_GEO) -> Comunas:
         return cls(json.loads(path.read_text(encoding="utf-8"))["features"])
 
     def code_at(self, lon: float, lat: float) -> str | None:
@@ -209,7 +210,7 @@ def dp_simplify(pts: list, tol: float) -> list:
 
 def length_km(pts: list) -> float:
     total = 0.0
-    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+    for (x0, y0), (x1, y1) in itertools.pairwise(pts):
         total += math.hypot((x1 - x0) * math.cos(math.radians((y0 + y1) / 2)), y1 - y0) * 111.2
     return total
 
@@ -237,7 +238,7 @@ def join_lines(lines: list[list]) -> list[list]:
 def clip_line(line: list, comunas: Comunas) -> list[list]:
     """Runs of consecutive segments whose midpoint lies inside any commune polygon."""
     runs, cur = [], []
-    for p, q in zip(line, line[1:]):
+    for p, q in itertools.pairwise(line):
         if comunas.code_at((p[0] + q[0]) / 2, (p[1] + q[1]) / 2):
             cur = cur or [p]
             cur.append(q)
@@ -454,7 +455,7 @@ def main() -> None:
     page = cached(
         PAGE, RAW / "cr2_caudales_pagina.html", manifest, lambda: get(PAGE, ua=BROWSER_UA)
     ).decode("utf-8", "replace")
-    links = sorted(set(re.findall(r'https?://[^"\'\s<>]*' + ZIP_MARK + r'[^"\'\s<>]*', page, re.I)))
+    links = sorted(set(re.findall(r'https?://[^"\'\s<>]*' + ZIP_MARK + r'[^"\'\s<>]*', page, re.IGNORECASE)))
     if len(links) != 1:
         raise SystemExit(f"Expected one {ZIP_MARK} link on the CR2 page, found {links}")
     link = links[0].replace("&#038;", "&").replace("&amp;", "&")
