@@ -23,7 +23,7 @@ Branch: `feat/riesgo-climatico`. Delivery: ask-on-risk. Test runner: `make test`
 |---|---|---|---|---|
 | T1 | S1, S3 | inline | done | `6f29de4`: `core/clima.py`; RED (import error) → GREEN 9 tests |
 | T2 | S1, S3 | inline | done | `f8263d2`: `clima` block; every other key equal to the pre-change snapshot |
-| T3 | S2, S3 | inline | done | `fa1a35e`: AUC model 0.605, outside Santiago province 0.917, base precipitation 0.125; README table unchanged |
+| T3 | S2, S3 | inline | done | `fa1a35e`, then permutation p and `docs/modelo-clima.md`: AUC model 0.605 (p 0.086), outside Santiago province 0.917, base precipitation 0.125; README table unchanged |
 
 ## Log
 
@@ -31,5 +31,6 @@ Branch: `feat/riesgo-climatico`. Delivery: ask-on-risk. Test runner: `make test`
 - **L2** (2026-11-21, evidence): ARClim series are not in LFS. GCMs per indicator (ssp245): 28 for the water and flood indicators, 18 for heat, 10 for `eto_mean`; 18 common to the six chosen indicators. DGA: 186 decree rows, 24 communes, 2008–2023; 15 rows declared by province. `simulacion.json` is 1.5 MB, 500 replicas, seed 22, keyed streams `SeedSequence([seed, replica, key])` in `core/credibilidad.py`.
 - **L3** (2026-11-21, evidence): 19 runs (17 GCMs ssp245, 18 ssp585) carry all six indicators. Santiago, ssp245, 2041–2060 vs 1991–2020, p10/p50/p90: hot days +23/+40/+51; precipitation −20/−5/+5 %; drought frequency −7/+2/+11 pp. Consistent with the ARClim README ensemble (hot days 71.0 → 107.6).
 - **L4** (2026-11-21, decision): values rounded to 1 decimal; `simulacion.json` grows from 1.50 MB to 2.63 MB (gzip 208 KB → 324 KB). If the viz never reads `clima`, move it to its own file when integrating.
-- **L5** (2026-11-21, evidence): the water check loses. The model's drought-frequency change ranks communes with a decree above chance (AUC 0.61), but «outside the Santiago province» ranks them far better (0.92). Decrees probably track exposure (rural, irrigation) more than climate change. The engine measures how much the climate changes, not how exposed a commune is today. Next: an exposure component (rural share, water source), and the viz decision.
+- **L5** (2026-11-21, evidence): the water check loses. The model's drought-frequency change gives AUC 0.61, permutation p 0.09: not distinguishable from chance. «Outside the Santiago province» ranks them far better (0.92, p 0.0001). Modelled 1991–2020 rainfall ranks backwards (0.12): decree communes are the wetter ones. Decrees probably track exposure (rural, irrigation) more than climate change. The engine measures how much the climate changes, not how exposed a commune is today. Next: an exposure component (rural share, water source), and the viz decision.
 - **L6** (2026-11-21, checks): `make test` 289 passed; `ruff check .` clean; viz typecheck + 215 vitest passed (after T2).
+- **L7** (2026-11-21, checks): `simulacion.json` has no NaN/Infinity and parses with `JSON.parse`. DGA labels checked: every decree text names its commune (only the spelling «Til Til» differs). RDD is off (global), so no native review. `make test` 290 passed; `ruff check .` clean. Re-running `make simulate` reproduces `simulacion.json` byte for byte.
