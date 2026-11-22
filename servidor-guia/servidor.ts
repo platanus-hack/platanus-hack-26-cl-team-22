@@ -2,7 +2,7 @@
  * HTTP intermediary between the simulator page and the Claude API. The API key lives only here
  * (ANTHROPIC_API_KEY in this process's environment), never in the page or in a VITE_ variable.
  *
- *   POST /interpretar  { caso, perfil, prioridades }  -> { ajustes, indicadores, no_medido, preguntas }
+ *   POST /interpretar  { caso, perfil, prioridades }  -> { ajustes, indicadores, no_medido }
  *   POST /guia         PedidoGuia (viz/src/lib/guia.ts) -> { texto }
  *   GET  /salud        -> { ok, clave, ip, proxies, cadena, directa }  (cadena: X-Forwarded-For as received)
  *

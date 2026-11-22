@@ -5,7 +5,7 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 
 | Ruta | Pedido | Respuesta | Para qué |
 |---|---|---|---|
-| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido, preguntas }` | Lee el caso, propone ajustes de prioridad y, en la misma llamada, una sola pregunta sobre lo que falta, la que más mueve los indicadores de ese perfil (niños, asma, horarios de noche, clientes cercanos); el propósito lo infiere |
+| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido }` | Lee el caso y propone ajustes de prioridad, sin hacer preguntas: el propósito y lo demás los infiere del caso y del perfil. En Energía hidráulica e Industria y logística no sube el aire |
 | `POST /guia` | `PedidoGuia` (`viz/src/lib/guia.ts`) | `{ texto }` | Redacta la explicación de las comunas que quedaron primeras |
 | `GET /salud` | — | `{ ok, clave, ip, proxies, cadena, directa }` | Saber si hay clave y cómo ve el límite a quien consulta (`cadena` es `X-Forwarded-For` tal como llegó) |
 
@@ -39,8 +39,7 @@ Protecciones del servidor:
   pasarlo responde 429 y la página sigue sin IA. El límite por dirección no frena a quien usa muchas direcciones.
   Las respuestas en memoria siguen saliendo aunque se haya agotado el cupo.
 - El caso va entre comillas triples; tres o más comillas dentro del texto se reducen a una, para que nadie pueda
-  cerrar ese bloque y escribir instrucciones. Las preguntas del modelo se descartan si traen enlaces, no son
-  preguntas o piden datos personales (RUT, correo, teléfono, etc.).
+  cerrar ese bloque y escribir instrucciones.
 - Cada llamada deja una línea de log con sus tokens (`entrada`, `salida`, `cache_leida`, `cache_escrita`), sin el
   texto de la persona, para medir el costo real antes de tocar el esfuerzo o el modelo.
 Ante un rechazo por política, la API reintenta sola con un modelo de respaldo (`fallbacks: "default"`).
@@ -99,7 +98,7 @@ Un valor mal puesto nunca deja esquivar el límite: en el peor caso varios visit
 
 ### Dimensionar `TOPE_DIARIO`
 
-Cada caso nuevo cuesta hasta 2 llamadas (lectura del caso y guía) y 3 si la persona responde preguntas; lo que sale
+Cada caso nuevo cuesta hasta 2 llamadas (lectura del caso y guía); lo que sale
 de la caché no cuenta. Con el costo real por llamada (sale de los logs, abajo):
 `TOPE_DIARIO ≈ presupuesto diario / costo por llamada`. `render.yaml` parte en 1000.
 
@@ -117,7 +116,7 @@ multiplica). Para varias instancias habría que llevarlos a un almacén comparti
 
 ## Pendiente
 
-- Medir con la clave real un conjunto de casos de ejemplo (una evaluación mínima: caso → ajustes y preguntas
+- Medir con la clave real un conjunto de casos de ejemplo (una evaluación mínima: caso → ajustes
   esperados) antes de cambiar modelo o esfuerzo.
 - **Bajar el costo del razonamiento**, solo con esa evaluación en mano y unos días de logs:
   - `thinking: { type: 'between_tools' }` en `/interpretar` (en Sonnet 5.5 apaga el razonamiento; acepta esfuerzo
