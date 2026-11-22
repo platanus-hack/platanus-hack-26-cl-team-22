@@ -134,10 +134,31 @@ export function montoDe(l: Licitacion): number | null {
 
 export type OrdenLicitacion = 'monto' | 'aporte'
 
-/** Filtra por estado (null = todas) y ordena de mayor a menor; lo que no tiene monto va al final. */
+/**
+ * Filtra por estado (null = todas) y ordena de mayor a menor; lo que no tiene monto va al final.
+ * Por aporte manda el tamaño del efecto (con o sin signo) y, a igual aporte, el monto.
+ */
 export function filtrarLicitaciones(ls: readonly Licitacion[], estado: EstadoLicitacion | null, orden: OrdenLicitacion): Licitacion[] {
-  const clave = (l: Licitacion) => (orden === 'monto' ? (montoDe(l) ?? -1) : Math.abs(l.aporte))
-  return ls.filter((l) => !estado || l.estado === estado).sort((a, b) => clave(b) - clave(a) || a.nombre.localeCompare(b.nombre))
+  const monto = (l: Licitacion) => montoDe(l) ?? -1
+  const clave = (l: Licitacion) => (orden === 'monto' ? monto(l) : Math.abs(l.aporte))
+  return ls
+    .filter((l) => !estado || l.estado === estado)
+    .sort((a, b) => clave(b) - clave(a) || monto(b) - monto(a) || a.nombre.localeCompare(b.nombre))
+}
+
+/** Por aporte cuando la comuna entra al modelo; fuera de él todas aportan 0 y se ordena por monto. */
+export function ordenInicial(afectaModelo: boolean): OrdenLicitacion {
+  return afectaModelo ? 'aporte' : 'monto'
+}
+
+/** Credibilidad de la comuna sin esa licitación (0 a 1); null si no la movió o la comuna no entra al modelo. */
+export function credibilidadSin(c: LicitacionesComuna, l: Licitacion): number | null {
+  return c.afectaModelo && c.credibilidad !== null && l.aporte !== 0 ? c.credibilidad - l.aporte : null
+}
+
+/** Aporte a la credibilidad en puntos de una escala de 0 a 100, con signo. */
+export function puntosCredibilidad(aporte: number, fmt: (n: number, d?: number) => string): string {
+  return `${aporte > 0 ? '+' : aporte < 0 ? '−' : ''}${fmt(Math.abs(aporte) * 100, 3)} pt`
 }
 
 /** Aporte de una licitación de cada estado: dentro de una comuna todas las de un estado aportan lo mismo. */

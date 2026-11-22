@@ -9,9 +9,9 @@ describe('pestañas y secciones', () => {
     expect(PESTANAS.filter((p) => !p.titulo || !p.subtitulo).map((p) => p.id)).toEqual(['resumen'])
   })
   it('una sección sin datos no aparece', () => {
-    expect(seccionesDe('social', todo).map((s) => s.id)).toEqual(['seguridad', 'crecimiento', 'urbano', 'aportes'])
-    expect(seccionesDe('social', { seguridad: true }).map((s) => s.id)).toEqual(['seguridad', 'aportes'])
-    expect(seccionesDe('referencias', {}).map((s) => s.id)).toEqual(['fuentes'])
+    expect(seccionesDe('social', todo).map((s) => s.id)).toEqual(['seguridad', 'crecimiento', 'urbano'])
+    expect(seccionesDe('social', { seguridad: true }).map((s) => s.id)).toEqual(['seguridad'])
+    expect(seccionesDe('referencias', {}).map((s) => s.id)).toEqual(['aportes', 'fuentes'])
   })
 })
 
@@ -29,7 +29,10 @@ describe('modoDe', () => {
   })
   it('si la sección pedida no existe abre la primera disponible', () => {
     expect(modoDe('social', 'urbano', seccionesDe('social', { crecimiento: true })).seccion).toBe('crecimiento')
-    expect(modoDe('referencias', 'validacion', seccionesDe('referencias', {}))).toEqual({ vista: 'fuentes', papel: null, seccion: 'fuentes' })
+    expect(modoDe('referencias', 'validacion', seccionesDe('referencias', {}))).toEqual({ vista: 'aportes', papel: null, seccion: 'aportes' })
+  })
+  it('referencias abre primero el aporte de cada licitación', () => {
+    expect(modoDe('referencias', undefined, seccionesDe('referencias', todo))).toEqual({ vista: 'aportes', papel: null, seccion: 'aportes' })
   })
   it('el detalle de cada variable tiene su lugar', () => {
     expect(lugarDe('aire')).toEqual({ pestana: 'clima', seccion: 'aire' })
