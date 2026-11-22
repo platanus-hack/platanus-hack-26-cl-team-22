@@ -1,6 +1,6 @@
 # ADR-0003: El municipio simula; el ciudadano lee con perfiles
 
-- **Estado**: Aceptado
+- **Estado**: Reemplazado por ADR-0006 en la elección del usuario principal
 - **Fecha**: 2026-11-21
 
 ## Contexto
