@@ -275,7 +275,10 @@ def cauces_de_teselas(
 def unir(lineas: list[list], tol: float = TOL_UNION) -> list[list]:
     """Une líneas cuando el fin de una cae sobre el inicio de otra (con tolerancia), sin cambiar el sentido."""
     lineas = [list(x) for x in lineas]
-    cerca = lambda a, b: abs(a[0] - b[0]) <= tol and abs(a[1] - b[1]) <= tol
+
+    def cerca(a, b) -> bool:
+        return abs(a[0] - b[0]) <= tol and abs(a[1] - b[1]) <= tol
+
     cambio = True
     while cambio:
         cambio = False
