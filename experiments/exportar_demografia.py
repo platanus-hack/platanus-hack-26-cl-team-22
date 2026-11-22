@@ -23,8 +23,11 @@ Usage:  python -m experiments.exportar_demografia   -> viz/public/datos/demograf
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
+import os
+from pathlib import Path
 
 import numpy as np
 
@@ -35,7 +38,9 @@ from experiments.validar_poblacion import TasasAbiertas, proyectar
 
 SALIDA = ROOT / "viz" / "public" / "datos" / "demografia.json"
 ANIO_BASE = 2024
-ANIOS = list(range(ANIO_BASE, 2037))
+VALIDATED_END_YEAR = 2036  # horizon of the documented assumptions
+END_YEAR = int(os.environ.get("SIMULAR_HASTA", VALIDATED_END_YEAR))  # CLI: --hasta
+ANIOS = list(range(ANIO_BASE, END_YEAR + 1))
 NACIMIENTOS = (2022, 2023)
 DEFUNCIONES = (2019, 2022, 2023)
 
@@ -149,10 +154,21 @@ def main() -> None:
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
     SALIDA.write_text(json.dumps(salida, ensure_ascii=False) + "\n", encoding="utf-8")
     ref = np.array(salida["referencia"]["por_defecto"]["poblacion"])
-    print(f"RM 2024 {pob24.sum():,.0f} -> 2036 {ref[-1].sum():,.0f} (abierto, tasas recientes); "
+    print(f"RM 2024 {pob24.sum():,.0f} -> {ANIOS[-1]} {ref[-1].sum():,.0f} (abierto, tasas recientes); "
           f"INE 2035 {sum(salida['ine']['poblacion'][-1]):,}")
     print(f"{SALIDA.relative_to(ROOT)}  {SALIDA.stat().st_size / 1024:.0f} KB")
 
 
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description="Export household model parameters for the web lab")
+    ap.add_argument("--hasta", type=int, default=END_YEAR,
+                    help=f"last year (default {END_YEAR}; env SIMULAR_HASTA); past "
+                         f"{VALIDATED_END_YEAR} it extrapolates the same rates")
+    ap.add_argument("--salida", type=Path, default=None, help="output path")
+    a = ap.parse_args()
+    if a.hasta <= ANIO_BASE:
+        raise SystemExit(f"--hasta must be > {ANIO_BASE}")
+    ANIOS = list(range(ANIO_BASE, a.hasta + 1))
+    if a.salida:
+        SALIDA = a.salida if a.salida.is_absolute() else ROOT / a.salida
     main()
