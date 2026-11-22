@@ -821,6 +821,24 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
     [agua, aguaAnio, aguaSim, fraccionAgua, anio, idx, estacion?.codigo, pasa, cauceElegido, focoAgua],
   )
 
+  // Lo que la pantalla de espera dibuja; se arma una vez al abrirla, no en cada render.
+  const riesgoRef = useRef(riesgo)
+  riesgoRef.current = riesgo
+  const mapaCarga = useMemo(
+    () => ({
+      features,
+      rios: agua?.rios ?? [],
+      clase: (f: GeoFeature) => {
+        const r = f.properties.simCodigo ? riesgoRef.current.porCodigo.get(f.properties.simCodigo) : undefined
+        return r && r.indice !== null ? `nivel-${papelNivel(nivel(r.indice, CORTES_RIESGO), CORTES_RIESGO)}` : null
+      },
+      conPlan: (f: GeoFeature) => !!f.properties.simCodigo && zonasSim.has(f.properties.simCodigo),
+    }),
+    // `cargando` entra para que cada apertura tome el riesgo del momento
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [features, agua, zonasSim, cargando],
+  )
+
   let hoja: ReactNode = null
   if (vista === 'riesgo') {
     const cod = comunaSel?.codigo
@@ -1071,12 +1089,13 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
       {cargando && !onb && (
         <Cargando
           onFin={() => setCargando(false)}
+          mapa={mapaCarga}
           pasos={[
             { texto: busqueda?.contexto ? 'Leyendo tu caso' : 'Preparando la región', listo: !lecturaCaso?.cargando },
-            { texto: `Ubicando las ${data.comunas.length} comunas en el mapa`, listo: mapaListo },
-            ...(agua ? [{ texto: `Midiendo los ríos: ${agua.estaciones.length} estaciones de la DGA`, listo: true }] : []),
-            { texto: `Revisando ${data.politicas.length} planes y normas`, listo: true },
-            { texto: 'Ordenando las comunas por riesgo', listo: true },
+            { texto: `Ubicando las ${data.comunas.length} comunas en el mapa`, listo: mapaListo, etapa: 'comunas' },
+            ...(agua ? [{ texto: `Midiendo los ríos: ${agua.estaciones.length} estaciones de la DGA`, listo: true, etapa: 'rios' as const }] : []),
+            { texto: `Revisando ${data.politicas.length} planes y normas`, listo: true, etapa: 'planes' },
+            { texto: 'Ordenando las comunas por riesgo', listo: true, etapa: 'riesgo' },
           ]}
         />
       )}
