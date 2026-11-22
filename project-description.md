@@ -58,6 +58,38 @@ Cada mecanismo se ajusta con un período y se prueba con otro, contra dos altern
 | Población | Población por comuna 2024 | Sin cambio |
 | Seguridad | Tasa de delitos a 2 años | **Modelo** |
 
+## Ingeniería
+
+- **Monte Carlo con credibilidad Beta-Binomial:** cada medida tiene una probabilidad anual de ejecución
+  `θ ~ Beta(α0 + k, β0 + n − k)`, con una previa por tipo de ejecutor (ministerio, municipio, privado en el
+  SEIA) y su historial de `k` hitos cumplidos de `n`. Cada réplica sortea qué se ejecuta cada año.
+- **Modelos acoplados:** el aire usa transferencia por distancia entre comunas; los hogares se mueven como
+  flujos calibrados con las matrices de migración de los censos, y llevan la calefacción a leña consigo;
+  el clima sortea una corrida de ARClim por réplica.
+- **Reproducible por semilla:** toda la aleatoriedad pasa por generadores con semilla (NumPy en el modelo,
+  un PRNG propio en el navegador). Cada número de `results/` sale de un comando con nombre.
+- **El navegador no recalcula el modelo:** lee un contrato JSON precalculado; el ABM de mudanzas corre en
+  un Web Worker. El mapa baja solo de relieve en línea a teselas locales y a un mapa plano.
+- **Pruebas:** ~230 tests en Python, ~280 en la interfaz y 28 en el servidor de Claude; CI corre lint y
+  pytest en cada PR.
+
+## Por qué no usamos fine-tuning (ni agentes LLM)
+
+Claude solo clasifica el caso en un catálogo cerrado; nunca produce números. Para eso, un prompt con
+**salida estructurada** (`json_schema`) más **validación en el servidor** (se descarta toda variable fuera
+del catálogo y toda cita que no esté textual en el caso) alcanza: **29 de 29** frases de prueba quedan como
+se esperaba con el modelo real, incluida una inyección de prompt.
+
+| Alternativa | Por qué no |
+|---|---|
+| Fine-tuning | No hay casos etiquetados; habría que inventarlos. El catálogo cambió varias veces en 36 horas, y cada cambio obligaría a reentrenar. Con prompt + esquema, se edita y se reevalúa en minutos. |
+| RAG sobre las comunas | El LLM terminaría citando cifras; los números deben venir solo del simulador validado. |
+| Agentes LLM en la simulación | 260 000 decisiones por escenario, no reproducibles por semilla y sin datos para validarlas. |
+| Miles de agentes sintéticos | Sin datos individuales para calibrarlos; los flujos agregados se validan directo contra el censo. |
+
+Detalle en [`docs/adr/0007-claude-sin-fine-tuning.md`](./docs/adr/0007-claude-sin-fine-tuning.md) y
+[`docs/adr/0002-hogares-como-flujos-agregados.md`](./docs/adr/0002-hogares-como-flujos-agregados.md).
+
 ## Datos
 
 SINCA (PM2,5), RETC (emisiones), INE (censos 2017 y 2024), CEAD (delitos), DGA (caudales), ARClim (clima),
