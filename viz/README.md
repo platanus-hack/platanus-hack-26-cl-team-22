@@ -48,7 +48,7 @@ tienen varias secciones las muestran como acordeón con una sola abierta, que ta
 
 | Pestaña | Secciones | Qué pinta el mapa |
 |---|---|---|
-| Resumen | El índice de riesgo de 0 a 100, las tres de menor riesgo y una fila por variable | El índice |
+| Resumen | El índice de riesgo de 0 a 100, las tres de menor riesgo y una fila por variable que pesa | El índice |
 | Climático | Calidad del aire · La leña, su fuente principal · El agua: caudal de los ríos | PM2,5 frente a la norma · zonas y emisiones de leña · ríos y estaciones de caudal |
 | Legal | Los planes públicos, su probabilidad de cumplirse y el efecto de encender o apagar cada uno | Valor o diferencia |
 | Social | Seguridad ciudadana · Crecimiento poblacional · Desarrollo urbano (la simulación de mudanzas) | Posición de riesgo · flujos |
@@ -71,7 +71,7 @@ color y elegido son estado de cada tramo y de cada estación (`setFeatureState`)
 ocultan por opacidad: sobre el terreno, ocultar una capa o vaciar su fuente deja restos dibujados.
 Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
 tiene. Cada río con nombre trae las comunas por donde pasa, de aguas arriba a aguas abajo (`cauces` en
-`caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el caso «Energía hidráulica» el resumen ofrece un botón directo a esta sección. El caudal no entra
+`caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el perfil «Energía» el resumen ofrece un botón directo a esta sección. El caudal no entra
 al índice de riesgo: solo 14 estaciones cumplen el filtro y no hay un valor por comuna.
 
 **«¿Y si sigue la megasequía?»** (`src/lib/aguaSim.ts`): la parte del agua que sí es simulación. Para cada
@@ -87,7 +87,8 @@ climático: supone que la próxima década se parece al período elegido, y la h
 **Unidad del índice** (`src/lib/riesgo.ts`): en cada variable, el riesgo de una comuna es el porcentaje de las
 otras comunas que están mejor que ella en ese año (0 = la mejor, 100 = la peor). El índice general es el promedio
 de esos riesgos, ponderado por la prioridad de 0 a 10 que se le da a cada variable (los perfiles de
-`tipos_hogar` son prioridades ya puestas). Hasta 33 es riesgo bajo; hasta 66, medio; más, alto. Se usa la
+`tipos_hogar` son prioridades ya puestas). Entran siete variables: las tres simuladas y los cuatro indicadores
+de inversión (ver «Las siete variables del índice»); una variable con peso 0 no cuenta. Hasta 33 es riesgo bajo; hasta 66, medio; más, alto. Se usa la
 posición y no el valor porque las unidades son distintas y hay comunas muy alejadas del resto.
 Es un índice relativo a la región: no dice si el valor es bueno en términos absolutos; para el aire, eso lo dice
 la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición sea buena.
@@ -95,13 +96,18 @@ la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición
 ### Entrada guiada
 
 Al abrir, una sola pantalla sobre el mapa (`src/components/Onboarding.tsx`): **el caso, en texto libre**.
-`leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía hidráulica, vivienda, industria
-o evaluación general, y de ahí salen solos los pesos de las tres variables simuladas; no hay más preguntas.
+Claude lo lee y elige uno de nueve perfiles (`PERFILES` en `src/lib/caso.ts`): familia con niños, adulto mayor,
+joven que arrienda, inversionista inmobiliario, emprendedor o comercio, empresario joven u oficina, industria y
+logística, energía o evaluación general. Cada perfil da un peso a las siete variables del índice y deja como mucho
+tres activas (por ejemplo, industria apaga el aire y usa la red eléctrica); Claude puede subir o bajar cualquiera;
+`leerCaso` (`src/lib/onboarding.ts`) clasifica por palabras clave solo cuando Claude no responde. No hay más
+preguntas. `npm run evaluar` prueba frases de ejemplo contra el modelo real (`scripts/evaluar-casos.eval.ts`,
+reporte en `docs/evaluacion-casos.md`).
 Los criterios propios del caso que el modelo no mide (caída disponible, precio del suelo, etc.) **no entran al
 cálculo ni muestran número**: la guía los nombra como «aún sin datos», porque para usarlos hace falta un valor
 por comuna que hoy no existe. El caudal sí tiene datos y se ve en Climático › El agua.
 
-Ya en el mapa, «Ajustar pesos» abre el peso de cada variable (0 a 10) y el rango que se acepta: para el aire,
+Ya en el mapa, «Ajustar pesos» abre el peso de las siete variables (0 a 10; subir una en 0 la enciende) y el rango que se acepta: para el aire,
 la norma chilena o las metas de la OMS; para seguridad y crecimiento, cortes sobre los datos de la región. Las
 tres de menor riesgo salen solo de las comunas que cumplen todos los rangos, y la ficha marca «Fuera de tu
 rango» donde corresponde. Con `?directo` en la dirección la entrada no aparece.
@@ -111,7 +117,7 @@ se define `VITE_GUIA_URL` con la dirección de un intermediario propio y la pers
 a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.ts`):
 
 - Pedido: `POST` con JSON `{ perfil, contexto, prioridades, anio, top, falta }`; `top` trae las tres comunas de
-  menor riesgo con sus valores. Respuesta: JSON `{ "texto": "..." }`.
+  menor riesgo con los valores de las variables que pesan, indicadores incluidos. Respuesta: JSON `{ "texto": "..." }`.
 - La clave del modelo vive en el intermediario, nunca en esta página. El intermediario debe permitir el origen
   de la página (CORS) y limitar el uso.
 - El modelo solo redacta: el orden de las comunas lo calcula siempre el índice. Si el intermediario no está,
@@ -122,7 +128,7 @@ a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.
   «Por lo que contaste: Aire: Clave» y puede apagarlos; el índice recalcula el orden. Detalle en
   `servidor-guia/README.md`.
   Esa misma llamada se hace desde la entrada y **no hace preguntas de seguimiento**: Claude infiere todo del caso
-  y del perfil (en Energía hidráulica e Industria y logística el aire no pesa). El mapa reusa esa lectura en vez de
+  y del perfil (en comercio, industria y energía el aire no pesa). El mapa reusa esa lectura en vez de
   pedir otra.
 
 ### Junto a la landing
@@ -177,10 +183,13 @@ y `python -m experiments.exportar_demografia --hasta 2040 --salida viz/public/da
 fuera del período validado», porque ahí el modelo sigue con las mismas tasas y nada lo valida. Cambiar de
 horizonte no borra el caso, los pesos ni la comuna elegida. También se puede abrir con `?horizonte=15`.
 
-### Las siete variables de quien invierte
+### Las siete variables del índice
 
-Si el caso se lee como energía hidráulica o industria, la ficha del resumen muestra siete filas: las tres
-simuladas y cuatro más (`src/lib/inversion.ts`), que **no entran al índice** y se comparan aparte por posición:
+Además de las tres simuladas, el índice suma cuatro indicadores de inversión (`src/lib/inversion.ts`:
+`comoVariables`, `sumarIndicadores`). Entran como cualquier variable, con el peso que les dé el perfil o la
+persona; la ficha del resumen muestra solo las que pesan. No tienen serie ni capa de detalle: su fila da la
+posición y el valor del año, sin tendencia ni enlace. Se probaron antes en una simulación
+(`npm run evaluar -- simular-indicadores`, reporte en `docs/simulacion-indicadores.md`).
 
 | Variable | De dónde sale |
 |---|---|
@@ -190,7 +199,7 @@ simuladas y cuatro más (`src/lib/inversion.ts`), que **no entran al índice** y
 | Inversión evaluada | Dato real: proyectos aprobados en el SEIA desde 2015 |
 
 Las tres reales vienen de `viz/public/datos/inversion.json` (`python -I datos/viz/build_inversion.py`). Un
-indicador que cubre menos de la mitad de las comunas o vale lo mismo en todas no se muestra (por eso no se usa
+indicador que cubre menos de la mitad de las comunas o vale lo mismo en todas no entra (por eso no se usa
 la amenaza de sequía de ARClim de ese archivo: solo 9 comunas, todas en 1,0).
 
 ### Pantalla de espera

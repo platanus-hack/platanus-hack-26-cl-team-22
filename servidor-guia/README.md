@@ -5,7 +5,7 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 
 | Ruta | Pedido | Respuesta | Para qué |
 |---|---|---|---|
-| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido }` | Lee el caso y propone ajustes de prioridad, sin hacer preguntas: el propósito y lo demás los infiere del caso y del perfil. En Energía hidráulica e Industria y logística no sube el aire |
+| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ perfil, ajustes, indicadores, no_medido }` | Lee el caso y propone ajustes de prioridad, sin hacer preguntas: el propósito y lo demás los infiere del caso y del perfil. Elige además uno de los nueve perfiles (`PERFILES`), que fija los pesos de partida. En comercio, industria y energía no sube el aire |
 | `POST /guia` | `PedidoGuia` (`viz/src/lib/guia.ts`) | `{ texto }` | Redacta la explicación de las comunas que quedaron primeras |
 | `GET /salud` | — | `{ ok, clave, ip, proxies, cadena, directa }` | Saber si hay clave y cómo ve el límite a quien consulta (`cadena` es `X-Forwarded-For` tal como llegó) |
 

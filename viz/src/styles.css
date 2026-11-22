@@ -1649,15 +1649,6 @@ body:has(.estado) {
   font-size: var(--t-l);
   line-height: 1;
 }
-.dimension-apagada .dimension-nombre,
-.dimension-apagada .dimension-valor {
-  color: var(--tinta-2);
-  font-weight: 600;
-}
-.dimension-apagada .dimension-barra,
-.dimension-apagada .sello {
-  opacity: 0.4;
-}
 
 /* Detalle de una variable */
 .detalle-fila {
@@ -3466,9 +3457,14 @@ body:has(.estado) {
   font-style: italic;
 }
 
-/* ---------- Las variables de inversión, junto a las simuladas ---------- */
-.dimension-extra {
+/* ---------- Los indicadores de inversión: entran al índice, sin serie ni detalle ---------- */
+.dimension-extra,
+.dimension-extra:hover {
   cursor: default;
+  background: var(--papel);
+}
+.dimension-extra:hover .dimension-pista {
+  background: var(--papel-2);
 }
 .dimension-extra .dimension-nombre small {
   display: block;
@@ -3479,41 +3475,6 @@ body:has(.estado) {
 .sello-sin {
   background: var(--papel-2);
   color: var(--tinta-2);
-}
-
-/* Ficha con siete variables: filas más bajas y el índice más chico, para que quepa sin desplazarse */
-.ficha-compacta .ficha-cabeza {
-  gap: calc(var(--u) * 1);
-}
-.ficha-compacta .indice {
-  width: calc(var(--u) * 5.4);
-  height: calc(var(--u) * 5.4);
-  padding: calc(var(--u) * 0.4);
-}
-.ficha-compacta .indice b {
-  font-size: calc(var(--u) * 3);
-}
-.ficha-compacta h2 {
-  font-size: calc(var(--u) * 2.6);
-}
-.ficha-compacta .dimensiones {
-  margin-top: calc(var(--u) * 0.6);
-}
-.ficha-compacta .dimension {
-  padding: calc(var(--u) * 0.24) calc(var(--u) * 0.6);
-  min-height: 0;
-}
-.ficha-compacta .dimension-nombre {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ficha-compacta .dimension-extra .dimension-nombre small {
-  display: inline;
-  margin-left: 0.5em;
-}
-.ficha-compacta .dimension {
-  grid-template-columns: 13.5em minmax(2em, 1fr) 9.4em 7.6em 0.8em;
 }
 
 /* ---------- Ajustes tras la sesión de QA: menos piezas a la vista, nada cortado ---------- */
@@ -3565,26 +3526,6 @@ p.agua-sim-pie {
 .agua-estacion .desplegable-boton > span {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dimensiones-titulo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: calc(var(--u) * 0.8);
-  margin-top: calc(var(--u) * 0.45);
-  font-size: var(--t-xs);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: var(--tinta-2);
-}
-.dimensiones-titulo:first-child {
-  margin-top: 0;
-}
-.ficha-compacta .dimension {
-  grid-template-columns: 12.6em minmax(1.5em, 1fr) 11.8em 7.6em 0.8em;
-}
-.ficha-compacta .dimension-valor {
   white-space: nowrap;
 }
 .pesos-ayuda {

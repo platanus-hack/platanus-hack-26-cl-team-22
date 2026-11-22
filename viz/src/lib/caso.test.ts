@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mensajeCaso, sinDelimitador, aplicarAjustes, ESQUEMA_INTERPRETACION, INSTRUCCIONES_CASO, LARGO_CASO_MAX, pedirInterpretacion, validarInterpretacion, type Interpretacion } from './caso'
+import { mensajeCaso, sinDelimitador, aplicarAjustes, PERFILES, ESQUEMA_INTERPRETACION, INSTRUCCIONES_CASO, LARGO_CASO_MAX, pedirInterpretacion, validarInterpretacion, type Interpretacion } from './caso'
 
 const caso = 'Busco departamento para mi familia; mi hijo tiene asma y trabajo de noche.'
 
@@ -89,10 +89,10 @@ describe('ESQUEMA_INTERPRETACION', () => {
   it('is a strict JSON schema with only catalog values and no numeric fields about comunas', () => {
     const s = ESQUEMA_INTERPRETACION as Record<string, any>
     expect(s.additionalProperties).toBe(false)
-    expect(s.required).toEqual(['ajustes', 'indicadores', 'no_medido'])
+    expect(s.required).toEqual(['perfil', 'ajustes', 'indicadores', 'no_medido'])
     const ajuste = s.properties.ajustes.items
     expect(ajuste.additionalProperties).toBe(false)
-    expect(ajuste.properties.variable.enum).toEqual(['pm25_anual', 'seguridad', 'crecimiento_poblacion'])
+    expect(ajuste.properties.variable.enum).toEqual(['pm25_anual', 'seguridad', 'crecimiento_poblacion', 'sequia_futura', 'escasez_hidrica', 'red_electrica', 'inversion_evaluada'])
     expect(ajuste.properties.grado.enum).toEqual([0, 3, 5, 8, 10])
     expect(JSON.stringify(s)).not.toMatch(/comuna/)
   })
@@ -124,6 +124,34 @@ describe('pedirInterpretacion', () => {
   })
 })
 
+describe('profile chosen by Claude', () => {
+  it('asks Claude to pick one of the nine profiles, in the schema and the prompt', () => {
+    expect(ESQUEMA_INTERPRETACION.required).toContain('perfil')
+    expect(ESQUEMA_INTERPRETACION.properties.perfil.enum).toEqual(PERFILES.map((p) => p.id))
+    for (const p of PERFILES) expect(INSTRUCCIONES_CASO).toContain(p.titulo)
+  })
+  it('keeps a profile from the list and drops anything else', () => {
+    expect(validarInterpretacion({ ...valida, perfil: 'emprendedor' }, caso)?.perfil).toBe('emprendedor')
+    expect(validarInterpretacion({ ...valida, perfil: 'astronauta' }, caso)?.perfil).toBeUndefined()
+    expect(validarInterpretacion(valida, caso)?.perfil).toBeUndefined()
+  })
+  it('tells Claude the keyword profile is only a guess', () => {
+    expect(mensajeCaso('hola', 'Familia con niños', {})).toMatch(/^Perfil sugerido por palabras clave \(puede estar mal\): Familia con niños\./)
+  })
+  it('explains the four extra indicators so Claude can raise or lower them', () => {
+    for (const id of ['sequia_futura', 'escasez_hidrica', 'red_electrica', 'inversion_evaluada']) expect(INSTRUCCIONES_CASO).toContain(`- ${id}:`)
+    expect(INSTRUCCIONES_CASO).toMatch(/maquinaria|consumo eléctrico/)
+    expect(INSTRUCCIONES_CASO).toMatch(/En el perfil energia no las subas/)
+  })
+  it('uses the general profile only when the case gives no clue', () => {
+    expect(INSTRUCCIONES_CASO).toMatch(/con familia, hijos o colegios es familia/)
+    expect(INSTRUCCIONES_CASO).toMatch(/Usa general solo cuando el caso no da ninguna pista/)
+  })
+  it('treats wanting the property to gain value as growth', () => {
+    expect(INSTRUCCIONES_CASO).toMatch(/que se valorice/)
+  })
+})
+
 describe('no follow-up questions', () => {
   it('reads the case without asking anything: no questions in the schema, the prompt or the reading', () => {
     expect(Object.keys(ESQUEMA_INTERPRETACION.properties)).not.toContain('preguntas')
@@ -135,8 +163,8 @@ describe('no follow-up questions', () => {
 })
 
 describe('weight by profile', () => {
-  it('never raises air quality for Energía hidráulica or Industria y logística: safety and growth weigh there', () => {
-    expect(INSTRUCCIONES_CASO).toMatch(/En Energía hidráulica e Industria y logística la calidad del aire no pesa/)
+  it('never raises air quality for commerce, industry or energy: safety and growth weigh there', () => {
+    expect(INSTRUCCIONES_CASO).toMatch(/En los perfiles Emprendedor o comercio, Industria y logística y Energía la calidad del aire no pesa/)
   })
 })
 

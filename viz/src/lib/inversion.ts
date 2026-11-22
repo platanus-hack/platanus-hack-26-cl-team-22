@@ -1,11 +1,13 @@
 /**
  * Las variables que le importan a quien quiere invertir o instalar una empresa, además de las tres que
- * simula el modelo de comunas. Salen de dos fuentes y ninguna entra al índice de riesgo:
+ * simula el modelo de comunas. Salen de dos fuentes y entran al índice de riesgo como variables más
+ * (comoVariables, sumarIndicadores), con el peso que les dé cada perfil:
  * - datos/inversion.json (datos/viz/build_inversion.py): datos reales por comuna (DGA, Coordinador, SEIA);
  * - el bloque `clima` de la simulación: cambio simulado de la frecuencia de sequía (ARClim).
  * Son archivos externos: se validan campo por campo y lo que no calza se descarta.
  */
-import { riesgoPorPosicion } from './riesgo'
+import { riesgoPorPosicion, type FilaValores } from './riesgo'
+import type { Variable } from './types'
 
 export interface IndicadorInversion {
   id: string
@@ -98,4 +100,25 @@ export function indicadoresInversion(reales: readonly IndicadorInversion[], clim
   const todos = [...(sequia ? [sequia] : []), ...reales.filter((r) => r.id !== 'sequia_futura')]
   const pos = (id: string) => (ORDEN.indexOf(id) < 0 ? ORDEN.length : ORDEN.indexOf(id))
   return todos.sort((a, b) => pos(a.id) - pos(b.id)).slice(0, max)
+}
+
+/** The indicators as risk-index variables: the shape calcularRiesgo reads (id, name, unit, direction). */
+export function comoVariables(inds: readonly IndicadorInversion[]): Variable[] {
+  return inds.map((x) => ({ id: x.id, nombre: x.nombre, unidad: x.unidad, mejor: x.mejor }))
+}
+
+/** New rows with each indicator's value added to its commune; the input rows stay untouched. */
+export function sumarIndicadores(filas: readonly FilaValores[], inds: readonly IndicadorInversion[]): FilaValores[] {
+  return filas.map((f) => ({ codigo: f.codigo, valores: { ...f.valores, ...Object.fromEntries(inds.map((x) => [x.id, x.valores.get(f.codigo)])) } }))
+}
+
+/**
+ * The indicators of every year, once each, in display order. Sequía only exists in the years the climate
+ * block covers, so taking the list from one year would make the index's variables change with the year.
+ */
+export function unionIndicadores(porAnio: readonly (readonly IndicadorInversion[])[]): IndicadorInversion[] {
+  const vistos = new Map<string, IndicadorInversion>()
+  for (const inds of porAnio) for (const x of inds) if (!vistos.has(x.id)) vistos.set(x.id, x)
+  const pos = (id: string) => (ORDEN.indexOf(id) < 0 ? ORDEN.length : ORDEN.indexOf(id))
+  return [...vistos.values()].sort((a, b) => pos(a.id) - pos(b.id))
 }

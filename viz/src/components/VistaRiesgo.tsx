@@ -8,7 +8,7 @@ import { fmt, fmtSigned } from '../lib/format'
 import { nivel, papelNivel } from '../lib/niveles'
 import { CORTES_RIESGO, decimales, ESTADO_DE_RIESGO, nivelRiesgo, TEXTO_RIESGO, veredictoGeneral, type Riesgo } from '../lib/riesgo'
 import type { Aporte, Banda, Comuna, Politica, TipoHogar } from '../lib/types'
-import type { VariableCorta } from '../lib/variables'
+import { ordenarPorPeso, type VariableCorta } from '../lib/variables'
 import { GraficoBanda } from './GraficoBanda'
 import { ClaveGrafico, Rodela, Sello } from './Papel'
 
@@ -18,22 +18,11 @@ export const PERSONALIZADO = '__personalizado'
 const papelRiesgo = (r: number) => papelNivel(nivel(r, CORTES_RIESGO), CORTES_RIESGO)
 const valorTxt = (v: number | undefined, unidad: string) => (v === undefined ? 'sin dato' : `${fmt(v, decimales(v))}${unidad === '%' ? ' %' : ''}`)
 
-/** Variable de inversión que se muestra junto a las simuladas: no entra al índice. */
-export interface FilaExtra {
-  id: string
-  nombre: string
-  que: string
-  unidad: string
-  origen: 'simulado' | 'real'
-  valor: number | null
-  /** 0 a 100: porcentaje de las otras comunas que están mejor */
-  riesgo: number | null
-}
-
 interface Props {
+  /** todas las variables del índice: las simuladas y los indicadores de inversión */
   variables: VariableCorta[]
-  /** variables de inversión de la comuna elegida; vacío si el caso no es de inversión */
-  extras: FilaExtra[]
+  /** ids de los indicadores de inversión: entran al índice, pero no tienen serie ni capa de detalle */
+  extras: ReadonlySet<string>
   /** rango aceptado por variable (id de la opción) */
   rangos: Record<string, string>
   onRango: (variable: string, id: string) => void
@@ -142,7 +131,7 @@ function General(p: Props) {
         {ajustar ? (
           <div className="pesos" id="pesos">
             <p className="pesos-ayuda">Peso: 0 no cuenta y 10 es lo más importante. «Acepto» deja fuera de las 3 mejores a las comunas que no cumplen ese límite.</p>
-            {p.variables.map((v) => (
+            {ordenarPorPeso(p.variables, p.pesos).map((v) => (
               <div className="peso-fila" key={v.id}>
                 <label className="peso">
                   <span className="peso-nombre">{v.nombre}</span>
@@ -187,6 +176,11 @@ function General(p: Props) {
             )}
             {p.guia.notas && p.guia.notas.length > 0 && <p className="guia-pie">{p.guia.notas.join(' ')}</p>}
             {p.guia.porIA && <p className="guia-pie">Redactado por Claude con los números del modelo</p>}
+            {p.guia.onAgua && (
+              <button type="button" className="lectura ajustar ajustar-agua" onClick={p.guia.onAgua}>
+                Ver caudales de los ríos
+              </button>
+            )}
           </div>
         ) : (
           <div className="perfiles" role="radiogroup" aria-label="Perfil de prioridades">
@@ -237,7 +231,7 @@ function General(p: Props) {
       </section>
 
       {p.comuna && sel && sel.indice !== null ? (
-        <section className={`tramo ficha${p.extras.length > 0 ? ' ficha-compacta' : ''}`} aria-labelledby="h-ficha">
+        <section className="tramo ficha" aria-labelledby="h-ficha">
           <div className="ficha-cabeza">
             <div className={`indice nivel-${papelRiesgo(sel.indice)} txt-nivel-${papelRiesgo(sel.indice)}`} role="img" aria-label={`Riesgo ${fmt(sel.indice, 0)} de 100`}>
               <b>{fmt(sel.indice, 0)}</b>
@@ -249,25 +243,33 @@ function General(p: Props) {
             </div>
           </div>
           <ul className="dimensiones">
-            {p.extras.length > 0 && (
-              <li className="dimensiones-titulo">
-                <span>Entran al índice de riesgo</span>
-              </li>
-            )}
-            {p.variables.map((v) => {
-              const parte = sel.partes[v.id]
-              if (parte === undefined) return null
-              const fuera = p.fuera.includes(v.id)
-              // El sello dice la posición entre comunas, igual en todas las filas. Lo que diga la norma (solo el
-              // aire la tiene) va junto al nombre: una comuna puede estar entre las mejores y aun así sobre la norma.
-              const propio = fuera ? { estado: 'riesgo' as const, texto: 'Fuera de tu rango' } : undefined
-              const norma = p.sellos[v.id]
-              const n = nivelRiesgo(parte)
-              const estado = propio?.estado ?? ESTADO_DE_RIESGO[n]
-              const apagada = !((p.pesos[v.id] ?? 0) > 0)
-              return (
-                <li key={v.id}>
-                  <button type="button" className={`dimension${apagada ? ' dimension-apagada' : ''}`} onClick={() => p.onCapa(v.id)} title={`Ver el detalle de ${v.nombre.toLowerCase()}`}>
+            {/* Solo las variables que pesan en el índice (a lo más tres por perfil), de más a menos peso. */}
+            {ordenarPorPeso(p.variables, p.pesos)
+              .filter((v) => (p.pesos[v.id] ?? 0) > 0)
+              .map((v) => {
+                const parte = sel.partes[v.id]
+                const extra = p.extras.has(v.id)
+                if (parte === undefined)
+                  return (
+                    <li key={v.id}>
+                      <div className="dimension dimension-extra" title={v.que}>
+                        <span className="dimension-nombre">{v.nombre}</span>
+                        <span className="dimension-pista" aria-hidden="true" />
+                        <span className="dimension-valor">—</span>
+                        <span className="sello sello-sin">Sin dato</span>
+                        <span className="dimension-ir" aria-hidden="true" />
+                      </div>
+                    </li>
+                  )
+                const fuera = p.fuera.includes(v.id)
+                // El sello dice la posición entre comunas, igual en todas las filas. Lo que diga la norma (solo el
+                // aire la tiene) va junto al nombre: una comuna puede estar entre las mejores y aun así sobre la norma.
+                const propio = fuera ? { estado: 'riesgo' as const, texto: 'Fuera de tu rango' } : undefined
+                const norma = p.sellos[v.id]
+                const n = nivelRiesgo(parte)
+                const estado = propio?.estado ?? ESTADO_DE_RIESGO[n]
+                const contenido = (
+                  <>
                     <span className="dimension-nombre">
                       {v.nombre}
                       {norma && <small className={`dimension-norma dimension-norma-${norma.estado}`}>{norma.texto.toLowerCase()}</small>}
@@ -280,42 +282,27 @@ function General(p: Props) {
                       {v.unidad !== '%' && <small> {v.unidad}</small>}
                     </span>
                     <span className={`sello sello-${estado}`}>{propio?.texto ?? TEXTO_RIESGO[n]}</span>
-                    <span className="dimension-ir" aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-            {p.extras.length > 0 && (
-              <li className="dimensiones-titulo">
-                <span>Se comparan aparte, no entran al índice</span>
-                {p.guia?.onAgua && (
-                  <button type="button" className="lectura ajustar ajustar-agua" onClick={p.guia.onAgua}>
-                    Ver caudales de los ríos
-                  </button>
-                )}
-              </li>
-            )}
-            {p.extras.map((x) => {
-              const n = x.riesgo === null ? null : nivelRiesgo(x.riesgo)
-              return (
-                <li key={x.id}>
-                  <div className="dimension dimension-extra" title={x.que}>
-                    <span className="dimension-nombre">{x.nombre}</span>
-                    <span className="dimension-pista" aria-hidden="true">
-                      {x.riesgo !== null && n && <span className={`dimension-barra sello-${ESTADO_DE_RIESGO[n]}`} style={{ width: `${Math.max(3, x.riesgo)}%` }} />}
-                    </span>
-                    <span className="dimension-valor">
-                      {x.valor === null ? '—' : fmt(x.valor, x.valor >= 100 || Number.isInteger(x.valor) ? 0 : 1)}
-                      <small> {x.unidad}</small>
-                    </span>
-                    {n ? <span className={`sello sello-${ESTADO_DE_RIESGO[n]}`}>{TEXTO_RIESGO[n]}</span> : <span className="sello sello-sin">Sin dato</span>}
-                    <span className="dimension-ir" aria-hidden="true" />
-                  </div>
-                </li>
-              )
-            })}
+                  </>
+                )
+                return (
+                  <li key={v.id}>
+                    {extra ? (
+                      // un indicador no tiene serie ni capa propia: se muestra su posición, sin detalle al que ir
+                      <div className="dimension dimension-extra" title={v.que}>
+                        {contenido}
+                        <span className="dimension-ir" aria-hidden="true" />
+                      </div>
+                    ) : (
+                      <button type="button" className="dimension" onClick={() => p.onCapa(v.id)} title={`Ver el detalle de ${v.nombre.toLowerCase()}`}>
+                        {contenido}
+                        <span className="dimension-ir" aria-hidden="true">
+                          ›
+                        </span>
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
           </ul>
           <p className={`nota${todas || ajustar ? ' nota-fuera' : ''}`}>
             Riesgo de 0 a 100: posición entre las {p.riesgo.total} comunas según tus prioridades. 0 es la mejor; 100, la peor.
