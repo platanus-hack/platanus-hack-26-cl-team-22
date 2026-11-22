@@ -46,7 +46,7 @@ import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, typ
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
 import { casoDe, explicar, fueraDeRango, GRADOS, resolverLimites } from './lib/onboarding'
-import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, urlPreguntas, type Interpretacion } from './lib/caso'
+import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -676,7 +676,12 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
     if (!urlCaso || !b.contexto) return pedirGuiaPara(b, b.prioridades, n)
     // Primero Claude lee el caso y propone ajustes; el índice ordena con ellos; después se redacta la guía.
     setLecturaCaso({ cargando: true, apagados: new Set(), base: b.prioridades })
-    void pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: casoDe(b.caso).titulo, prioridades: b.prioridades }).then((r) => {
+    // The entry may have read the case already (same text, profile and priorities): reuse it.
+    const lectura =
+      b.lectura !== undefined
+        ? Promise.resolve(b.lectura)
+        : pedirInterpretacion(urlCaso, { caso: b.contexto.slice(0, LARGO_CASO_MAX), perfil: casoDe(b.caso).titulo, prioridades: b.prioridades })
+    void lectura.then((r) => {
       if (n !== pedido.current) return
       if (!r) {
         setLecturaCaso(null)
@@ -1123,7 +1128,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
           onListo={terminarEntrada}
           inicio={inicio}
           hasta={anios[anios.length - 1]!}
-          urlPreguntas={urlPreguntas(urlGuia(import.meta.env.VITE_CASO_URL as string | undefined))}
+          urlCaso={urlGuia(import.meta.env.VITE_CASO_URL as string | undefined)}
         />}
       {cargando && !onb && (
         <Cargando

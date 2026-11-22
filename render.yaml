@@ -33,6 +33,15 @@ services:
       # Never a VITE_* variable: it must not reach the browser.
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Trusted proxy hops in front of the service, so the rate limit sees each visitor's address
+      # (from X-Forwarded-For) instead of the proxy's. Render's docs do not state the hop count:
+      # 1 is a starting guess. Set it from GET /salud as servidor-guia/README.md («Operación») explains.
+      - key: PROXIES_CONFIABLES
+        value: 1
+      # Model calls per UTC day for the whole service; past it the routes answer 429 and the page
+      # goes on without AI. 0 = no cap. Size it to the budget (about 3 calls per visitor).
+      - key: TOPE_DIARIO
+        value: 1000
       # Origin(s) of the landing allowed by CORS, comma separated.
       - key: ORIGENES
         sync: false

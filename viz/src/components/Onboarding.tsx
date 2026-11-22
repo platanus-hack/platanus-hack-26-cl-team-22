@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import logoRoot from '../assets/logo-root.png'
-import { componerCaso, pedirPreguntas, LARGO_RESPUESTA_MAX } from '../lib/caso'
+import { componerCaso, LARGO_RESPUESTA_MAX, pedirInterpretacion, type Interpretacion } from '../lib/caso'
 import { CASOS, casoDe, LARGO_CASO, leerCaso, prioridadesDe, type CasoId } from '../lib/onboarding'
 import type { VariableCorta } from '../lib/variables'
 
@@ -14,6 +14,11 @@ export interface Busqueda {
   contexto: string
   /** criterios del caso que esta versión no mide */
   sinDatos: string[]
+  /**
+   * Claude's reading of `contexto`, when the entry already asked for it: null if that call failed,
+   * absent if nobody asked yet (the map then asks itself).
+   */
+  lectura?: Interpretacion | null
 }
 
 interface Props {
@@ -23,8 +28,8 @@ interface Props {
   inicio: string | null
   /** último año de la simulación cargada */
   hasta: number
-  /** Where Claude's follow-up questions come from; null when no intermediary is configured. */
-  urlPreguntas?: string | null
+  /** servidor-guia's /interpretar; null when no intermediary is configured. */
+  urlCaso?: string | null
 }
 
 const SALIDA_MS = 520
@@ -34,11 +39,12 @@ const orden = (i: number) => ({ '--i': i }) as CSSProperties
  * Entrada en una sola pantalla: el caso en texto libre. De él salen el tipo de caso y el peso de cada
  * variable, sin más preguntas; quien quiera cambiarlos lo hace después con «Ajustar pesos».
  */
-export function Onboarding({ variables, onListo, inicio, hasta, urlPreguntas = null }: Props) {
+export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }: Props) {
   const [contexto, setContexto] = useState('')
   const [pensando, setPensando] = useState(false)
   const [preguntas, setPreguntas] = useState<string[]>([])
   const [respuestas, setRespuestas] = useState<string[]>([])
+  const [primera, setPrimera] = useState<Interpretacion | null>(null)
   const [saliendo, setSaliendo] = useState(false)
   const hoja = useRef<HTMLDivElement>(null)
   const ids = variables.map((v) => v.id)
@@ -53,7 +59,7 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlPreguntas = n
     const quieto = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
     window.setTimeout(() => onListo(b), quieto ? 0 : SALIDA_MS)
   }
-  const terminar = (texto: string) => {
+  const terminar = (texto: string, lectura?: Interpretacion | null) => {
     const caso = casoDe(texto ? leerCaso(texto) : 'general')
     cerrar({
       caso: caso.id,
@@ -61,21 +67,29 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlPreguntas = n
       rangos: {},
       contexto: texto,
       sinDatos: texto ? caso.referencia.map((r) => r.nombre) : [],
+      ...(lectura !== undefined && { lectura }),
     })
   }
   const entrar = () => {
     if (saliendo || pensando) return
     const texto = contexto.trim()
-    // Second step: the person answered (or skipped) Claude's questions.
-    if (preguntas.length > 0) return terminar(componerCaso(texto, preguntas, respuestas))
-    // First step: with an intermediary, Claude may ask up to two things the case leaves out.
-    if (!urlPreguntas || !texto) return terminar(texto)
+    // Second step: the person answered (or skipped) Claude's questions. With no answers the case is
+    // unchanged and the first reading still holds, so it is reused instead of asking again.
+    if (preguntas.length > 0) {
+      const final = componerCaso(texto, preguntas, respuestas)
+      return terminar(final, final === texto ? primera : undefined)
+    }
+    if (!urlCaso || !texto) return terminar(texto)
+    // One call reads the case and says what is missing (at most two questions). When nothing is
+    // missing, that same reading goes to the map, which then skips its own call.
+    const caso = casoDe(leerCaso(texto))
     setPensando(true)
-    void pedirPreguntas(urlPreguntas, texto).then((qs) => {
+    void pedirInterpretacion(urlCaso, { caso: texto, perfil: caso.titulo, prioridades: prioridadesDe(caso, ids) }).then((r) => {
       setPensando(false)
-      if (qs.length === 0) return terminar(texto)
-      setPreguntas(qs)
-      setRespuestas(qs.map(() => ''))
+      if (!r || r.preguntas.length === 0) return terminar(texto, r)
+      setPrimera(r)
+      setPreguntas(r.preguntas)
+      setRespuestas(r.preguntas.map(() => ''))
     })
   }
 
