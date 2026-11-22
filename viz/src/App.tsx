@@ -6,7 +6,7 @@ import { Mapa } from './components/Mapa'
 import type { AguaMapa, Cinta, Encuadre } from './components/MapaPapel'
 import { VistaAgua, type SimAgua } from './components/VistaAgua'
 import { decadaDe, ESCENARIOS_AGUA, REPLICAS_AGUA, resumirSim, sortearDecadas, type EscenarioAgua } from './lib/aguaSim'
-import { cauceDe, caudalEn, decimalesCaudal, estacionDeComuna, estadoCaudal, fraccionNormal, leerAgua, TEXTO_ESTADO as TEXTO_CAUDAL, type AnioAgua, type Estacion } from './lib/agua'
+import { cauceDe, claveCauce, caudalEn, decimalesCaudal, estacionDeComuna, estadoCaudal, fraccionNormal, leerAgua, TEXTO_ESTADO as TEXTO_CAUDAL, type AnioAgua, type Estacion } from './lib/agua'
 import { VistaLena, VistaPlan, VistaPrueba } from './components/Vistas'
 import { GENERAL, PERSONALIZADO, VistaRiesgo } from './components/VistaRiesgo'
 import type { AportePolitica } from './lib/capas'
@@ -143,6 +143,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   const [pesos, setPesos] = useState<Record<string, number>>(() => aPrioridades(data.tipos_hogar[0]?.pesos ?? {}))
   /** sección abierta de cada pestaña que tiene varias */
   const [secciones, setSecciones] = useState<Partial<Record<PestanaId, SeccionId>>>({})
+  /** pestañas cuya sección abierta se cerró a mano: quedan solo los títulos */
+  const [plegadas, setPlegadas] = useState<ReadonlySet<PestanaId>>(new Set())
   const [demo, setDemo] = useState(false)
   // Entrada guiada: se muestra al abrir, salvo con ?directo en la dirección (para ensayar o proyectar sin ella).
   const [onb, setOnb] = useState(() => !new URLSearchParams(window.location.search).has('directo'))
@@ -194,6 +196,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
     if (!papel) return
     const l = lugarDe(papel)
     setSecciones((x) => ({ ...x, [l.pestana]: l.seccion }))
+    setPlegadas((x) => new Set([...x].filter((k) => k !== l.pestana)))
     setVistaIdx(vistas.findIndex((v) => v.id === l.pestana))
   }
   // Una dimensión (el índice general) o una variable en detalle; fuera de la hoja de riesgo siempre es el aire.
@@ -371,6 +374,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   }
   const irAAgua = () => {
     setSecciones((x) => ({ ...x, clima: 'agua' }))
+    setPlegadas((x) => new Set([...x].filter((k) => k !== 'clima')))
     setVistaIdx(vistas.findIndex((v) => v.id === 'clima'))
   }
 
@@ -736,6 +740,17 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   }, [comunaGeo, vista === 'agua'])
   const cauce = agua && estacion ? cauceDe(agua, estacion) : null
   const pasa = useMemo(() => new Set(cauce?.comunas ?? []), [cauce])
+  const cauceElegido = estacion ? claveCauce(estacion.rio) : null
+  /** caja del río elegido (sus tramos y su estación), para que el mapa vaya a él */
+  const focoAgua = useMemo<readonly [number, number, number, number] | null>(() => {
+    if (!agua || !estacion) return null
+    const pts: [number, number][] = [[estacion.lon, estacion.lat]]
+    for (const r of agua.rios) if (r.nombre && claveCauce(r.nombre) === cauceElegido) pts.push(...r.coords)
+    const xs = pts.map((q) => q[0])
+    const ys = pts.map((q) => q[1])
+    const h = pts.length > 1 ? 0.02 : 0.12
+    return [Math.min(...xs) - h, Math.min(...ys) - h, Math.max(...xs) + h, Math.max(...ys) + h]
+  }, [agua, estacion, cauceElegido])
   // Simulación del agua: 500 décadas por escenario para los años de la línea de tiempo; se reproduce una.
   const decadas = useMemo(() => (agua && aguaSim ? sortearDecadas(agua, aguaSim.escenario, anios.length) : null), [agua, aguaSim?.escenario, anios.length])
   const decadaPorEstacion = useMemo(() => {
@@ -787,6 +802,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             },
             clave: aguaSim ? `sim-${aguaSim.escenario}-${aguaSim.replica}-${idx}` : `medido-${aguaAnio}`,
             elegida: estacion?.codigo ?? null,
+            cauceElegido,
+            foco: focoAgua,
             onElegir: setAguaEstacion,
             etiqueta: (e) => {
               const f = fraccionAgua(e)
@@ -801,7 +818,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
             },
           }
         : null,
-    [agua, aguaAnio, aguaSim, fraccionAgua, anio, idx, estacion?.codigo, pasa],
+    [agua, aguaAnio, aguaSim, fraccionAgua, anio, idx, estacion?.codigo, pasa, cauceElegido, focoAgua],
   )
 
   let hoja: ReactNode = null
@@ -1103,7 +1120,22 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
           ))}
         </nav>
         <div className="hoja" id="hoja" role="tabpanel" aria-labelledby={`tab-${pestana.id}`} key={pestana.id}>
-          <Hoja pestana={pestana} secciones={disponibles} abierta={modo.seccion} onSeccion={(id) => setSecciones((x) => ({ ...x, [pestana.id]: id }))}>
+          <Hoja
+            pestana={pestana}
+            secciones={disponibles}
+            abierta={plegadas.has(pestana.id) ? null : modo.seccion}
+            onSeccion={(id) => {
+              // tocar la sección abierta la cierra; tocar otra la abre
+              const cerrar = id === modo.seccion && !plegadas.has(pestana.id)
+              setPlegadas((x) => {
+                const y = new Set(x)
+                if (cerrar) y.add(pestana.id)
+                else y.delete(pestana.id)
+                return y
+              })
+              setSecciones((x) => ({ ...x, [pestana.id]: id }))
+            }}
+          >
             {hoja}
           </Hoja>
         </div>

@@ -72,13 +72,14 @@ export const CAPAS = {
   trama: 'c-trama',
   linea: 'c-linea',
   nombres: 'c-nombres',
+  rioElegido: 'rios-elegido',
   riosFilo: 'rios-filo',
   riosBase: 'rios-base',
   rios: 'rios',
   flujoBase: 'rios-flujo-base',
   flujo: 'rios-flujo',
   estaciones: 'estaciones',
-  pulso: 'estaciones-pulso',
+  estacionNombre: 'estaciones-nombre',
 } as const
 
 const VACIO = { type: 'FeatureCollection', features: [] }
@@ -103,7 +104,7 @@ function capaRio(id: string, filter: unknown, paint: Record<string, unknown>, re
 }
 
 /** Capas de ríos, de abajo hacia arriba. */
-export const CAPAS_RIOS = ['rios-filo', 'rios-base', 'rios', 'rios-flujo-base', 'rios-flujo'] as const
+export const CAPAS_RIOS = ['rios-elegido', 'rios-filo', 'rios-base', 'rios', 'rios-flujo-base', 'rios-flujo'] as const
 
 export interface CauceAncho {
   /** nombres con que el cauce puede venir en las teselas */
@@ -241,19 +242,12 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
     // Ríos: salen de la capa de cauces de las mismas teselas del mapa base, así que no hay otro archivo que
     // cargar. Los medidos llevan un filo de papel y un ancho según su caudal; todos, un brillo de trazos que
     // corre aguas abajo. Parten ocultos: la pantalla los enciende, les da el filtro y el ancho.
+    capaRio(CAPAS.rioElegido, NINGUNO, { 'line-color': c.tinta, 'line-width': 8 }, true),
     capaRio('rios-filo', NINGUNO, { 'line-color': c.papel, 'line-opacity': 0.85, 'line-width': 3 }, true),
     capaRio(CAPAS.riosBase, ES_RIO, { 'line-color': c.agua, 'line-width': 1.3 }, true),
     capaRio(CAPAS.rios, NINGUNO, { 'line-color': c.agua, 'line-width': 2 }, true),
     capaRio(CAPAS.flujoBase, ES_RIO, { 'line-color': c.aguaClara, 'line-opacity': 0.9, 'line-width': 0.7, 'line-dasharray': TRAZOS_FLUJO[0] }, false),
     capaRio(CAPAS.flujo, NINGUNO, { 'line-color': c.aguaClara, 'line-opacity': 0.9, 'line-width': 1, 'line-dasharray': TRAZOS_FLUJO[0] }, false),
-    {
-      id: CAPAS.pulso,
-      type: 'circle',
-      source: 'estaciones',
-      // solo laten las estaciones con caudal crítico en lo que se mira
-      filter: ['==', ['get', 'late'], true],
-      paint: { 'circle-radius': ['get', 'r'], 'circle-color': ['get', 'color'], 'circle-opacity': 0, 'circle-pitch-alignment': 'map' },
-    },
     {
       id: CAPAS.estaciones,
       type: 'circle',
@@ -284,6 +278,23 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
   ]
   const i = capas.findIndex((l) => l.type === 'symbol')
   capas.splice(i < 0 ? capas.length : i, 0, ...datos)
+  // Nombre de la estación elegida, para que se sepa qué es el punto y cuál se está mirando.
+  capas.push({
+    id: CAPAS.estacionNombre,
+    type: 'symbol',
+    source: 'estaciones',
+    filter: ['==', ['get', 'sel'], true],
+    layout: {
+      'text-field': ['get', 'rotulo'],
+      'text-font': ['Noto Sans Bold'],
+      'text-size': 13,
+      'text-offset': [0, 1.5],
+      'text-anchor': 'top',
+      'text-max-width': 9,
+      'text-allow-overlap': true,
+    },
+    paint: { 'text-color': c.papel, 'text-halo-color': c.tinta, 'text-halo-width': 2.2 },
+  })
   capas.push({
     id: CAPAS.nombres,
     type: 'symbol',

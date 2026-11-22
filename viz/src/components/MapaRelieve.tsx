@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import urlWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 setWorkerUrl(urlWorker)
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { anchoRio, caucesMedidos, estadoCaudal, radioEstacion, type EstadoCaudal, type Estacion } from '../lib/agua'
+import { anchoRio, caucesMedidos, claveCauce, estadoCaudal, radioEstacion, type EstadoCaudal, type Estacion } from '../lib/agua'
 import { apilarNivel } from '../lib/capas'
 import { claseFondo, variableDeClase } from '../lib/fondo'
 import { radioDisco } from '../lib/lena'
@@ -34,7 +34,6 @@ const ESPERA_CARGA_MS = 20_000
 const RADIO_DISCO_M = 7000
 /** cada cuánto avanza el brillo de los ríos y cuánto dura un latido de las estaciones */
 const PASO_FLUJO_MS = 55
-const LATIDO_MS = 2400
 const DURACION_CAUDAL = 380
 /** papel de cada estado del caudal: el del río y el del punto de su estación */
 const PAPEL_ESTADO: Record<EstadoCaudal, string> = { sin: '--tinta-2', normal: '--agua', bajo: '--agua-baja', critico: '--agua-critica' }
@@ -374,7 +373,7 @@ export default function MapaRelieve(p: Props) {
               r: radioEstacion(e.medio),
               color: cs.getPropertyValue(PAPEL_ESTADO[estado]).trim() || '#1f6fb2',
               sel: e.codigo === aguaActiva.elegida,
-              late: estado === 'critico',
+              rotulo: e.nombre.slice(0, 44),
             },
             geometry: { type: 'Point', coordinates: [e.lon, e.lat] },
           }
@@ -384,7 +383,7 @@ export default function MapaRelieve(p: Props) {
     if (!aguaActiva) setSobreEstacion(null)
   }, [listo, aguaActiva, aguaActiva?.estaciones, aguaActiva?.elegida, aguaActiva?.clave])
 
-  // Movimiento del agua: el brillo corre aguas abajo y las estaciones laten. Quieto si se pidió menos movimiento.
+  // Movimiento del agua: el brillo corre aguas abajo. Quieto si se pidió menos movimiento.
   const hayAgua = !!aguaActiva
   useEffect(() => {
     const m = mapa.current
@@ -396,18 +395,45 @@ export default function MapaRelieve(p: Props) {
         for (const id of [CAPAS.flujoBase, CAPAS.flujo]) if (m.getLayer(id)) m.setPaintProperty(id, 'line-dasharray', TRAZOS_FLUJO[paso] as number[])
         pasoPrevio = paso
       }
-      if (m.getLayer(CAPAS.pulso)) {
-        const t = (ahora % LATIDO_MS) / LATIDO_MS
-        m.setPaintProperty(CAPAS.pulso, 'circle-radius', ['*', ['get', 'r'], 1 + t * 2.2])
-        m.setPaintProperty(CAPAS.pulso, 'circle-opacity', 0.45 * (1 - t))
-      }
       cuadro = requestAnimationFrame(anima)
     })
-    return () => {
-      cancelAnimationFrame(cuadro)
-      if (m.getLayer(CAPAS.pulso)) m.setPaintProperty(CAPAS.pulso, 'circle-opacity', 0)
-    }
+    return () => cancelAnimationFrame(cuadro)
   }, [listo, hayAgua, p.reducido])
+
+  // Río elegido: se le pone un contorno oscuro y la cámara va a él, para que cambiar de río se vea en el mapa.
+  const focoPrevio = useRef<string | null>(null)
+  useEffect(() => {
+    const m = mapa.current
+    if (!m || !listo) return
+    const elegido = aguaActiva ? cauces.find((c) => claveCauce(c.estacion.rio) === aguaActiva.cauceElegido) : undefined
+    if (m.getLayer(CAPAS.rioElegido)) {
+      const nombrados = elegido ? [{ nombres: elegido.nombres, ancho: anchoRio(aguaActiva!.caudalDe(elegido.estacion) ?? elegido.estacion.medio, 'river') }] : []
+      m.setFilter(CAPAS.rioElegido, filtroCauces(nombrados, prep.limites.region) as Parameters<MapaGL['setFilter']>[1])
+      m.setPaintProperty(CAPAS.rioElegido, 'line-width', anchoCauces(nombrados, 1, 6.5) as unknown as number)
+    }
+    const foco = aguaActiva?.foco ?? null
+    const clave = foco ? foco.join(',') : null
+    if (!foco || clave === focoPrevio.current) {
+      if (!foco) focoPrevio.current = null
+      return
+    }
+    const primera = focoPrevio.current === null
+    focoPrevio.current = clave
+    if (primera) return // al entrar se ve toda la región; la cámara se mueve al cambiar de río
+    const cam = CAMARA.region
+    const leyenda = caja.current?.querySelector('.leyenda')?.getBoundingClientRect().height ?? 0
+    const c = m.cameraForBounds(
+      [
+        [foco[0], foco[1]],
+        [foco[2], foco[3]],
+      ],
+      { bearing: cam.bearing, padding: { top: 90, bottom: leyenda * 0.5 + 40, left: 60, right: 60 }, maxZoom: 11.5 },
+    )
+    if (!c || c.zoom === undefined || !c.center) return
+    const destino = { center: c.center, zoom: c.zoom + cam.dz * 0.5, bearing: cam.bearing, pitch: cam.pitch }
+    if (p.reducido) m.jumpTo(destino)
+    else m.easeTo({ ...destino, duration: 1300 })
+  }, [listo, aguaActiva, cauces, aguaActiva?.cauceElegido, aguaActiva?.foco, aguaActiva?.clave, prep.limites.region, p.reducido])
 
   // Encuadre: Gran Santiago o toda la región; `reencuadre` fuerza volver aunque no cambie.
   const encuadrado = useRef(false)

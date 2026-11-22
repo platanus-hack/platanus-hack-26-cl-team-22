@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { anchoRio, estadoCaudal, radioEstacion, type CauceDato, type EstadoCaudal, type Estacion, type Rio } from '../lib/agua'
+import { anchoRio, claveCauce, estadoCaudal, radioEstacion, type CauceDato, type EstadoCaudal, type Estacion, type Rio } from '../lib/agua'
 import type { AportePolitica } from '../lib/capas'
 import { apilarLabios, apilarNivel, PAPELES_POLITICA } from '../lib/capas'
 import type { Punto } from '../lib/data'
@@ -53,6 +53,9 @@ export interface AguaMapa {
   fraccionDe: (e: Estacion) => number | null
   /** cambia cuando cambia lo que se mira: los mapas vuelven a pintar */
   clave: string
+  /** clave del río elegido (claveCauce), para destacarlo, y su caja [oeste, sur, este, norte] para ir a él */
+  cauceElegido: string | null
+  foco: readonly [number, number, number, number] | null
   elegida: string | null
   onElegir: (codigo: string) => void
   etiqueta: (e: Estacion) => Etiqueta
@@ -437,6 +440,7 @@ export function MapaPapel(p: PropsMapa) {
                   const w = anchoRio(caudalDeRio(x.r, p.agua!), x.r.clase)
                   return (
                     <g key={i} aria-hidden="true" className={`rio-${estadoDeRio(x.r, p.agua!)}`}>
+                      {x.r.nombre && claveCauce(x.r.nombre) === p.agua!.cauceElegido && <path d={x.d} className="rio-elegido" style={{ strokeWidth: w + 6.5 }} />}
                       <path d={x.d} className="rio-filo" style={{ strokeWidth: w + 2.4 }} />
                       <path d={x.d} className="rio" style={{ strokeWidth: w }} />
                       <path d={x.d} className="rio-flujo" style={{ strokeWidth: Math.max(0.7, w * 0.42) }} />
@@ -453,7 +457,7 @@ export function MapaPapel(p: PropsMapa) {
                       cx={c[0]}
                       cy={c[1]}
                       r={(radioEstacion(e.medio) + (elegida ? 2 : 0)) / k}
-                      className={`estacion agua-estado-${estado}${estado === 'critico' ? ' estacion-late' : ''}${elegida ? ' estacion-elegida' : ''}`}
+                      className={`estacion agua-estado-${estado}${elegida ? ' estacion-elegida' : ''}`}
                       role="button"
                       tabIndex={0}
                       aria-label={`${e.nombre}: ${e.medio} metros cúbicos por segundo`}

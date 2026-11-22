@@ -3355,3 +3355,16 @@ body:has(.estado) {
   font-size: var(--t-xs);
   color: var(--tinta-2);
 }
+
+/* Río elegido: contorno de tinta para distinguirlo de los demás */
+.rio-elegido {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.leyenda-rio-elegido {
+  box-shadow: 0 0 0 2px var(--tinta);
+  background: var(--agua);
+}

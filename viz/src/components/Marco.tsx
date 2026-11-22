@@ -31,7 +31,7 @@ export function Leyenda(p: LeyendaProps) {
             <i className="leyenda-rio" /> Río: más ancho, más caudal
           </li>
           <li>
-            <Muestra clase="agua-estado-normal" forma="disco" /> Punto: estación que lo mide
+            <Muestra clase="agua-estado-normal" forma="disco" /> Punto: estación que mide el río
           </li>
           <li>
             <Muestra clase="agua-estado-normal" /> Normal
@@ -43,10 +43,10 @@ export function Leyenda(p: LeyendaProps) {
             <Muestra clase="agua-estado-critico" /> Crítico: menos de 60 %
           </li>
           <li>
-            <i className="leyenda-late agua-estado-critico" /> Late: caudal crítico
+            <i className="leyenda-rio leyenda-rio-elegido" /> Con borde: el río elegido
           </li>
         </ul>
-        <p className="leyenda-nota">Lo normal es el promedio {p.agua?.normal} de cada estación. Toca un punto para ver su río.</p>
+        <p className="leyenda-nota">El color es el caudal frente a lo normal (promedio {p.agua?.normal}). Toca un punto para ver su río.</p>
       </div>
     )
   if (p.modo === 'lena') {
