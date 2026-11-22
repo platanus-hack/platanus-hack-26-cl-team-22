@@ -367,7 +367,9 @@ function hover(p){
   tip.style.left=p[0]+"px"; tip.style.top=p[1]+"px"; tip.classList.add("on");
 }
 function click(p){
-  if(level()!=="region"){ if(nearMarker(p)||level()==="country") go("region"); return; }
+  // Clicking the globe takes the main path, the same as the button: it flies to the region and opens
+  // the real simulator. Flying here directly would land on the sample model's 12 communes instead.
+  if(level()!=="region"){ if(nearMarker(p)||level()==="country") $("cta").click(); return; }
   const f=comunaAt(p); if(f&&f.idx>=0&&SIM) select(f.idx,true);
 }
 
