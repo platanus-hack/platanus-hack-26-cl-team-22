@@ -143,6 +143,10 @@ describe('profile chosen by Claude', () => {
     expect(INSTRUCCIONES_CASO).toMatch(/maquinaria|consumo eléctrico/)
     expect(INSTRUCCIONES_CASO).toMatch(/En el perfil energia no las subas/)
   })
+  it('treats three active variables as the base, never switching others off to make room', () => {
+    expect(INSTRUCCIONES_CASO).toMatch(/Tres variables activas es la base de cada perfil, no un tope/)
+    expect(INSTRUCCIONES_CASO).not.toMatch(/no dejes más de tres/)
+  })
   it('uses the general profile only when the case gives no clue', () => {
     expect(INSTRUCCIONES_CASO).toMatch(/con familia, hijos o colegios es familia/)
     expect(INSTRUCCIONES_CASO).toMatch(/Usa general solo cuando el caso no da ninguna pista/)
