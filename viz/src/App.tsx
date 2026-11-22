@@ -46,7 +46,7 @@ import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, typ
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
 import { casoDe, explicar, fueraDeRango, GRADOS, resolverLimites } from './lib/onboarding'
-import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
+import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, urlPreguntas, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
 interface EstadoPlan {
@@ -1118,7 +1118,13 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         </Mapa>
       </main>
 
-      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} hasta={anios[anios.length - 1]!} />}
+      {onb && <Onboarding
+          variables={cortas}
+          onListo={terminarEntrada}
+          inicio={inicio}
+          hasta={anios[anios.length - 1]!}
+          urlPreguntas={urlPreguntas(urlGuia(import.meta.env.VITE_CASO_URL as string | undefined))}
+        />}
       {cargando && !onb && (
         <Cargando
           onFin={() => setCargando(false)}

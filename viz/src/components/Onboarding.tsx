@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import logoRoot from '../assets/logo-root.png'
+import { componerCaso, pedirPreguntas, LARGO_RESPUESTA_MAX } from '../lib/caso'
 import { CASOS, casoDe, LARGO_CASO, leerCaso, prioridadesDe, type CasoId } from '../lib/onboarding'
 import type { VariableCorta } from '../lib/variables'
 
@@ -22,6 +23,8 @@ interface Props {
   inicio: string | null
   /** último año de la simulación cargada */
   hasta: number
+  /** Where Claude's follow-up questions come from; null when no intermediary is configured. */
+  urlPreguntas?: string | null
 }
 
 const SALIDA_MS = 520
@@ -31,8 +34,11 @@ const orden = (i: number) => ({ '--i': i }) as CSSProperties
  * Entrada en una sola pantalla: el caso en texto libre. De él salen el tipo de caso y el peso de cada
  * variable, sin más preguntas; quien quiera cambiarlos lo hace después con «Ajustar pesos».
  */
-export function Onboarding({ variables, onListo, inicio, hasta }: Props) {
+export function Onboarding({ variables, onListo, inicio, hasta, urlPreguntas = null }: Props) {
   const [contexto, setContexto] = useState('')
+  const [pensando, setPensando] = useState(false)
+  const [preguntas, setPreguntas] = useState<string[]>([])
+  const [respuestas, setRespuestas] = useState<string[]>([])
   const [saliendo, setSaliendo] = useState(false)
   const hoja = useRef<HTMLDivElement>(null)
   const ids = variables.map((v) => v.id)
@@ -47,8 +53,7 @@ export function Onboarding({ variables, onListo, inicio, hasta }: Props) {
     const quieto = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
     window.setTimeout(() => onListo(b), quieto ? 0 : SALIDA_MS)
   }
-  const entrar = () => {
-    const texto = contexto.trim()
+  const terminar = (texto: string) => {
     const caso = casoDe(texto ? leerCaso(texto) : 'general')
     cerrar({
       caso: caso.id,
@@ -56,6 +61,21 @@ export function Onboarding({ variables, onListo, inicio, hasta }: Props) {
       rangos: {},
       contexto: texto,
       sinDatos: texto ? caso.referencia.map((r) => r.nombre) : [],
+    })
+  }
+  const entrar = () => {
+    if (saliendo || pensando) return
+    const texto = contexto.trim()
+    // Second step: the person answered (or skipped) Claude's questions.
+    if (preguntas.length > 0) return terminar(componerCaso(texto, preguntas, respuestas))
+    // First step: with an intermediary, Claude may ask up to two things the case leaves out.
+    if (!urlPreguntas || !texto) return terminar(texto)
+    setPensando(true)
+    void pedirPreguntas(urlPreguntas, texto).then((qs) => {
+      setPensando(false)
+      if (qs.length === 0) return terminar(texto)
+      setPreguntas(qs)
+      setRespuestas(qs.map(() => ''))
     })
   }
 
@@ -77,9 +97,10 @@ export function Onboarding({ variables, onListo, inicio, hasta }: Props) {
             <span className="solo-lector">Tu caso</span>
             <textarea
               value={contexto}
+              readOnly={preguntas.length > 0}
               maxLength={LARGO_CASO}
-              rows={3}
-              placeholder="Quiero…"
+              rows={4}
+              placeholder="Cuéntame qué quieres evaluar y para quién: ¿una vivienda o una empresa? ¿Hay niños, mayores o personas con asma?"
               onChange={(e) => setContexto(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -92,7 +113,30 @@ export function Onboarding({ variables, onListo, inicio, hasta }: Props) {
               {contexto.length} / {LARGO_CASO}
             </span>
           </label>
-          <div className="onb-ejemplos" style={orden(2)}>
+          {preguntas.length > 0 && (
+            <div className="onb-preguntas" role="group" aria-label="Preguntas para entender tu caso">
+              <p className="onb-bajada">Para afinar el resultado, ¿me ayudas con esto? Puedes dejarlo en blanco.</p>
+              {preguntas.map((q, i) => (
+                <label key={q} className="onb-pregunta">
+                  <span>{q}</span>
+                  <input
+                    type="text"
+                    value={respuestas[i] ?? ''}
+                    maxLength={LARGO_RESPUESTA_MAX}
+                    autoFocus={i === 0}
+                    onChange={(e) => setRespuestas((r) => r.map((x, j) => (j === i ? e.target.value : x)))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        entrar()
+                      }
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+          )}
+          <div className="onb-ejemplos" style={orden(2)} hidden={preguntas.length > 0}>
             <span>Por ejemplo:</span>
             {CASOS.filter((c) => c.ejemplo).map((c) => (
               <button key={c.id} type="button" className="onb-chip" onClick={() => setContexto(c.ejemplo)}>
@@ -106,8 +150,8 @@ export function Onboarding({ variables, onListo, inicio, hasta }: Props) {
                 Atrás
               </a>
             )}
-            <button type="button" className="onb-seguir" onClick={entrar}>
-              Ver el mapa
+            <button type="button" className="onb-seguir" onClick={entrar} disabled={pensando}>
+              {pensando ? 'Leyendo tu caso…' : 'Ver el mapa'}
             </button>
           </div>
         </div>

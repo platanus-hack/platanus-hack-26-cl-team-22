@@ -5,6 +5,7 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 
 | Ruta | Pedido | Respuesta | Para qué |
 |---|---|---|---|
+| `POST /preguntar` | `{ caso }` | `{ preguntas }` | Hasta 2 preguntas de seguimiento sobre lo que el caso no dice (vivienda o empresa, niños, mayores, asma) |
 | `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido }` | Lee el caso de la persona y propone ajustes de prioridad |
 | `POST /guia` | `PedidoGuia` (`viz/src/lib/guia.ts`) | `{ texto }` | Redacta la explicación de las comunas que quedaron primeras |
 | `GET /salud` | — | `{ ok, clave }` | Saber si el servidor tiene clave |
@@ -24,7 +25,7 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 Si no hay clave, el modelo rechaza la consulta o algo falla, la página sigue sin ajustes y con su explicación propia.
 
 Protecciones del servidor:
-- Cada pedido se valida antes de llamar a Claude (`/interpretar` y `/guia`). Uno inválido responde 400 sin gastar
+- Cada pedido se valida antes de llamar a Claude (`/preguntar`, `/interpretar` y `/guia`). Uno inválido responde 400 sin gastar
   la clave; uno de más de 8 KB responde 413.
 - Hay un límite de 20 llamadas por minuto por dirección (429 si se pasa). CORS no basta, porque solo frena a los
   navegadores. Antes de publicarlo, conviene además ponerlo detrás de un límite del proveedor.

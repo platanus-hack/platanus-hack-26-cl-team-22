@@ -3,6 +3,7 @@
  * (ANTHROPIC_API_KEY in this process's environment), never in the page or in a VITE_ variable.
  *
  *   POST /interpretar  { caso, perfil, prioridades }  -> { ajustes, indicadores, no_medido }
+ *   POST /preguntar    { caso }                      -> { preguntas }  (0 to 2 follow-up questions)
  *   POST /guia         PedidoGuia (viz/src/lib/guia.ts) -> { texto }
  *   GET  /salud        -> { ok, clave }
  *
@@ -10,7 +11,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
-import { interpretarCaso, redactarGuia, validarPedidoCaso, validarPedidoGuia, type ClienteClaude } from './claude.ts'
+import { interpretarCaso, prepararPreguntas, redactarGuia, validarPedidoCaso, validarPedidoGuia, validarPedidoPreguntas, type ClienteClaude } from './claude.ts'
 
 const LIMITE_CUERPO = 8_000
 const ORIGENES_DEFECTO = ['http://localhost:5173', 'http://localhost:4173']
@@ -95,7 +96,7 @@ export function crearServidor(
     }
     if (req.method === 'OPTIONS') return void res.writeHead(204).end()
     if (req.method === 'GET' && req.url === '/salud') return responder(res, 200, { ok: true, clave: obtenerCliente() !== null })
-    if (req.method !== 'POST' || (req.url !== '/interpretar' && req.url !== '/guia')) return responder(res, 404, { error: 'no existe' })
+    if (req.method !== 'POST' || (req.url !== '/interpretar' && req.url !== '/guia' && req.url !== '/preguntar')) return responder(res, 404, { error: 'no existe' })
 
     const cliente = obtenerCliente()
     if (!cliente) return responder(res, 503, { error: 'falta ANTHROPIC_API_KEY en el servidor' })
@@ -106,7 +107,8 @@ export function crearServidor(
     }
     const pedidoCaso = req.url === '/interpretar' ? validarPedidoCaso(cuerpo) : null
     const pedidoGuia = req.url === '/guia' ? validarPedidoGuia(cuerpo) : null
-    if (!pedidoCaso && !pedidoGuia) return responder(res, 400, { error: 'pedido no válido' })
+    const pedidoPreguntas = req.url === '/preguntar' ? validarPedidoPreguntas(cuerpo) : null
+    if (!pedidoCaso && !pedidoGuia && !pedidoPreguntas) return responder(res, 400, { error: 'pedido no válido' })
     if (!permitir(req.socket.remoteAddress ?? 'desconocido')) return responder(res, 429, { error: 'demasiados pedidos; espera un minuto' })
     // If the page gives up (it waits 12-15 s), stop the model call instead of spending tokens on it.
     const corte = new AbortController()
@@ -114,6 +116,10 @@ export function crearServidor(
       if (!res.writableEnded) corte.abort()
     })
     try {
+      if (pedidoPreguntas) {
+        const q = await prepararPreguntas(cliente, pedidoPreguntas, corte.signal)
+        return q ? responder(res, 200, { preguntas: q }) : responder(res, 502, { error: 'sin preguntas' })
+      }
       if (pedidoCaso) {
         const r = await interpretarCaso(cliente, pedidoCaso, corte.signal)
         return r ? responder(res, 200, r) : responder(res, 502, { error: 'sin interpretación' })
