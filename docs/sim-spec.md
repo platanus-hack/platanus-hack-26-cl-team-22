@@ -201,3 +201,19 @@ experiments/  calibración, comparación de promesas y simulación -> results/, 
 tests/        pruebas del núcleo y de los datos (make test)
 viz/          interfaz: solo lee simulacion.json
 ```
+
+## Horizonte configurable
+
+El horizonte por defecto es 2026–2036. Es un parámetro (`END_YEAR` en `experiments/simular.py` y
+`experiments/exportar_demografia.py`), con `--hasta AAAA` o la variable `SIMULAR_HASTA`:
+
+```
+python -m experiments.simular --hasta 2040 --salida viz/datos/simulacion-15.json
+python -m experiments.exportar_demografia --hasta 2040 --salida viz/public/datos/demografia-15.json
+```
+
+Más allá de 2036 el modelo extrapola, no está validado: mismas tasas del censo 2012-2017, mismo
+crecimiento de viviendas 2017-2024 (la capacidad no se satura en 2040: 0 comunas), medidas que ya
+llegaron al efecto completo se quedan ahí y la seguridad sigue volviendo a la media de cada
+comuna. El JSON lo declara en `meta.anios_extrapolados`, `meta.anio_fin_validado` y un supuesto
+adicional. Con el valor por defecto la salida es idéntica a la anterior.

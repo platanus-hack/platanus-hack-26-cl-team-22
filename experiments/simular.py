@@ -11,9 +11,12 @@ Usage:  python -m experiments.simular
 """
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import unicodedata
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
@@ -48,7 +51,10 @@ SECURITY_CALIBRATION = ROOT / "results" / "seguridad_calibracion.json"
 SEED = 22
 REPLICAS = 500
 BASE_YEAR = 2023
-YEARS = list(range(2026, 2037))
+FIRST_YEAR = 2026
+VALIDATED_END_YEAR = 2036  # last year covered by the documented assumptions (docs/modelo-hogares.md)
+END_YEAR = int(os.environ.get("SIMULAR_HASTA", VALIDATED_END_YEAR))  # CLI: --hasta
+YEARS = list(range(FIRST_YEAR, END_YEAR + 1))
 YEARS_TO_FULL = 10  # assumption: the PPDA sets a 10-year horizon (art. 1)
 PM25_ANNUAL_NORM = 20.0  # ug/m3, Chilean annual PM2.5 standard (docs/politicas-aire.md)
 EXECUTOR = "ppda-rm"
@@ -718,17 +724,29 @@ def main() -> None:
             transformations, default_reference="base"
         ),
     }
+    extrapolated = [y for y in YEARS if y > VALIDATED_END_YEAR]
+    if extrapolated:  # opt-in longer horizon: say which years go beyond the documented assumptions
+        output["meta"]["supuestos"] = [*ASSUMPTIONS, (
+            f"Years {extrapolated[0]}-{extrapolated[-1]} extrapolate the model past the "
+            f"{VALIDATED_END_YEAR} horizon of the documented assumptions: the same census "
+            "out-rates and dwelling growth continue unchanged, measures that reached full effect "
+            "stay at it, and security rates keep reverting to each commune's mean. Not validated "
+            f"out of sample beyond {VALIDATED_END_YEAR}.")]
+        output["meta"]["anios_extrapolados"] = extrapolated
+        output["meta"]["anio_fin_validado"] = VALIDATED_END_YEAR
+        output["meta"]["comunas_en_capacidad_vivienda"] = binding
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
     weights = population[-1] / population[-1].sum()
-    print(f"{'escenario':<48} PM2,5 2036 (pond. población) p10/p50/p90 | sobre norma p50")
+    print(f"{'escenario':<48} PM2,5 {YEARS[-1]} (pond. población) p10/p50/p90 | "
+          "sobre norma p50")
     for sc in scenarios:
         final = run(sc["politicas_activas"], sc["lectura"], sc["hogares"])[:, -1, :] @ weights
         p10, p50, p90 = np.quantile(final, [0.1, 0.5, 0.9])
         print(f"{sc['id']:<48} {p10:6.2f} {p50:6.2f} {p90:6.2f} | "
               f"{impact[sc['id']]['p50'][-1]:>9,}")
-    print(f"\nDMCS 2036 en las {SECURITY_TARGETS} comunas intervenidas "
+    print(f"\nDMCS {YEARS[-1]} en las {SECURITY_TARGETS} comunas intervenidas "
           f"({', '.join(communes.names[i] for i in targets)}), media de p10/p50/p90:")
     for sc in scenarios:
         final = run_security(sc["politicas_activas"])[:, -1, targets].mean(axis=1)
@@ -739,5 +757,26 @@ def main() -> None:
           f"{OUTPUT.relative_to(ROOT)}")
 
 
+def _set_horizon(end_year: int, output: Path | None) -> None:
+    """Make the simulated years FIRST_YEAR..end_year (module-level, read by main)."""
+    global END_YEAR, YEARS, OUTPUT
+    if end_year < FIRST_YEAR:
+        raise SystemExit(f"--hasta must be >= {FIRST_YEAR}")
+    END_YEAR, YEARS = end_year, list(range(FIRST_YEAR, end_year + 1))
+    if output is not None:
+        OUTPUT = output if output.is_absolute() else ROOT / output
+
+
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--hasta", type=int, default=END_YEAR,
+                    help=f"last simulated year (default {END_YEAR}; env SIMULAR_HASTA). Years past "
+                         f"{VALIDATED_END_YEAR} extrapolate the model.")
+    ap.add_argument("--salida", type=Path, default=None,
+                    help="output path (default viz/datos/simulacion.json)")
+    ap.add_argument("--replicas", type=int, default=None, help=f"replicas (default {REPLICAS})")
+    a = ap.parse_args()
+    if a.replicas:
+        REPLICAS = a.replicas
+    _set_horizon(a.hasta, a.salida)
     main()
