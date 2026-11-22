@@ -98,8 +98,10 @@ la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición
 Al abrir, una sola pantalla sobre el mapa (`src/components/Onboarding.tsx`): **el caso, en texto libre**.
 Claude lo lee y elige uno de nueve perfiles (`PERFILES` en `src/lib/caso.ts`): familia con niños, adulto mayor,
 joven que arrienda, inversionista inmobiliario, emprendedor o comercio, empresario joven u oficina, industria y
-logística, energía o evaluación general. Cada perfil da un peso a las siete variables del índice y deja como mucho
-tres activas (por ejemplo, industria apaga el aire y usa la red eléctrica); Claude puede subir o bajar cualquiera;
+logística, energía o evaluación general. Cada perfil da un peso a las siete variables del índice y parte con
+tres activas (por ejemplo, industria apaga el aire y usa la red eléctrica); Claude puede subir o bajar cualquiera.
+Tres es la base, no un tope: con «Ajustar pesos» o escribiendo un cambio («el agua es clave») se suman más
+indicadores y el orden se recalcula al instante;
 `leerCaso` (`src/lib/onboarding.ts`) clasifica por palabras clave solo cuando Claude no responde. No hay más
 preguntas. `npm run evaluar` prueba frases de ejemplo contra el modelo real (`scripts/evaluar-casos.eval.ts`,
 reporte en `docs/evaluacion-casos.md`).

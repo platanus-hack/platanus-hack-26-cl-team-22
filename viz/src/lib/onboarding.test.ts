@@ -163,30 +163,18 @@ describe('modificar el requerimiento con un texto', () => {
   })
   it('también mueve los indicadores de inversión si están en el índice', () => {
     const r = ajustarPorTexto('el agua es clave', { ...base, sequia_futura: 0, escasez_hidrica: 5, red_electrica: 5 })
-    // Water words move both water indicators; switching sequía on also lowers the least important active
-    // weight (red eléctrica here), because a profile keeps at most three active.
-    expect(r.prioridades).toMatchObject({ sequia_futura: 10, escasez_hidrica: 10, red_electrica: 0 })
+    expect(r.prioridades).toMatchObject({ sequia_futura: 10, escasez_hidrica: 10, red_electrica: 5 })
   })
   it('sin nada reconocible no cambia nada, ni toca variables que no existen', () => {
     expect(ajustarPorTexto('quiero algo cerca del metro', base)).toEqual({ prioridades: base, cambiadas: [] })
     expect(ajustarPorTexto('más seguridad', { pm25_anual: 5 })).toEqual({ prioridades: { pm25_anual: 5 }, cambiadas: [] })
   })
-  it('nunca deja más de tres pesos activos: baja a 0 el menos importante', () => {
+  it('tres activos son la base, no un tope: el texto suma indicadores sin apagar otros', () => {
     const industria = { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8, red_electrica: 10 }
     const r = ajustarPorTexto('me importa el aire', industria)
-    expect(r.prioridades).toEqual({ pm25_anual: 8, seguridad: 0, crecimiento_poblacion: 8, red_electrica: 10 })
-    expect(r.cambiadas.sort()).toEqual(['pm25_anual', 'seguridad'])
-    expect(Object.values(ajustarPorTexto('el aire es lo más importante', industria).prioridades).filter((v) => v > 0)).toHaveLength(3)
-  })
-  it('al hacer espacio nunca baja la que se acaba de subir', () => {
-    const r = ajustarPorTexto('me importa el aire', { pm25_anual: 0, seguridad: 10, crecimiento_poblacion: 10, red_electrica: 10 })
-    // empate entre las de menor peso: baja la última en el orden de las variables
-    expect(r.prioridades).toEqual({ pm25_anual: 8, seguridad: 10, crecimiento_poblacion: 10, red_electrica: 0 })
-  })
-  it('si nada se activa no recorta, aunque ya hubiera más de tres', () => {
-    const cuatro = { pm25_anual: 3, seguridad: 5, crecimiento_poblacion: 8, red_electrica: 10 }
-    expect(ajustarPorTexto('quiero algo cerca del metro', cuatro)).toEqual({ prioridades: cuatro, cambiadas: [] })
-    expect(ajustarPorTexto('no me importa el aire', cuatro).prioridades).toEqual({ ...cuatro, pm25_anual: 0 })
+    expect(r.prioridades).toEqual({ pm25_anual: 8, seguridad: 5, crecimiento_poblacion: 8, red_electrica: 10 })
+    expect(r.cambiadas).toEqual(['pm25_anual'])
+    expect(Object.values(r.prioridades).filter((v) => v > 0)).toHaveLength(4)
   })
   it('subir una que ya estaba activa no baja ninguna otra', () => {
     const r = ajustarPorTexto('más seguridad', { pm25_anual: 3, seguridad: 5, crecimiento_poblacion: 8, red_electrica: 0 })
