@@ -163,7 +163,9 @@ describe('modificar el requerimiento con un texto', () => {
   })
   it('también mueve los indicadores de inversión si están en el índice', () => {
     const r = ajustarPorTexto('el agua es clave', { ...base, sequia_futura: 0, escasez_hidrica: 5, red_electrica: 5 })
-    expect(r.prioridades).toMatchObject({ sequia_futura: 10, escasez_hidrica: 10, red_electrica: 5 })
+    // Water words move both water indicators; switching sequía on also lowers the least important active
+    // weight (red eléctrica here), because a profile keeps at most three active.
+    expect(r.prioridades).toMatchObject({ sequia_futura: 10, escasez_hidrica: 10, red_electrica: 0 })
   })
   it('sin nada reconocible no cambia nada, ni toca variables que no existen', () => {
     expect(ajustarPorTexto('quiero algo cerca del metro', base)).toEqual({ prioridades: base, cambiadas: [] })
