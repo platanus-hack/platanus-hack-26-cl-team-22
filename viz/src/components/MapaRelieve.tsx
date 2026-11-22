@@ -430,7 +430,9 @@ export default function MapaRelieve(p: Props) {
       { bearing: cam.bearing, padding: { top: 90, bottom: leyenda * 0.5 + 40, left: 60, right: 60 }, maxZoom: 11.5 },
     )
     if (!c || c.zoom === undefined || !c.center) return
-    const destino = { center: c.center, zoom: c.zoom + cam.dz * 0.5, bearing: cam.bearing, pitch: cam.pitch }
+    // El centro es el de la caja del río: con la cámara inclinada, el que propone el mapa lo deja en una esquina.
+    const centro: [number, number] = [(foco[0] + foco[2]) / 2, (foco[1] + foco[3]) / 2]
+    const destino = { center: centro, zoom: c.zoom - 0.25, bearing: cam.bearing, pitch: cam.pitch }
     if (p.reducido) m.jumpTo(destino)
     else m.easeTo({ ...destino, duration: 1300 })
   }, [listo, aguaActiva, cauces, aguaActiva?.cauceElegido, aguaActiva?.foco, aguaActiva?.clave, prep.limites.region, p.reducido])

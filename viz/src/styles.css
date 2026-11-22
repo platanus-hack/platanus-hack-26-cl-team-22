@@ -3512,3 +3512,80 @@ body:has(.estado) {
 .ficha-compacta .dimension {
   grid-template-columns: 13.5em minmax(2em, 1fr) 9.4em 7.6em 0.8em;
 }
+
+/* ---------- Ajustes tras la sesión de QA: menos piezas a la vista, nada cortado ---------- */
+.agua-pasa-mas button {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+}
+.agua-detalle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 1);
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  background: var(--papel-2);
+  color: var(--tinta);
+  font-size: var(--t-s);
+  font-weight: 600;
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.8);
+  text-align: left;
+  transition: background-color var(--t-capa) var(--ease);
+}
+.agua-detalle:hover { background: var(--corte); }
+.agua-detalle span:last-child {
+  font-size: var(--t-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.agua-detalle:focus-visible {
+  outline: 3px solid var(--pol-0);
+  outline-offset: 2px;
+}
+.agua-resultado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+}
+.agua-resultado .agua-dato b {
+  font-size: calc(var(--u) * 3.4);
+}
+p.agua-sim-pie {
+  display: block;
+}
+.agua-estacion .desplegable-boton {
+  max-width: calc(var(--u) * 24);
+}
+.agua-estacion .desplegable-boton > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dimensiones-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 0.8);
+  margin-top: calc(var(--u) * 0.45);
+  font-size: var(--t-xs);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--tinta-2);
+}
+.dimensiones-titulo:first-child {
+  margin-top: 0;
+}
+.ficha-compacta .dimension {
+  grid-template-columns: 12.6em minmax(1.5em, 1fr) 11.8em 7.6em 0.8em;
+}
+.ficha-compacta .dimension-valor {
+  white-space: nowrap;
+}
+.pesos-ayuda {
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+  margin-bottom: calc(var(--u) * 0.3);
+}

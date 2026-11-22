@@ -65,6 +65,9 @@ const FUENTES: readonly { sigla: string; que: string }[] = [
   { sigla: 'OpenStreetMap', que: 'Trazado de los ríos (ODbL).' },
 ]
 
+/** Quita las rutas internas del repo que algunas citas traen entre paréntesis: no le dicen nada a quien lee. */
+const limpiarCita = (c: string | undefined): string => (c ?? '').replace(/\s*\((?:data|docs|results)\/[^)]*\)/g, '')
+
 /** Bibliografía: fuentes de datos y la cita de cada plan o medida que el modelo usa. */
 export function VistaFuentes({ politicas }: { politicas: Politica[] }) {
   const citas = politicas.filter((p) => p.cita)
@@ -90,10 +93,10 @@ export function VistaFuentes({ politicas }: { politicas: Politica[] }) {
                   <span>
                     {url ? (
                       <a href={url} target="_blank" rel="noopener noreferrer">
-                        {p.cita}
+                        {limpiarCita(p.cita)}
                       </a>
                     ) : (
-                      p.cita
+                      limpiarCita(p.cita)
                     )}
                   </span>
                 </li>

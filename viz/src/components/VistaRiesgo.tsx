@@ -129,11 +129,6 @@ function General(p: Props) {
         <div className="tramo-cabeza">
           <h3 id="h-prio">{p.guia ? p.guia.titulo : 'Qué priorizas'}</h3>
           <div className="tramo-acciones">
-            {p.guia?.onAgua && !ajustar && (
-              <button type="button" className="lectura ajustar ajustar-agua" onClick={p.guia.onAgua}>
-                Ver caudales
-              </button>
-            )}
             {p.guia && !ajustar && (
               <button type="button" className="lectura ajustar" onClick={p.guia.onCambiar}>
                 Cambiar búsqueda
@@ -146,6 +141,7 @@ function General(p: Props) {
         </div>
         {ajustar ? (
           <div className="pesos" id="pesos">
+            <p className="pesos-ayuda">Peso: 0 no cuenta y 10 es lo más importante. «Acepto» deja fuera de las 3 mejores a las comunas que no cumplen ese límite.</p>
             {p.variables.map((v) => (
               <div className="peso-fila" key={v.id}>
                 <label className="peso">
@@ -253,6 +249,11 @@ function General(p: Props) {
             </div>
           </div>
           <ul className="dimensiones">
+            {p.extras.length > 0 && (
+              <li className="dimensiones-titulo">
+                <span>Entran al índice de riesgo</span>
+              </li>
+            )}
             {p.variables.map((v) => {
               const parte = sel.partes[v.id]
               if (parte === undefined) return null
@@ -280,15 +281,22 @@ function General(p: Props) {
                 </li>
               )
             })}
+            {p.extras.length > 0 && (
+              <li className="dimensiones-titulo">
+                <span>Se comparan aparte, no entran al índice</span>
+                {p.guia?.onAgua && (
+                  <button type="button" className="lectura ajustar ajustar-agua" onClick={p.guia.onAgua}>
+                    Ver caudales de los ríos
+                  </button>
+                )}
+              </li>
+            )}
             {p.extras.map((x) => {
               const n = x.riesgo === null ? null : nivelRiesgo(x.riesgo)
               return (
                 <li key={x.id}>
                   <div className="dimension dimension-extra" title={x.que}>
-                    <span className="dimension-nombre">
-                      {x.nombre}
-                      <small>{x.origen === 'real' ? 'dato real' : 'simulado'}</small>
-                    </span>
+                    <span className="dimension-nombre">{x.nombre}</span>
                     <span className="dimension-pista" aria-hidden="true">
                       {x.riesgo !== null && n && <span className={`dimension-barra sello-${ESTADO_DE_RIESGO[n]}`} style={{ width: `${Math.max(3, x.riesgo)}%` }} />}
                     </span>
@@ -304,9 +312,7 @@ function General(p: Props) {
             })}
           </ul>
           <p className={`nota${todas || ajustar ? ' nota-fuera' : ''}`}>
-            {p.extras.length > 0
-              ? `Riesgo: posición entre las ${p.riesgo.total} comunas (0 la mejor, 100 la peor). El índice usa las ${p.variables.length} primeras variables; las otras ${p.extras.length} se comparan aparte.`
-              : `Riesgo de 0 a 100: posición entre las ${p.riesgo.total} comunas según tus prioridades. 0 es la mejor; 100, la peor.`}
+            Riesgo de 0 a 100: posición entre las {p.riesgo.total} comunas según tus prioridades. 0 es la mejor; 100, la peor.
           </p>
         </section>
       ) : (
