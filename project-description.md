@@ -88,7 +88,7 @@ se esperaba con el modelo real, incluida una inyección de prompt.
 | Agentes LLM en la simulación | 260 000 decisiones por escenario, no reproducibles por semilla y sin datos para validarlas. |
 | Miles de agentes sintéticos | Sin datos individuales para calibrarlos; los flujos agregados se validan directo contra el censo. |
 
-Detalle en [`docs/adr/0007-claude-sin-fine-tuning.md`](./docs/adr/0007-claude-sin-fine-tuning.md) y
+Todas las decisiones en [`docs/decisiones-tecnicas.md`](./docs/decisiones-tecnicas.md). Detalle en [`docs/adr/0007-claude-sin-fine-tuning.md`](./docs/adr/0007-claude-sin-fine-tuning.md) y
 [`docs/adr/0002-hogares-como-flujos-agregados.md`](./docs/adr/0002-hogares-como-flujos-agregados.md).
 
 ## Datos

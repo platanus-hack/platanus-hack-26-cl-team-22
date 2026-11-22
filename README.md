@@ -101,7 +101,8 @@ Evaluamos las alternativas y las descartamos a propósito:
 
 La clave de Anthropic vive solo en `servidor-guia/`, con tope por IP y tope diario. Si el servidor no
 responde, la página sigue funcionando con detección por palabras clave. Detalle en
-[ADR-0007](docs/adr/0007-claude-sin-fine-tuning.md).
+[ADR-0007](docs/adr/0007-claude-sin-fine-tuning.md); todas las decisiones de ingeniería (modelo,
+validación, despliegue, seguridad, reproducibilidad) en [`docs/decisiones-tecnicas.md`](docs/decisiones-tecnicas.md).
 
 ## Cómo ejecutar
 
