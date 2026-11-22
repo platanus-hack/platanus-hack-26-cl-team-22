@@ -251,7 +251,7 @@ function General(p: Props) {
           <ul className="dimensiones">
             {p.extras.length > 0 && (
               <li className="dimensiones-titulo">
-                <span>Entran al índice de riesgo</span>
+                <span>Simuladas por el modelo, con tus prioridades</span>
               </li>
             )}
             {p.variables.map((v) => {
@@ -289,7 +289,7 @@ function General(p: Props) {
             })}
             {p.extras.length > 0 && (
               <li className="dimensiones-titulo">
-                <span>Se comparan aparte, no entran al índice</span>
+                <span>También entran al índice, con peso medio</span>
                 {p.guia?.onAgua && (
                   <button type="button" className="lectura ajustar ajustar-agua" onClick={p.guia.onAgua}>
                     Ver caudales de los ríos

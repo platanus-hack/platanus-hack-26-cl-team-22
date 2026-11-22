@@ -20,6 +20,11 @@ describe('leer el caso', () => {
     expect(leerCaso('Quiero instalar una central HIDROELÉCTRICA de pasada')).toBe('hidro')
     expect(leerCaso('Busco depto para mi familia')).toBe('vivienda')
     expect(leerCaso('abrir una bodega de logística')).toBe('industria')
+    // agua y energía en un caso de empresa no lo vuelven una central hidroeléctrica
+    expect(leerCaso('Quiero instalar un centro de datos; me preocupa el agua, la energía y los permisos')).toBe('industria')
+    expect(leerCaso('un parque solar para vender energía')).toBe('industria')
+    expect(leerCaso('una minicentral en el río Maipo')).toBe('hidro')
+    expect(leerCaso('Busco casa: quiero instalarme con mi familia')).toBe('vivienda')
   })
   it('lo que no reconoce o viene vacío es una evaluación general', () => {
     expect(leerCaso('asdf qwer')).toBe('general')

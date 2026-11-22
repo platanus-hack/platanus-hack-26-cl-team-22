@@ -34,7 +34,8 @@ export const CASOS: readonly Caso[] = [
   {
     id: 'hidro',
     titulo: 'Energía hidráulica',
-    palabras: /hidr|central|represa|embalse|turbina|caudal|\brio\b|energia|renovable|eolic|solar/,
+    // solo lo propio de una central: «agua» o «energía» a secas también las pide cualquier empresa
+    palabras: /hidr|represa|embalse|turbina|caudal|central de pasada|minicentral|\brio\b/,
     prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8 },
     referencia: [
       { id: 'caudal', nombre: 'Caudal medio del río', que: 'Agua disponible para turbinar', unidad: 'm³/s' },
@@ -60,7 +61,7 @@ export const CASOS: readonly Caso[] = [
   {
     id: 'industria',
     titulo: 'Industria y logística',
-    palabras: /industr|planta|fabric|bodega|logist|distribu|manufact|empresa|galpon|comerci|local|negocio/,
+    palabras: /industr|planta|fabric|bodega|logist|distribu|manufact|empresa|galpon|comerci|local|negocio|centro de datos|data ?center|servidores|oficina|inver|instalar|energia|renovable|eolic|solar|central|mineria|agricol|proyecto/,
     prioridades: { pm25_anual: 3, seguridad: 5, crecimiento_poblacion: 8 },
     referencia: [
       { id: 'suelo', nombre: 'Suelo industrial disponible', que: 'Terrenos con uso de suelo permitido', unidad: 'ha' },
@@ -243,9 +244,10 @@ export function explicar(
   if (!a) {
     t = conIndice.length > 0 ? 'Ninguna comuna cumple todos tus rangos: prueba con uno más amplio.' : 'No hay datos suficientes para ordenar las comunas.'
   } else {
-    const clave = variables
-      .filter((v) => (pesos[v.id] ?? 0) > 0 && a.partes[v.id] !== undefined)
-      .sort((x, y) => (pesos[y.id] ?? 0) - (pesos[x.id] ?? 0) || a.partes[x.id]! - a.partes[y.id]!)[0]
+    // Se nombra aquello en que de verdad destaca (tercio mejor de la región); si en nada, lo que más pesa.
+    const conPeso = variables.filter((v) => (pesos[v.id] ?? 0) > 0 && a.partes[v.id] !== undefined)
+    const destaca = conPeso.filter((v) => a.partes[v.id]! <= 100 / 3)
+    const clave = (destaca.length > 0 ? destaca : conPeso).sort((x, y) => (pesos[y.id] ?? 0) - (pesos[x.id] ?? 0) || a.partes[x.id]! - a.partes[y.id]!)[0]
     t = `${nombre(a.codigo)} es la de menor riesgo${o.dentro ? ' dentro de tus rangos' : ' para ti'}`
     if (clave) t += `: ${textoPosicion(a.partes[clave.id]!)} en ${clave.nombre.toLowerCase()}`
     t += '.'

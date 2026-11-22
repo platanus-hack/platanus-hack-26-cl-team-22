@@ -30,6 +30,7 @@ import { alternar, buscarEscenario, escenarioInicial, lecturasDisponibles, resol
 import {
   aPrioridad,
   calcularRiesgo,
+  type ParteExtra,
   CORTES_RIESGO,
   decimales,
   redondear,
@@ -93,6 +94,10 @@ function useMovimientoReducido(): boolean {
   }, [])
   return r
 }
+
+/** Peso de cada indicador de inversión dentro del índice: «Medio», el mismo grado de la entrada guiada. */
+const PESO_INVERSION = 5
+const esCasoInversion = (caso: string | undefined) => caso === 'hidro' || caso === 'industria'
 
 export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inversionRaw, horizonte = '10', onHorizonte, cambiandoHorizonte = false }: Props) {
   const anios = data.meta.anios
@@ -321,8 +326,38 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
       }),
     [data, escenario.id, conDato],
   )
-  const riesgo = useMemo(() => calcularRiesgo(filasDe(idx), data.variables, pesos), [filasDe, idx, data.variables, pesos])
-  const riesgoFin = useMemo(() => calcularRiesgo(filasDe(anios.length - 1), data.variables, pesos), [filasDe, anios.length, data.variables, pesos])
+  // Variables de inversión: solo para quien llegó con un caso de empresa o inversión (mentoría: «las 7 que más les interesan»).
+  // En ese caso entran al índice con peso medio: si no, la comuna «de menor riesgo» podría tener en rojo justo lo que el caso necesita.
+  const inversionReal = useMemo(() => leerInversion(inversionRaw), [inversionRaw])
+  const casoInversion = esCasoInversion(busqueda?.caso)
+  const extras = useMemo(
+    () => (casoInversion ? indicadoresInversion(inversionReal, data.clima, anio) : []),
+    [casoInversion, inversionReal, data.clima, anio],
+  )
+  /** Los indicadores de inversión de un año como partes del índice, con el código de comuna del modelo. */
+  const partesInversion = useCallback(
+    (activo: boolean, a: number): ParteExtra[] => {
+      if (!activo) return []
+      const geoDe = new Map(features.filter((f) => f.properties.simCodigo).map((f) => [f.properties.simCodigo!, f.properties.codigo]))
+      return indicadoresInversion(inversionReal, data.clima, a).map((x) => {
+        const m = new Map<string, number>()
+        for (const c of data.comunas) {
+          const r = x.riesgo.get(geoDe.get(c.codigo) ?? c.codigo)
+          if (r !== undefined) m.set(c.codigo, r)
+        }
+        return { id: x.id, peso: PESO_INVERSION, riesgo: m }
+      })
+    },
+    [features, inversionReal, data.clima, data.comunas],
+  )
+  const riesgo = useMemo(
+    () => calcularRiesgo(filasDe(idx), data.variables, pesos, partesInversion(casoInversion, anio)),
+    [filasDe, idx, data.variables, pesos, partesInversion, casoInversion, anio],
+  )
+  const riesgoFin = useMemo(
+    () => calcularRiesgo(filasDe(anios.length - 1), data.variables, pesos, partesInversion(casoInversion, anios[anios.length - 1]!)),
+    [filasDe, anios, data.variables, pesos, partesInversion, casoInversion],
+  )
 
   const puntosMapa = useMemo(() => {
     if (mapaMudanzas) return puntosMudanzas
@@ -627,7 +662,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
     const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
     if (!url || !b.contexto) return
     const cumple = cumplenDe(b)
-    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades)
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades, partesInversion(esCasoInversion(b.caso), anio))
       .filas.filter((f) => f.indice !== null && cumple.has(f.codigo))
       .slice(0, 3)
     setGuiaIA({ cargando: true })
@@ -655,15 +690,15 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   }
 
   /** Aplica unas prioridades: ordena, elige la primera comuna que cumple los rangos y la deja seleccionada. */
-  const aplicarPrioridades = (prioridades: Record<string, number>, cumple?: ReadonlySet<string> | null) => {
-    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.find((f) => f.indice !== null && (!cumple || cumple.has(f.codigo)))
+  const aplicarPrioridades = (prioridades: Record<string, number>, cumple?: ReadonlySet<string> | null, inversion = casoInversion) => {
+    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades, partesInversion(inversion, anio)).filas.find((f) => f.indice !== null && (!cumple || cumple.has(f.codigo)))
     setPesos(prioridades)
     if (top) setSeleccionada(top.codigo)
   }
 
   const terminarEntrada = (b: Busqueda) => {
     const cumple = cumplenDe(b)
-    aplicarPrioridades(b.prioridades, cumple)
+    aplicarPrioridades(b.prioridades, cumple, esCasoInversion(b.caso))
     setRangos(b.rangos)
     setPerfilId(PERSONALIZADO)
     setVistaIdx(0)
@@ -692,7 +727,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
       }
       const nuevas = aplicarAjustes(b.prioridades, r)
       setLecturaCaso({ cargando: false, r, apagados: new Set(), base: b.prioridades })
-      aplicarPrioridades(nuevas, cumple)
+      aplicarPrioridades(nuevas, cumple, esCasoInversion(b.caso))
       pedirGuiaPara(b, nuevas, n)
     })
   }
@@ -734,7 +769,17 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
           guiaIA?.texto ??
           (guiaIA?.cargando || lecturaCaso?.cargando
             ? 'Leyendo tu caso…'
-            : explicar(riesgo, cortas, pesos, nombre, { dentro: dentro ?? undefined, sinDatos: agua ? busqueda.sinDatos.filter((x) => !/caudal/i.test(x)) : busqueda.sinDatos })),
+            : explicar(
+                riesgo,
+                [...cortas, ...extras.map((x) => ({ id: x.id, nombre: x.nombre }))],
+                { ...pesos, ...Object.fromEntries(extras.map((x) => [x.id, PESO_INVERSION])) },
+                nombre,
+                {
+                  dentro: dentro ?? undefined,
+                  // lo que ya cubren los ríos y los indicadores de inversión no se anuncia como faltante
+                  sinDatos: busqueda.sinDatos.filter((x) => !(agua && /caudal/i.test(x)) && !(extras.length > 0 && /energ|agua|transmisi/i.test(x))),
+                },
+              )),
         cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
         porIA: !!guiaIA?.texto,
         onCambiar: () => setOnb(true),
@@ -860,13 +905,6 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   )
 
   const comunaGeoRiesgo = seleccionada ? (features.find((f) => f.properties.simCodigo === seleccionada)?.properties.codigo ?? seleccionada) : null
-  // Variables de inversión: solo para quien llegó con un caso de empresa o inversión (mentoría: «las 7 que más les interesan»).
-  const inversionReal = useMemo(() => leerInversion(inversionRaw), [inversionRaw])
-  const casoInversion = busqueda?.caso === 'hidro' || busqueda?.caso === 'industria'
-  const extras = useMemo(
-    () => (casoInversion ? indicadoresInversion(inversionReal, data.clima, anio) : []),
-    [casoInversion, inversionReal, data.clima, anio],
-  )
   const extrasComuna = extras.map((x) => ({
     id: x.id,
     nombre: x.nombre,

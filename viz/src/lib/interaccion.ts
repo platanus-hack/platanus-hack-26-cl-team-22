@@ -117,14 +117,15 @@ export function veredicto(errorModelo: number, errorRival: number, tolerancia = 
 }
 
 /**
- * Rótulo discreto del modelo: «Modelo de aire v0 · 500 réplicas». Toma `meta.modelo` hasta el primer
+ * Rótulo discreto del modelo: «Modelo de aire · 500 réplicas». Toma `meta.modelo` hasta el primer
  * signo de dos puntos o paréntesis y nunca muestra rutas de archivo del JSON.
  */
 export function etiquetaModelo(modelo: string | undefined, replicas: number | undefined, fmtNum: (n: number) => string): string {
   const partes: string[] = []
   if (modelo) {
     let m = modelo.split(/[:(]/)[0]!.trim()
-    m = m.replace(/\S*[\/]\S*/g, '').replace(/\S+\.(md|json|py|csv)\b/gi, '').replace(/\s+/g, ' ').trim()
+    // la versión interna («v0») no le dice nada a quien mira y suena a borrador
+    m = m.replace(/\bv\d+(\.\d+)*\b/gi, '').replace(/\S*[\/]\S*/g, '').replace(/\S+\.(md|json|py|csv)\b/gi, '').replace(/\s+/g, ' ').trim()
     if (m) partes.push(/^modelo\b/i.test(m) ? m.charAt(0).toUpperCase() + m.slice(1) : `Modelo de ${m.charAt(0).toLowerCase()}${m.slice(1)}`)
   }
   if (replicas && replicas > 0) partes.push(`${fmtNum(replicas)} réplicas`)

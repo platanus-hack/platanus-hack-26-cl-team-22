@@ -3662,3 +3662,9 @@ p.agua-sim-pie {
 div.agua-sim-pie {
   display: grid;
 }
+
+/* En la ficha compacta el estado frente a la norma baja a su propia línea: junto al nombre se cortaba. */
+.ficha-compacta .dimension-nombre .dimension-norma {
+  display: block;
+  margin-left: 0;
+}

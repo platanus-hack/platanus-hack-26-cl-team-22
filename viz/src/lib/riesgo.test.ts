@@ -91,3 +91,27 @@ describe('textos y veredictos', () => {
     expect(veredictoVariable(10, [2000, 2005], [2026, 2027], 0, { mejor: 'menor', unidad: 'casos' }).futuro).toBe('No cambia: 2.005 en 2027')
   })
 })
+
+describe('indicadores que entran al índice ya como posición', () => {
+  const vars = [{ id: 'a', nombre: 'A', unidad: '', mejor: 'menor' as const }]
+  const filas = [
+    { codigo: '1', valores: { a: 1 } },
+    { codigo: '2', valores: { a: 2 } },
+    { codigo: '3', valores: { a: 3 } },
+  ]
+  it('pesan en el promedio y pueden cambiar quién queda primera', () => {
+    const sin = calcularRiesgo(filas, vars, { a: 5 })
+    expect(sin.filas[0]!.codigo).toBe('1')
+    const extra = { id: 'sequia', peso: 5, riesgo: new Map([['1', 100], ['2', 0], ['3', 100]]) }
+    const con = calcularRiesgo(filas, vars, { a: 5 }, [extra])
+    expect(con.filas[0]!.codigo).toBe('2') // (50 + 0) / 2 = 25, contra (0 + 100) / 2 = 50
+    expect(con.porCodigo.get('1')!.indice).toBe(50)
+    expect(con.porCodigo.get('1')!.partes.sequia).toBe(100)
+    expect(con.usadas).toEqual(['a', 'sequia'])
+  })
+  it('una comuna sin dato en el indicador se ordena con lo que tiene, y peso 0 no cuenta', () => {
+    const extra = { id: 'red', peso: 5, riesgo: new Map([['2', 100]]) }
+    expect(calcularRiesgo(filas, vars, { a: 5 }, [extra]).porCodigo.get('1')!.indice).toBe(0)
+    expect(calcularRiesgo(filas, vars, { a: 5 }, [{ ...extra, peso: 0 }]).porCodigo.get('2')!.indice).toBe(50)
+  })
+})

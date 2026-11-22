@@ -1,6 +1,6 @@
 /**
  * Las variables que le importan a quien quiere invertir o instalar una empresa, además de las tres que
- * simula el modelo de comunas. Salen de dos fuentes y ninguna entra al índice de riesgo:
+ * simula el modelo de comunas. Salen de dos fuentes. Entran al índice de riesgo solo en un caso de empresa o inversión, con peso medio (App.tsx):
  * - datos/inversion.json (datos/viz/build_inversion.py): datos reales por comuna (DGA, Coordinador, SEIA);
  * - el bloque `clima` de la simulación: cambio simulado de la frecuencia de sequía (ARClim).
  * Son archivos externos: se validan campo por campo y lo que no calza se descarta.

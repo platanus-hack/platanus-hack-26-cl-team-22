@@ -82,7 +82,7 @@ Más detalle en [`docs/sim-spec.md`](docs/sim-spec.md#validación).
 
 ```bash
 make setup      # crea .venv e instala dependencias
-make test       # 180 pruebas del núcleo y de los datos
+make test       # 329 pruebas del núcleo y de los datos
 make simulate   # calibra, simula y escribe viz/datos/simulacion.json (~15 s)
 make validate   # prueba fuera de muestra contra sin cambio y tendencia -> docs/validacion.md
 make licitaciones-detalle  # aporte de cada licitación a la credibilidad municipal -> viz/datos/licitaciones.json

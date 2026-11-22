@@ -180,7 +180,7 @@ horizonte no borra el caso, los pesos ni la comuna elegida. También se puede ab
 ### Las siete variables de quien invierte
 
 Si el caso se lee como energía hidráulica o industria, la ficha del resumen muestra siete filas: las tres
-simuladas y cuatro más (`src/lib/inversion.ts`), que **no entran al índice** y se comparan aparte por posición:
+simuladas y cuatro más (`src/lib/inversion.ts`), que en ese caso **entran al índice con peso medio** (5 de 10), por su posición entre las comunas:
 
 | Variable | De dónde sale |
 |---|---|
