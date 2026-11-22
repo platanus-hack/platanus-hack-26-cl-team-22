@@ -43,10 +43,11 @@ import {
 import { ordenarPorPeso, variableCorta } from './lib/variables'
 import { Hoja, VistaFuentes } from './components/Hoja'
 import type { VistaId } from './lib/interaccion'
+import { VistaAportes } from './components/VistaAportes'
 import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, type SeccionId } from './lib/pestanas'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
-import { casoDe, explicar, fueraDeRango, GRADOS, resolverLimites } from './lib/onboarding'
+import { ajustarPorTexto, casoDe, explicar, fueraDeRango, GRADOS, leerCaso, prioridadesDe, resolverLimites, sumarCambio } from './lib/onboarding'
 import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
@@ -235,7 +236,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   // Una dimensión (el índice general) o una variable en detalle; fuera de la hoja de riesgo siempre es el aire.
   const variable = (vista === 'riesgo' && capa !== GENERAL && data.variables.find((v) => v.id === capa && conDato.has(v.id))) || varAire
   const esAire = variable.id === varAire.id
-  const general = vista === 'riesgo' && capa === GENERAL
+  const general = (vista === 'riesgo' && capa === GENERAL) || vista === 'fuentes' || vista === 'prueba' || vista === 'aportes'
   /** el mapa pinta posición de riesgo (0 a 100) en vez del valor de la variable */
   const mapaRiesgo = vista === 'riesgo' && (general || !esAire)
   const anio = anios[idx] ?? anios[0]!
@@ -753,6 +754,24 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         ...(lecturaCaso.r.no_medido.length > 0 ? [`El modelo no mide ${lecturaCaso.r.no_medido.map((k) => NO_MEDIDO[k]).join(', ')}.`] : []),
       ]
     : []
+  /**
+   * Cambia el requerimiento con una frase. Si la frase describe otro tipo de caso, parte de sus prioridades;
+   * si no, de las actuales. El texto se suma al caso para que Claude, si está, lo lea completo.
+   */
+  const modificarBusqueda = (cambio: string) => {
+    if (!busqueda) return
+    const otro = leerCaso(cambio)
+    const caso = casoDe(otro === 'general' ? busqueda.caso : otro)
+    const base = caso.id === busqueda.caso ? pesos : prioridadesDe(caso, variablesIndice.map((v) => v.id))
+    terminarEntrada({
+      caso: caso.id,
+      prioridades: ajustarPorTexto(cambio, base).prioridades,
+      rangos,
+      contexto: sumarCambio(busqueda.contexto, cambio, LARGO_CASO_MAX),
+      sinDatos: caso.referencia.map((r) => r.nombre),
+    })
+  }
+
   const guia = busqueda
     ? {
         titulo: casoDe(busqueda.caso).titulo,
@@ -764,6 +783,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
         porIA: !!guiaIA?.texto,
         onCambiar: () => setOnb(true),
+        onModificar: modificarBusqueda,
         onAgua: agua && busqueda.caso === 'energia' ? irAAgua : undefined,
         leyendo: !!lecturaCaso?.cargando,
         ajustes: ajustesGuia,
@@ -1048,6 +1068,13 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
       />
     )
   else if (vista === 'fuentes') hoja = <VistaFuentes politicas={data.politicas} />
+  else if (vista === 'aportes')
+    hoja = (
+      <VistaAportes
+        codigo={seleccionada ? (features.find((f) => f.properties.simCodigo === seleccionada)?.properties.codigo ?? seleccionada) : null}
+        nombre={seleccionada ? nombre(seleccionada) : ''}
+      />
+    )
   else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
   else if (vista === 'mudanzas' && demografia)
     hoja = (

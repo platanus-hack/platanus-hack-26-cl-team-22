@@ -253,3 +253,22 @@ src/components/ MapaPapel (mapa SVG), Vistas (las cinco hojas), TiraPolitica, Gr
                 muestras, icono), Marco (leyenda, encuadre, años)
 src/App.tsx     estado, teclado y demostración;  src/main.tsx  carga de datos y estados de error
 ```
+
+### Aporte de cada proyecto y de cada licitación
+
+En Referencias › «Cuánto aportó cada licitación y cada proyecto», la primera sección de la pestaña
+(`src/components/VistaAportes.tsx`, `src/lib/aportes.ts`), la comuna elegida muestra sus licitaciones de 2024 y sus
+proyectos SEIA (cada uno suma 1 a «inversión evaluada»). Cada licitación muestra primero su aporte propio a la
+credibilidad municipal, en puntos con signo; la fila se abre para ver su estado, sector, montos, oferentes y cuánto
+sería la credibilidad sin ella. Por defecto se ordenan por aporte. Los avisos quedan junto a la lista: todas las
+adjudicadas aportan lo mismo y todas las fallidas también, los aportes no suman el total por el tope de licitaciones
+efectivas, y no se muestra el efecto sobre los delitos. Las licitaciones se piden por comuna desde
+`public/datos/licitaciones/<codigo>.json`, que genera `python -I datos/viz/partir_licitaciones.py` a partir de
+`viz/datos/licitaciones.json`. Solo cinco comunas usan las licitaciones en el modelo; en las demás la vista dice
+que son contexto. Si un archivo no carga, la sección lo indica y el resto sigue igual.
+
+### Cambiar el requerimiento desde el resumen
+
+Bajo el texto del resumen hay una línea para reescribir lo que se necesita («ahora me importa más la seguridad
+que el aire»). Sin el intermediario, `ajustarPorTexto` (`src/lib/onboarding.ts`) sube o baja las variables que
+cada frase nombra; con él, el cambio se suma al caso y Claude lo lee completo.

@@ -82,8 +82,8 @@ export function VistaFuentes({ politicas }: { politicas: Politica[] }) {
         ))}
       </ul>
       {citas.length > 0 && (
-        <>
-          <h4>Normas y estudios detrás de cada plan</h4>
+        <details className="limites fuentes-planes">
+          <summary>Normas y estudios detrás de cada plan ({citas.length})</summary>
           <ul className="fuentes">
             {citas.map((p) => {
               const url = safeUrl(p.url)
@@ -103,7 +103,7 @@ export function VistaFuentes({ politicas }: { politicas: Politica[] }) {
               )
             })}
           </ul>
-        </>
+        </details>
       )}
     </div>
   )

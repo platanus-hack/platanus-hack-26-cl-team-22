@@ -6,7 +6,7 @@ import type { VistaId } from './interaccion'
  * y la variable que muestra si corresponde.
  */
 export type PestanaId = 'resumen' | 'clima' | 'legal' | 'social' | 'referencias'
-export type SeccionId = 'aire' | 'lena' | 'agua' | 'seguridad' | 'crecimiento' | 'urbano' | 'fuentes' | 'validacion'
+export type SeccionId = 'aire' | 'lena' | 'agua' | 'seguridad' | 'crecimiento' | 'urbano' | 'aportes' | 'fuentes' | 'validacion'
 
 export interface DefPestana {
   id: PestanaId
@@ -21,7 +21,7 @@ export const PESTANAS: readonly DefPestana[] = [
   { id: 'clima', nombre: 'Climático', titulo: 'Riesgo climático y ambiental', subtitulo: 'El aire de cada comuna año a año, su fuente principal y el agua de sus ríos.' },
   { id: 'legal', nombre: 'Legal', titulo: 'Marco legal y planes públicos', subtitulo: 'Qué planes afectan a cada comuna y con qué probabilidad se cumplen.' },
   { id: 'social', nombre: 'Social', titulo: 'Riesgo social', subtitulo: 'Seguridad, población y desarrollo urbano de cada comuna.' },
-  { id: 'referencias', nombre: 'Referencias', titulo: 'Referencias y validación', subtitulo: 'De dónde salen los datos y cómo le fue al modelo contra lo que no había visto.' },
+  { id: 'referencias', nombre: 'Referencias', titulo: 'Referencias y validación', subtitulo: 'Cuánto aportó cada licitación y cada proyecto, de dónde salen los datos y cómo le fue al modelo contra lo que no había visto.' },
 ]
 
 export interface DefSeccion {
@@ -48,6 +48,7 @@ const SECCIONES: Record<PestanaId, readonly (DefSeccion & { pide?: Pide })[]> = 
     { id: 'urbano', titulo: 'Desarrollo urbano: quién se muda a dónde', pide: 'urbano' },
   ],
   referencias: [
+    { id: 'aportes', titulo: 'Cuánto aportó cada licitación y cada proyecto' },
     { id: 'fuentes', titulo: 'Fuentes de datos y normas' },
     { id: 'validacion', titulo: 'El modelo contra datos que no vio', pide: 'validacion' },
   ],
@@ -59,7 +60,7 @@ export function seccionesDe(p: PestanaId, hay: Readonly<Partial<Record<Pide, boo
 }
 
 export interface Modo {
-  vista: VistaId | 'fuentes' | 'agua'
+  vista: VistaId | 'fuentes' | 'agua' | 'aportes'
   /** papel de la variable en detalle; null = índice general o no aplica */
   papel: Papel | null
 }
@@ -71,6 +72,7 @@ const MODOS: Partial<Record<SeccionId, Modo>> = {
   seguridad: { vista: 'riesgo', papel: 'seguridad' },
   crecimiento: { vista: 'riesgo', papel: 'crecimiento' },
   urbano: { vista: 'mudanzas', papel: null },
+  aportes: { vista: 'aportes', papel: null },
   fuentes: { vista: 'fuentes', papel: null },
   validacion: { vista: 'prueba', papel: null },
 }
@@ -80,7 +82,7 @@ export function modoDe(p: PestanaId, seccion: SeccionId | undefined, disponibles
   if (p === 'resumen') return { vista: 'riesgo', papel: null, seccion: null }
   if (p === 'legal') return { vista: 'plan', papel: null, seccion: null }
   const s = disponibles.find((x) => x.id === seccion) ?? disponibles[0]
-  if (!s) return { vista: p === 'referencias' ? 'fuentes' : 'riesgo', papel: null, seccion: null }
+  if (!s) return { vista: p === 'referencias' ? 'aportes' : 'riesgo', papel: null, seccion: null }
   return { ...(MODOS[s.id] ?? { vista: 'riesgo', papel: null }), seccion: s.id }
 }
 
