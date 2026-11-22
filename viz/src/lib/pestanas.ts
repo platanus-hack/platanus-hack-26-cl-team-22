@@ -18,7 +18,7 @@ export interface DefPestana {
 
 export const PESTANAS: readonly DefPestana[] = [
   { id: 'resumen', nombre: 'Resumen' },
-  { id: 'clima', nombre: 'Climático', titulo: 'Riesgo climático y ambiental', subtitulo: 'El aire de cada comuna hasta 2036, su fuente principal y el agua de sus ríos.' },
+  { id: 'clima', nombre: 'Climático', titulo: 'Riesgo climático y ambiental', subtitulo: 'El aire de cada comuna año a año, su fuente principal y el agua de sus ríos.' },
   { id: 'legal', nombre: 'Legal', titulo: 'Marco legal y planes públicos', subtitulo: 'Qué planes afectan a cada comuna y con qué probabilidad se cumplen.' },
   { id: 'social', nombre: 'Social', titulo: 'Riesgo social', subtitulo: 'Seguridad, población y desarrollo urbano de cada comuna.' },
   { id: 'referencias', nombre: 'Referencias', titulo: 'Referencias y validación', subtitulo: 'De dónde salen los datos y cómo le fue al modelo contra lo que no había visto.' },

@@ -15,7 +15,9 @@ import { diferenciasPorComuna, maxAbsDiferencia } from './lib/diferencia'
 import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, } from './lib/interaccion'
+import { indicadoresInversion, leerInversion } from './lib/inversion'
 import { leerLena, type Zona } from './lib/lena'
+import type { Horizonte } from './lib/load'
 import { CORTES_OCUPACION, bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
 import { useSimulacionAbm } from './lib/useSimulacionAbm'
 import { VistaMudanzas, type OpcionesMudanzas } from './components/VistaMudanzas'
@@ -60,6 +62,11 @@ interface Props {
   lenaRaw: unknown
   demografiaRaw?: unknown
   aguaRaw?: { caudales: unknown; rios: unknown }
+  inversionRaw?: unknown
+  /** horizonte cargado y cómo pedir el otro; sin `onHorizonte` no se ofrece el cambio */
+  horizonte?: Horizonte
+  onHorizonte?: (h: Horizonte) => void
+  cambiandoHorizonte?: boolean
 }
 
 /** cada cuánto avanza un año la reproducción de los caudales */
@@ -86,8 +93,9 @@ function useMovimientoReducido(): boolean {
   return r
 }
 
-export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Props) {
+export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inversionRaw, horizonte = '10', onHorizonte, cambiandoHorizonte = false }: Props) {
   const anios = data.meta.anios
+  const extrapolados = useMemo(() => new Set(data.meta.anios_extrapolados ?? []), [data.meta.anios_extrapolados])
   const conDato = useMemo(() => variablesConDato(data), [data])
   // El aire es la variable con norma, planes y validación; las demás hojas (plan, leña, prueba) hablan de ella.
   const varAire = data.variables.find((v) => conDato.has(v.id)) ?? data.variables[0]!
@@ -123,7 +131,12 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
   const lecturas = useMemo(() => lecturasDisponibles(data.escenarios, defecto), [data.escenarios, defecto])
 
   const [vistaIdx, setVistaIdx] = useState(0)
-  const [idx, setIdx] = useState(0)
+  const [idx, setIdxCrudo] = useState(0)
+  const setIdx: typeof setIdxCrudo = setIdxCrudo
+  // Al pasar de 15 a 10 años el año elegido puede quedar fuera: se vuelve al último que existe.
+  useEffect(() => {
+    setIdxCrudo((i) => Math.min(i, anios.length - 1))
+  }, [anios.length])
   const [jugando, setJugando] = useState(false)
   // Políticas pegadas, lectura y escenario en un solo estado: cada cambio se calcula desde el anterior,
   // así dos teclas en el mismo instante se aplican las dos.
@@ -838,6 +851,24 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
     [features, agua, zonasSim, cargando],
   )
 
+  const comunaGeoRiesgo = seleccionada ? (features.find((f) => f.properties.simCodigo === seleccionada)?.properties.codigo ?? seleccionada) : null
+  // Variables de inversión: solo para quien llegó con un caso de empresa o inversión (mentoría: «las 7 que más les interesan»).
+  const inversionReal = useMemo(() => leerInversion(inversionRaw), [inversionRaw])
+  const casoInversion = busqueda?.caso === 'hidro' || busqueda?.caso === 'industria'
+  const extras = useMemo(
+    () => (casoInversion ? indicadoresInversion(inversionReal, data.clima, anio) : []),
+    [casoInversion, inversionReal, data.clima, anio],
+  )
+  const extrasComuna = extras.map((x) => ({
+    id: x.id,
+    nombre: x.nombre,
+    que: `${x.que}. ${x.origen === 'real' ? 'Dato real' : 'Simulado'}: ${x.fuente}`,
+    unidad: x.unidad,
+    origen: x.origen,
+    valor: comunaGeoRiesgo ? (x.valores.get(comunaGeoRiesgo) ?? null) : null,
+    riesgo: comunaGeoRiesgo ? (x.riesgo.get(comunaGeoRiesgo) ?? null) : null,
+  }))
+
   let hoja: ReactNode = null
   if (vista === 'riesgo') {
     const cod = comunaSel?.codigo
@@ -864,6 +895,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
         tipos={data.tipos_hogar}
         perfilId={perfilId}
         pesos={pesos}
+        extras={extrasComuna}
         rangos={rangos}
         onRango={(k, id) => setRangos((x) => ({ ...x, [k]: id }))}
         onPerfil={(id) => {
@@ -1086,7 +1118,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
         </Mapa>
       </main>
 
-      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} />}
+      {onb && <Onboarding variables={cortas} onListo={terminarEntrada} inicio={inicio} hasta={anios[anios.length - 1]!} />}
       {cargando && !onb && (
         <Cargando
           onFin={() => setCargando(false)}
@@ -1168,6 +1200,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw }: Pro
           jugando={jugando}
           onIdx={elegirAnio}
           onJugar={jugar}
+          extrapolados={extrapolados}
+          horizonte={onHorizonte ? { valor: horizonte, cambiando: cambiandoHorizonte, onCambiar: onHorizonte } : null}
           escenario={
             vista === 'lena'
               ? 'La leña: inventario 2023, no cambia con el año'

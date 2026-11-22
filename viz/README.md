@@ -160,6 +160,38 @@ Sin uso durante 45 s, la pantalla se demuestra sola (recorre años y vistas y de
 política) con la etiqueta «Demostración automática». Cualquier tecla, clic o movimiento la detiene.
 Con `prefers-reduced-motion` los cambios son instantáneos.
 
+### Horizonte de 10 o 15 años
+
+Abajo a la derecha se elige «10 años» (2026–2036, el período que cubren los supuestos documentados del modelo)
+o «15 años» (hasta 2040). El segundo carga `viz/datos/simulacion-15.json` y `viz/public/datos/demografia-15.json`,
+que salen de la misma simulación con `python -m experiments.simular --hasta 2040 --salida viz/datos/simulacion-15.json`
+y `python -m experiments.exportar_demografia --hasta 2040 --salida viz/public/datos/demografia-15.json`. Los años
+2037–2040 vienen marcados en `meta.anios_extrapolados`: sus pestañas van rayadas y el pie dice «extrapolación,
+fuera del período validado», porque ahí el modelo sigue con las mismas tasas y nada lo valida. Cambiar de
+horizonte no borra el caso, los pesos ni la comuna elegida. También se puede abrir con `?horizonte=15`.
+
+### Las siete variables de quien invierte
+
+Si el caso se lee como energía hidráulica o industria, la ficha del resumen muestra siete filas: las tres
+simuladas y cuatro más (`src/lib/inversion.ts`), que **no entran al índice** y se comparan aparte por posición:
+
+| Variable | De dónde sale |
+|---|---|
+| Sequía futura | Simulada: cambio de la frecuencia de sequía del año elegido, bloque `clima` de la simulación (ARClim) |
+| Escasez hídrica | Dato real: años con decreto de escasez de la DGA, 2008–2023 |
+| Red eléctrica | Dato real: MVA de subestaciones en operación (Coordinador Eléctrico) |
+| Inversión evaluada | Dato real: proyectos aprobados en el SEIA desde 2015 |
+
+Las tres reales vienen de `viz/public/datos/inversion.json` (`python -I datos/viz/build_inversion.py`). Un
+indicador que cubre menos de la mitad de las comunas o vale lo mismo en todas no se muestra (por eso no se usa
+la amenaza de sequía de ARClim de ese archivo: solo 9 comunas, todas en 1,0).
+
+### Pantalla de espera
+
+Entre la entrada y el mapa (`src/components/Cargando.tsx`) se listan cinco pasos y la región se dibuja al ritmo
+de ellos: contornos, ríos, comunas con plan y color de riesgo. Dos pasos esperan algo real (la lectura del caso
+y que el mapa tenga algo que mostrar); el tope es de 14 s.
+
 ### Dónde van los datos
 
 | Archivo | Quién lo pone | Qué pasa si falta |

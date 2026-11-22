@@ -20,6 +20,8 @@ interface Props {
   onListo: (b: Busqueda) => void
   /** Where "Atrás" goes: the landing, when the simulator was opened from it. */
   inicio: string | null
+  /** último año de la simulación cargada */
+  hasta: number
 }
 
 const SALIDA_MS = 520
@@ -29,7 +31,7 @@ const orden = (i: number) => ({ '--i': i }) as CSSProperties
  * Entrada en una sola pantalla: el caso en texto libre. De él salen el tipo de caso y el peso de cada
  * variable, sin más preguntas; quien quiera cambiarlos lo hace después con «Ajustar pesos».
  */
-export function Onboarding({ variables, onListo, inicio }: Props) {
+export function Onboarding({ variables, onListo, inicio, hasta }: Props) {
   const [contexto, setContexto] = useState('')
   const [saliendo, setSaliendo] = useState(false)
   const hoja = useRef<HTMLDivElement>(null)
@@ -69,7 +71,7 @@ export function Onboarding({ variables, onListo, inicio }: Props) {
         <div className="onb-hoja" ref={hoja}>
           <h2>¿Qué quieres evaluar?</h2>
           <p className="onb-bajada" style={orden(0)}>
-            Cuéntalo con tus palabras. Con eso ordenamos las 52 comunas hasta 2036; los pesos se ajustan solos y puedes cambiarlos después.
+            Cuéntalo con tus palabras. Con eso ordenamos las 52 comunas hasta {hasta}; los pesos se ajustan solos y puedes cambiarlos después.
           </p>
           <label className="onb-caso" style={orden(1)}>
             <span className="solo-lector">Tu caso</span>

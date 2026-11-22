@@ -243,9 +243,14 @@ interface AniosProps {
   onIdx: (i: number) => void
   onJugar: (v: boolean) => void
   escenario: string
+  /** años más allá del período validado: se marcan como extrapolación */
+  extrapolados?: ReadonlySet<number>
+  /** selector de 10 o 15 años; null = no se ofrece */
+  horizonte?: { valor: '10' | '15'; cambiando: boolean; onCambiar: (h: '10' | '15') => void } | null
 }
 
-export function Anios({ anios, idx, jugando, onIdx, onJugar, escenario }: AniosProps) {
+export function Anios({ anios, idx, jugando, onIdx, onJugar, escenario, extrapolados, horizonte }: AniosProps) {
+  const extra = extrapolados?.has(anios[idx] ?? -1) ?? false
   return (
     <div className="anios">
       <button type="button" className="jugar" onClick={() => onJugar(!jugando)} aria-label={jugando ? 'Pausar' : 'Reproducir los años'} aria-keyshortcuts="Space">
@@ -253,15 +258,32 @@ export function Anios({ anios, idx, jugando, onIdx, onJugar, escenario }: AniosP
       </button>
       <div className="anios-pestanas" role="tablist" aria-label="Año">
         {anios.map((a, i) => (
-          <button key={a} type="button" role="tab" aria-selected={i === idx} className="anio" onClick={() => onIdx(i)}>
+          <button
+            key={a}
+            type="button"
+            role="tab"
+            aria-selected={i === idx}
+            className={`anio${extrapolados?.has(a) ? ' anio-extra' : ''}`}
+            title={extrapolados?.has(a) ? 'Extrapolación: más allá del período validado del modelo' : undefined}
+            onClick={() => onIdx(i)}
+          >
             {a}
           </button>
         ))}
       </div>
-      <p className="anios-pie">
-        <span>{escenario}</span>
+      <div className="anios-pie">
+        {horizonte && (
+          <span className="anios-horizonte" role="radiogroup" aria-label="Horizonte de la simulación">
+            {(['10', '15'] as const).map((h) => (
+              <button key={h} type="button" role="radio" aria-checked={horizonte.valor === h} disabled={horizonte.cambiando} className="accion-ligera" onClick={() => horizonte.onCambiar(h)}>
+                {h} años
+              </button>
+            ))}
+          </span>
+        )}
+        <span>{extra ? `${anios[idx]}: extrapolación, fuera del período validado` : escenario}</span>
         <span className="anios-teclas">Flechas: año · espacio: reproducir</span>
-      </p>
+      </div>
     </div>
   )
 }

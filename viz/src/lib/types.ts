@@ -132,6 +132,9 @@ export interface Simulacion {
     version: string
     es_ejemplo: boolean
     anios: number[]
+    /** años más allá del período que cubren los supuestos documentados (corrida larga) */
+    anios_extrapolados?: number[]
+    anio_fin_validado?: number
     anio_base?: number
     aviso?: string
     modelo?: string
@@ -142,6 +145,8 @@ export interface Simulacion {
   }
   variables: Variable[]
   comunas: Comuna[]
+  /** riesgo climático simulado (ARClim); se lee con cuidado donde se usa (lib/inversion.ts) */
+  clima?: unknown
   tipos_hogar: TipoHogar[]
   politicas: Politica[]
   escenarios: Escenario[]

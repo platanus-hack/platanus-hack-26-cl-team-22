@@ -3443,3 +3443,72 @@ body:has(.estado) {
 .carga-con-mapa .carga-titulo {
   font-size: calc(var(--u) * 3);
 }
+
+/* ---------- Horizonte de 10 o 15 años: los años extrapolados se marcan ---------- */
+.anios-horizonte {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: calc(var(--u) * 0.2);
+}
+.anios-horizonte .accion-ligera[aria-checked='true'] {
+  background: var(--tinta);
+  color: var(--papel);
+}
+.anios-horizonte .accion-ligera:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+.anio-extra {
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--tinta) 14%, transparent) 5px 7px);
+  font-style: italic;
+}
+
+/* ---------- Las variables de inversión, junto a las simuladas ---------- */
+.dimension-extra {
+  cursor: default;
+}
+.dimension-extra .dimension-nombre small {
+  display: block;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--tinta-2);
+}
+.sello-sin {
+  background: var(--papel-2);
+  color: var(--tinta-2);
+}
+
+/* Ficha con siete variables: filas más bajas y el índice más chico, para que quepa sin desplazarse */
+.ficha-compacta .ficha-cabeza {
+  gap: calc(var(--u) * 1);
+}
+.ficha-compacta .indice {
+  width: calc(var(--u) * 5.4);
+  height: calc(var(--u) * 5.4);
+  padding: calc(var(--u) * 0.4);
+}
+.ficha-compacta .indice b {
+  font-size: calc(var(--u) * 3);
+}
+.ficha-compacta h2 {
+  font-size: calc(var(--u) * 2.6);
+}
+.ficha-compacta .dimensiones {
+  margin-top: calc(var(--u) * 0.6);
+}
+.ficha-compacta .dimension {
+  padding: calc(var(--u) * 0.24) calc(var(--u) * 0.6);
+  min-height: 0;
+}
+.ficha-compacta .dimension-nombre {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ficha-compacta .dimension-extra .dimension-nombre small {
+  display: inline;
+  margin-left: 0.5em;
+}
+.ficha-compacta .dimension {
+  grid-template-columns: 13.5em minmax(2em, 1fr) 9.4em 7.6em 0.8em;
+}
