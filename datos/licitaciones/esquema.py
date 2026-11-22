@@ -151,6 +151,7 @@ class TenderLineRecord:
     dias_pub_cierre: int | None
     dias_pub_adj: int | None
     outlier_monto: bool = False
+    nombre: str = ""
 
 
 @dataclass(frozen=True)
@@ -413,8 +414,9 @@ def iter_records_from_csv_stream(
 
         numero_oferentes = parse_chilecompra_int(_field_lookup(row, "NumeroOferentes"))
 
+        nombre = _field_lookup(row, "Nombre")
         sector = classify_sector(
-            _field_lookup(row, "Nombre"),
+            nombre,
             _field_lookup(row, "Descripcion", "Descripcion linea Adquisicion"),
             _field_lookup(
                 row,
@@ -441,6 +443,7 @@ def iter_records_from_csv_stream(
             dias_pub_cierre=dias_pub_cierre,
             dias_pub_adj=dias_pub_adj,
             outlier_monto=outlier_monto,
+            nombre=nombre.strip(),
         )
 
 
@@ -469,51 +472,76 @@ def iter_records_from_zip(
 
 
 @dataclass
-class _TenderAcc:
+class DedupTender:
+    """One tender after deduplicating its line items per `(codigo_comuna, codigo_externo)`."""
+
     codigo_comuna: str
     anio: int
+    codigo_externo: str = ""
+    nombre: str = ""
+    estado: str = ""
     adjudicada: bool = False
     fallida: bool = False
     sector: str = "otros"
     monto_estimado: float | None = None
     monto_adjudicado: float = 0.0
+    con_monto_adjudicado: bool = False
     numero_oferentes: int | None = None
     dias_pub_cierre: int | None = None
     dias_pub_adj: int | None = None
 
+    @property
+    def estado_resumen(self) -> str:
+        """adjudicada / fallida / abierta: the state the aggregates count it under."""
+        if self.adjudicada:
+            return "adjudicada"
+        if self.fallida:
+            return "fallida"
+        return "abierta"
 
-def aggregate_records(
-    records: Iterable[TenderLineRecord],
-) -> tuple[list[CommuneYearMetrics], list[CommuneSectorMetrics]]:
-    """Deduplicate tender-level attributes per CodigoExterno and aggregate by commune.
 
-    ChileCompra dumps contain one row per line item (`CodigoExterno` repeats).
-    Status, dates, bidder counts, and `MontoEstimado` are tender-level
-    and deduplicated per `(codigo_comuna, codigo_externo)`; `MontoLineaAdjudica` is
-    line-level and summed across lines.
+def deduplicate_tenders(records: Iterable[TenderLineRecord]) -> list[DedupTender]:
+    """Collapse line items into one tender per `(codigo_comuna, codigo_externo)`.
+
+    ChileCompra dumps contain one row per line item (`CodigoExterno` repeats). Status, dates,
+    bidder counts, and `MontoEstimado` are tender-level and deduplicated; awarded beats failed;
+    `MontoLineaAdjudica` is line-level and summed across lines. The order is first appearance,
+    which `aggregate_records` relies on for reproducible float sums.
     """
-    tenders: dict[tuple[str, str], _TenderAcc] = {}
+    tenders: dict[tuple[str, str], DedupTender] = {}
     for rec in records:
         key = (rec.codigo_comuna, rec.codigo_externo)
         acc = tenders.get(key)
         if acc is None:
-            acc = _TenderAcc(codigo_comuna=rec.codigo_comuna, anio=rec.anio)
+            acc = DedupTender(
+                codigo_comuna=rec.codigo_comuna,
+                anio=rec.anio,
+                codigo_externo=rec.codigo_externo,
+                estado=rec.estado,
+            )
             tenders[key] = acc
         else:
             acc.anio = min(acc.anio, rec.anio)
 
         if rec.adjudicada:
+            if not acc.adjudicada:
+                acc.estado = rec.estado
             acc.adjudicada = True
             acc.fallida = False
         elif rec.fallida and not acc.adjudicada:
+            if not acc.fallida:
+                acc.estado = rec.estado
             acc.fallida = True
 
+        if not acc.nombre and rec.nombre:
+            acc.nombre = rec.nombre
         if acc.sector == "otros" and rec.sector != "otros":
             acc.sector = rec.sector
         if acc.monto_estimado is None and rec.monto_estimado is not None:
             acc.monto_estimado = rec.monto_estimado
         if rec.monto_adjudicado is not None and not rec.outlier_monto:
             acc.monto_adjudicado += rec.monto_adjudicado
+            acc.con_monto_adjudicado = True
         if rec.numero_oferentes is not None:
             acc.numero_oferentes = (
                 rec.numero_oferentes
@@ -524,10 +552,23 @@ def aggregate_records(
             acc.dias_pub_cierre = rec.dias_pub_cierre
         if acc.dias_pub_adj is None and rec.dias_pub_adj is not None:
             acc.dias_pub_adj = rec.dias_pub_adj
+    return list(tenders.values())
 
-    by_year: dict[tuple[str, int], list[_TenderAcc]] = defaultdict(list)
-    by_sector: dict[tuple[str, str], list[_TenderAcc]] = defaultdict(list)
-    for t in tenders.values():
+
+def aggregate_records(
+    records: Iterable[TenderLineRecord],
+) -> tuple[list[CommuneYearMetrics], list[CommuneSectorMetrics]]:
+    """Deduplicate tender-level attributes per CodigoExterno and aggregate by commune."""
+    return aggregate_tenders(deduplicate_tenders(records))
+
+
+def aggregate_tenders(
+    tenders: Iterable[DedupTender],
+) -> tuple[list[CommuneYearMetrics], list[CommuneSectorMetrics]]:
+    """Aggregate deduplicated tenders (`deduplicate_tenders`) by commune-year and sector."""
+    by_year: dict[tuple[str, int], list[DedupTender]] = defaultdict(list)
+    by_sector: dict[tuple[str, str], list[DedupTender]] = defaultdict(list)
+    for t in tenders:
         by_year[(t.codigo_comuna, t.anio)].append(t)
         by_sector[(t.codigo_comuna, t.sector)].append(t)
 

@@ -2,7 +2,7 @@
 
 Ingesta reproducible de licitaciones mensuales publicadas en los **Datos Abiertos de ChileCompra** para las 52 comunas de la Región Metropolitana (`data/comunas_rm.csv`).
 
-> **Estado actual en el repo:** descargado y procesado el **2026-11-21** para todo el año **2024 (`2024-01` a `2024-12`)**: 12 archivos ZIP (~270 MB) versionados con **Git LFS** en `data/raw/licitaciones/` (`2024-1.zip` … `2024-12.zip`), que produjeron `236.576` líneas de compras municipales de la RM (sobre `2.512.286` filas totales), **52/52 comunas** en `resumen_comuna_anio.csv`, `292` filas en `resumen_sector_comuna.csv` y `5` montos extremos filtrados (`manifest.json`).
+> **Estado actual en el repo:** descargado y procesado el **2026-11-21** para todo el año **2024 (`2024-01` a `2024-12`)**: 12 archivos ZIP (~270 MB) versionados con **Git LFS** en `data/raw/licitaciones/` (`2024-1.zip` … `2024-12.zip`), que produjeron `236.576` líneas de compras municipales de la RM (sobre `2.512.286` filas totales), **52/52 comunas** en `resumen_comuna_anio.csv`, `292` filas en `resumen_sector_comuna.csv`, `16.068` licitaciones en `licitaciones_detalle.csv` y `5` montos extremos filtrados (`manifest.json`).
 
 ## Fuente oficial
 
@@ -41,6 +41,25 @@ Una fila por `(codigo_comuna, anio)` con métricas deduplicadas a nivel de licit
 | `proporcion_oferente_unico` | Fracción de licitaciones con exactamente 1 oferente |
 | `monto_estimado_clp` | Suma deduplicada de `MontoEstimado` en pesos (sin otras monedas ni errores extremos > $1 billón) |
 | `monto_adjudicado_clp` | Suma de `MontoLineaAdjudica` por línea en pesos (sin otras monedas ni outliers > $1 billón). Es un piso, no el gasto total: ver límites |
+
+### `licitaciones_detalle.csv`
+
+Una fila por licitación deduplicada `(codigo_comuna, codigo_externo)`, escrita desde las mismas licitaciones que cuentan los resúmenes: por comuna y año, sus conteos de `estado` coinciden exactamente con `total_licitaciones`, `adjudicadas`, `fallidas` y `cerradas` de `resumen_comuna_anio.csv`.
+
+| Columna | Descripción |
+|---|---|
+| `codigo_comuna`, `anio`, `codigo_externo` | Comuna (CUT), año de publicación y código de la licitación |
+| `nombre` | Nombre de la licitación (`Nombre`, primer valor no vacío entre sus líneas) |
+| `estado` | `adjudicada`, `fallida` o `abierta` (ni adjudicada ni fallida, incluye «Cerrada» sin resolver). Si una línea la reporta adjudicada y otra fallida, gana adjudicada, igual que en los resúmenes |
+| `estado_chilecompra` | Etiqueta original de ChileCompra (`Estado` normalizado, o el código si falta) |
+| `sector` | Mismo clasificador por palabras clave que `resumen_sector_comuna.csv` |
+| `monto_estimado_clp` | `MontoEstimado` en pesos (vacío si falta o está en otra moneda) |
+| `monto_adjudicado_clp` | Suma de `MontoLineaAdjudica` en pesos; vacío si ninguna línea trae monto. Es un piso (ver límites) |
+| `numero_oferentes`, `dias_pub_cierre`, `dias_pub_adj` | Máximo de oferentes y días entre publicación y cierre / adjudicación |
+
+### `viz/datos/licitaciones.json` (aporte por licitación)
+
+`make licitaciones-detalle` (`experiments/licitaciones_aporte.py`) lee `licitaciones_detalle.csv` y `viz/datos/simulacion.json` y escribe, por comuna, sus conteos, la credibilidad municipal y sus licitaciones con `aporte_credibilidad`: el cambio exacto de la media posterior al quitar esa licitación (`media_con - media_sin`), con el mismo prior (`SECURITY_CREDIBILITY`), año (`PROCUREMENT_YEAR`) y `estimate_commune_credibility` que la simulación. Solo las comunas de `politicas[].credibilidad_por_comuna` tienen `afecta_modelo: true`; en las demás, y en las licitaciones abiertas, el aporte es 0 porque no entran al modelo. El script falla sin escribir si los conteos del detalle no coinciden con `resumen_comuna_anio.csv` o si la media recalculada no coincide con `credibilidad_por_comuna.media`. Con más de 40 cerradas el tamaño efectivo queda fijo, así que los aportes no son aditivos (adjudicadas × aporte + fallidas × aporte ≈ 0), y el efecto de una licitación sobre los delitos simulados queda bajo la resolución Monte Carlo: no se publica.
 
 ### `resumen_sector_comuna.csv`
 
