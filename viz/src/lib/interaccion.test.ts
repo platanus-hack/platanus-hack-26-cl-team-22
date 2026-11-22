@@ -68,7 +68,7 @@ describe('veredicto', () => {
 describe('rótulos', () => {
   const f = (n: number) => String(n)
   it('etiquetaModelo corta en los dos puntos y nunca muestra rutas', () => {
-    expect(etiquetaModelo('Aire v0: núcleo exponencial isotrópico (docs/modelo-aire.md)', 500, f)).toBe('Modelo de aire v0 · 500 réplicas')
+    expect(etiquetaModelo('Aire v0: núcleo exponencial isotrópico (docs/modelo-aire.md)', 500, f)).toBe('Modelo de aire · 500 réplicas')
     expect(etiquetaModelo('docs/x.md', undefined, f)).toBe('')
     expect(etiquetaModelo('Modelo urbano', 0, f)).toBe('Modelo urbano')
     expect(etiquetaModelo(undefined, 10, f)).toBe('10 réplicas')

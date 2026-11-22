@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { PERFILES } from './caso'
 import { limpiarGuia, pedirGuia, urlGuia } from './guia'
-import { CASOS, casoDe, explicar, fueraDeRango, gradoDe, leerCaso, limpiarCriterio, prioridadesDe, resolverLimites } from './onboarding'
+import { ajustarPorTexto, sumarCambio, CASOS, casoDe, explicar, fueraDeRango, gradoDe, leerCaso, limpiarCriterio, prioridadesDe, resolverLimites } from './onboarding'
 import { calcularRiesgo } from './riesgo'
 import type { Variable } from './types'
 
@@ -147,5 +147,33 @@ describe('guía del intermediario', () => {
     expect(await pedirGuia('https://x/guia', pedido, vi.fn().mockResolvedValue({ ok: false }))).toBeNull()
     const ok = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ texto: 'Lampa conviene.' }) })
     expect(await pedirGuia('https://x/guia', pedido, ok)).toEqual({ texto: 'Lampa conviene.' })
+  })
+})
+
+describe('modificar el requerimiento con un texto', () => {
+  const base = { pm25_anual: 5, seguridad: 5, crecimiento_poblacion: 5 }
+  it('sube lo que la frase nombra y baja lo que dice que no importa', () => {
+    const r = ajustarPorTexto('Ahora me importa más la seguridad, y no me importa el aire', base)
+    expect(r.prioridades).toEqual({ pm25_anual: 0, seguridad: 8, crecimiento_poblacion: 5 })
+    expect(r.cambiadas.sort()).toEqual(['pm25_anual', 'seguridad'])
+  })
+  it('distingue clave de mucho y menos de nada', () => {
+    expect(ajustarPorTexto('la contaminación es lo más importante', base).prioridades.pm25_anual).toBe(10)
+    expect(ajustarPorTexto('que pese menos el crecimiento', base).prioridades.crecimiento_poblacion).toBe(3)
+  })
+  it('también mueve los indicadores de inversión si están en el índice', () => {
+    const r = ajustarPorTexto('el agua es clave', { ...base, sequia_futura: 0, escasez_hidrica: 5, red_electrica: 5 })
+    expect(r.prioridades).toMatchObject({ sequia_futura: 10, escasez_hidrica: 10, red_electrica: 5 })
+  })
+  it('sin nada reconocible no cambia nada, ni toca variables que no existen', () => {
+    expect(ajustarPorTexto('quiero algo cerca del metro', base)).toEqual({ prioridades: base, cambiadas: [] })
+    expect(ajustarPorTexto('más seguridad', { pm25_anual: 5 })).toEqual({ prioridades: { pm25_anual: 5 }, cambiadas: [] })
+  })
+  it('suma el cambio al caso sin pasarse del largo', () => {
+    expect(sumarCambio('Busco depto', '  más   seguridad ', 800)).toBe('Busco depto\nmás seguridad')
+    expect(sumarCambio('', 'más seguridad', 800)).toBe('más seguridad')
+    expect(sumarCambio('x'.repeat(900), 'más seguridad', 800)).toHaveLength(800)
+    expect(sumarCambio('x'.repeat(900), 'más seguridad', 800).endsWith('más seguridad')).toBe(true)
+    expect(sumarCambio('igual', '   ', 800)).toBe('igual')
   })
 })
