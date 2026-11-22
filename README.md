@@ -1,13 +1,36 @@
-# Simulador de comunas de la Región Metropolitana
+# root
 
-<img src="./project-logo.png" alt="Logo del proyecto" width="160" />
+<img src="./project-logo.png" alt="Logo de root" width="160" />
 
 Platanus Hack 26 · Santiago · team-22 · Track 🌐 Simulaciones
 
-Proyecta el aire (PM2,5) de las 52 comunas de la Región Metropolitana entre 2026 y 2036 según
-los planes públicos que las afectan y **la probabilidad real de que se cumplan**. Las comunas se
-afectan entre sí de dos maneras: el aire se mueve por la cuenca y los hogares se mudan, llevando
-consigo la leña que queman.
+**¿Hacia dónde va una comuna, y qué pasa si el plan que la iba a mejorar no se cumple?**
+
+root simula cómo evolucionan las 52 comunas de la Región Metropolitana de Santiago entre 2026 y 2036
+y las ordena por el riesgo que corre quien quiere vivir, invertir o instalar una empresa en ellas.
+Cada plan público pesa según **la probabilidad real de que se cumpla**, y cada resultado se muestra
+como una banda de 500 réplicas, nunca como un número solo.
+
+**[Probar root](https://root-landing.onrender.com)**
+
+Qué simula y qué mide:
+
+- **Aire.** PM2,5 por comuna y año según los planes de descontaminación, con el aire moviéndose
+  por la cuenca de una comuna a otra.
+- **Hogares y población.** Quién se muda a dónde y cuánto crece cada comuna; los hogares se
+  llevan consigo la leña que queman.
+- **Seguridad.** Delitos por habitante, con el efecto de cámaras e iluminación como políticas
+  ilustrativas.
+- **Clima.** Cambio en la frecuencia de sequía por comuna, con las corridas de los modelos
+  climáticos de ARClim.
+- **Agua.** Caudal medido en 14 estaciones de la DGA y un «¿y si sigue la megasequía?» que sortea
+  500 décadas posibles por río.
+- **Lo que mira quien invierte.** Decretos de escasez hídrica, capacidad de la red eléctrica,
+  proyectos aprobados en el SEIA y licitaciones municipales, una por una.
+
+Escribes tu caso con tus palabras y Claude lo traduce a prioridades dentro de un catálogo cerrado;
+el orden de las comunas y todos los números los calcula siempre la simulación. El modelo se probó
+contra datos que no había visto y publicamos también dónde pierde.
 
 ## La pregunta
 
