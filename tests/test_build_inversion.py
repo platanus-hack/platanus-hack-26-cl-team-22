@@ -2,9 +2,11 @@ import json
 
 from datos.viz.build_inversion import (
     OUT,
+    OUT_PROYECTOS,
     anios_con_decreto,
     capacidad_operando,
     proyectos_aprobados,
+    proyectos_por_comuna,
 )
 
 
@@ -85,3 +87,87 @@ def test_json_generado_cumple_el_contrato():
     ids = [i["id"] for i in data["indicadores"]]
     assert ids == ["escasez_hidrica", "sequia_futura", "red_electrica", "inversion_evaluada"]
     assert all(set(c["valores"]) == set(ids) for c in data["comunas"])
+
+
+def _proy_full(exp, codigos, estado="Aprobado", fecha="2020-03-01", musd="12.5"):
+    return {
+        "expediente_id": exp,
+        "nombre": f"Proyecto {exp}",
+        "tipo_presentacion": "DIA",
+        "codigos_comuna": codigos,
+        "comunas": "",
+        "tipologia": "h1",
+        "descripcion_tipologia": "Proyectos inmobiliarios",
+        "titular": "Titular S.A.",
+        "inversion_musd": musd,
+        "fecha_presentacion": fecha,
+        "estado": estado,
+        "url_ficha": f"https://seia.sea.gob.cl/expediente/expediente.php?id_expediente={exp}&modo=ficha",
+    }
+
+
+def test_lista_de_proyectos_tiene_el_largo_del_conteo():
+    filas = [
+        _proy_full("1", "13101;13102"),
+        _proy_full("2", "13101"),
+        _proy_full("3", "13102", estado="Rechazado"),
+        _proy_full("4", "13103", fecha="2014-12-31"),
+    ]
+    lista = proyectos_por_comuna(filas)
+    cuenta = proyectos_aprobados(filas)
+    assert {c: len(ps) for c, ps in lista.items()} == cuenta == {"13101": 2, "13102": 1}
+
+
+def test_proyecto_multicomuna_aparece_una_vez_en_cada_comuna():
+    lista = proyectos_por_comuna([_proy_full("7", "13101;13102;13101")])
+    assert [p["expediente_id"] for p in lista["13101"]] == ["7"]
+    assert [p["expediente_id"] for p in lista["13102"]] == ["7"]
+
+
+def test_lista_excluye_no_aprobados_y_anteriores_a_2015():
+    filas = [
+        _proy_full("1", "13101", estado="Rechazado"),
+        _proy_full("2", "13101", fecha="2014-12-31"),
+        _proy_full("3", "13101", fecha=""),
+        _proy_full("4", "13101", fecha="2015-01-01"),
+    ]
+    assert [p["expediente_id"] for p in proyectos_por_comuna(filas)["13101"]] == ["4"]
+
+
+def test_entrada_trae_los_campos_y_aporte_uno():
+    (p,) = proyectos_por_comuna([_proy_full("9", "13101")])["13101"]
+    assert p == {
+        "expediente_id": "9",
+        "nombre": "Proyecto 9",
+        "titular": "Titular S.A.",
+        "tipologia": "h1",
+        "descripcion_tipologia": "Proyectos inmobiliarios",
+        "inversion_musd": 12.5,
+        "fecha_presentacion": "2020-03-01",
+        "url_ficha": "https://seia.sea.gob.cl/expediente/expediente.php?id_expediente=9&modo=ficha",
+        "aporte": 1,
+    }
+
+
+def test_inversion_musd_ausente_es_null():
+    (p,) = proyectos_por_comuna([_proy_full("9", "13101", musd="")])["13101"]
+    assert p["inversion_musd"] is None
+
+
+def test_lista_ordenada_por_fecha_descendente():
+    filas = [
+        _proy_full("1", "13101", fecha="2016-01-01"),
+        _proy_full("2", "13101", fecha="2022-05-01"),
+        _proy_full("3", "13101", fecha="2019-07-01"),
+    ]
+    assert [p["expediente_id"] for p in proyectos_por_comuna(filas)["13101"]] == ["2", "3", "1"]
+
+
+def test_json_de_proyectos_cuadra_con_inversion_evaluada():
+    indicadores = json.loads(OUT.read_text(encoding="utf-8"))
+    proyectos = json.loads(OUT_PROYECTOS.read_text(encoding="utf-8"))
+    cuenta = {c["codigo"]: c["valores"]["inversion_evaluada"] for c in indicadores["comunas"]}
+    assert [c["codigo"] for c in proyectos["comunas"]] == sorted(cuenta)
+    for c in proyectos["comunas"]:
+        assert c["inversion_evaluada"] == len(c["proyectos"]) == cuenta[c["codigo"]]
+        assert all(p["aporte"] == 1 for p in c["proyectos"])
