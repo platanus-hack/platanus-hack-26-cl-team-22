@@ -42,14 +42,19 @@ export function crearMemo<T>(ttlMs: number, max: number, ahora: () => number = D
             if (r !== null) guardar(clave, r)
             return r
           })
-          .finally(() => enVuelo.delete(clave))
+          .finally(() => {
+            if (enVuelo.get(clave) === v) enVuelo.delete(clave)
+          })
         v = { promesa, corte, esperando: 0 }
         enVuelo.set(clave, v)
       }
       const vuelo = v
       vuelo.esperando++
       const salir = () => {
-        if (--vuelo.esperando === 0) vuelo.corte.abort()
+        if (--vuelo.esperando > 0) return
+        vuelo.corte.abort()
+        // A request arriving now must start a fresh call, not join the cancelled one.
+        if (enVuelo.get(clave) === vuelo) enVuelo.delete(clave)
       }
       if (signal.aborted) salir()
       else signal.addEventListener('abort', salir, { once: true })

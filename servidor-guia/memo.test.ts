@@ -40,3 +40,15 @@ test('the shared call is cancelled only when every waiting request has gone away
   assert.equal(senal!.aborted, true)
   assert.deepEqual(await Promise.all([p1, p2]), [null, null])
 })
+
+test('a request arriving right after the shared call was cancelled starts a fresh call', async () => {
+  const m = crearMemo<string>(1000, 10)
+  let llamadas = 0
+  const colgada = (s: AbortSignal) => (llamadas++, new Promise<string | null>((ok) => s.addEventListener('abort', () => ok(null))))
+  const uno = new AbortController()
+  const p1 = m.calcular('k', colgada, uno.signal)
+  uno.abort()
+  assert.equal(await m.calcular('k', async () => (llamadas++, 'nuevo'), vivo()), 'nuevo')
+  assert.equal(llamadas, 2)
+  assert.equal(await p1, null)
+})
