@@ -15,7 +15,7 @@ import { diferenciasPorComuna, maxAbsDiferencia } from './lib/diferencia'
 import { fmt, fmtSigned } from './lib/format'
 import { anotar, emparejar, featuresDeRespaldo, leerFeatures, type GeoFeature } from './lib/geo'
 import { accionDeTecla, etiquetaModelo, pasoDemo, resumirDiferencias, } from './lib/interaccion'
-import { indicadoresInversion, leerInversion } from './lib/inversion'
+import { comoVariables, indicadoresInversion, leerInversion, sumarIndicadores, unionIndicadores } from './lib/inversion'
 import { leerLena, type Zona } from './lib/lena'
 import type { Horizonte } from './lib/load'
 import { CORTES_OCUPACION, bandaOcupacion, leerParametrosAbm } from './lib/mudanzasAbm'
@@ -40,7 +40,7 @@ import {
   veredictoVariable,
   type FilaValores,
 } from './lib/riesgo'
-import { variableCorta } from './lib/variables'
+import { ordenarPorPeso, variableCorta } from './lib/variables'
 import { Hoja, VistaFuentes } from './components/Hoja'
 import type { VistaId } from './lib/interaccion'
 import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, type SeccionId } from './lib/pestanas'
@@ -101,7 +101,6 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   // El aire es la variable con norma, planes y validación; las demás hojas (plan, leña, prueba) hablan de ella.
   const varAire = data.variables.find((v) => conDato.has(v.id)) ?? data.variables[0]!
   const tabla = useMemo(() => tablaPara(varAire, data.impacto?.norma), [varAire, data.impacto?.norma])
-  const cortas = useMemo(() => data.variables.filter((v) => conDato.has(v.id)).map(variableCorta), [data.variables, conDato])
   const cortes = tabla.cortes
   const demografia = useMemo(() => {
     if (!demografiaRaw) return null
@@ -134,6 +133,25 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   const [vistaIdx, setVistaIdx] = useState(0)
   const [idx, setIdxCrudo] = useState(0)
   const setIdx: typeof setIdxCrudo = setIdxCrudo
+  // Los cuatro indicadores de inversión entran al índice como variables más. Sequía futura cambia con el año
+  // (bloque `clima`); escasez, red e inversión evaluada son fijos (inversion.json). Si falta un archivo, el
+  // índice sigue con las variables que sí tienen dato.
+  const inversionReal = useMemo(() => leerInversion(inversionRaw), [inversionRaw])
+  const indsPorAnio = useMemo(() => anios.map((a) => indicadoresInversion(inversionReal, data.clima, a)), [anios, inversionReal, data.clima])
+  const indicadores = useMemo(() => unionIndicadores(indsPorAnio), [indsPorAnio])
+  /** las variables del índice: las simuladas y los indicadores, una sola lista para ordenar, filtrar y explicar */
+  const variablesIndice = useMemo(() => [...data.variables, ...comoVariables(indicadores)], [data.variables, indicadores])
+  const extrasIds = useMemo(() => new Set(indicadores.map((x) => x.id)), [indicadores])
+  const cortas = useMemo(
+    () => [
+      ...data.variables.filter((v) => conDato.has(v.id)).map(variableCorta),
+      ...indicadores.map((x) => {
+        const delAnio = indsPorAnio[idx]?.find((y) => y.id === x.id) ?? x
+        return { ...variableCorta(comoVariables([x])[0]!), que: `${delAnio.que}. ${x.origen === 'real' ? 'Dato real' : 'Simulado'}: ${x.fuente}` }
+      }),
+    ],
+    [data.variables, conDato, indicadores, indsPorAnio, idx],
+  )
   // Al pasar de 15 a 10 años el año elegido puede quedar fuera: se vuelve al último que existe.
   useEffect(() => {
     setIdxCrudo((i) => Math.min(i, anios.length - 1))
@@ -205,6 +223,8 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   /** Del resumen al detalle de una variable: abre su pestaña y su sección. */
   const irACapa = (id: string) => {
     if (id === GENERAL) return setVistaIdx(0)
+    // los indicadores de inversión no tienen capa propia ni serie: no hay detalle al que ir
+    if (extrasIds.has(id)) return
     const papel = (Object.keys(papelVar) as Papel[]).find((k) => papelVar[k] === id)
     if (!papel) return
     const l = lugarDe(papel)
@@ -313,15 +333,18 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
 
   const filasDe = useCallback(
     (i: number): FilaValores[] =>
-      data.comunas.map((c) => {
-        const valores: Record<string, number | undefined> = {}
-        for (const v of conDato) valores[v] = punto(data, escenario.id, c.codigo, v, i)?.p50
-        return { codigo: c.codigo, valores }
-      }),
-    [data, escenario.id, conDato],
+      sumarIndicadores(
+        data.comunas.map((c) => {
+          const valores: Record<string, number | undefined> = {}
+          for (const v of conDato) valores[v] = punto(data, escenario.id, c.codigo, v, i)?.p50
+          return { codigo: c.codigo, valores }
+        }),
+        indsPorAnio[i] ?? [],
+      ),
+    [data, escenario.id, conDato, indsPorAnio],
   )
-  const riesgo = useMemo(() => calcularRiesgo(filasDe(idx), data.variables, pesos), [filasDe, idx, data.variables, pesos])
-  const riesgoFin = useMemo(() => calcularRiesgo(filasDe(anios.length - 1), data.variables, pesos), [filasDe, anios.length, data.variables, pesos])
+  const riesgo = useMemo(() => calcularRiesgo(filasDe(idx), variablesIndice, pesos), [filasDe, idx, variablesIndice, pesos])
+  const riesgoFin = useMemo(() => calcularRiesgo(filasDe(anios.length - 1), variablesIndice, pesos), [filasDe, anios.length, variablesIndice, pesos])
 
   const puntosMapa = useMemo(() => {
     if (mapaMudanzas) return puntosMudanzas
@@ -563,7 +586,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
       if (general) {
         if (!r || r.indice === null) return { titulo, lineas: ['Sin dato'] }
         const n = nivelRiesgo(r.indice)
-        const partes = cortas.filter((v) => r.partes[v.id] !== undefined).map((v) => `${v.nombre} ${fmt(r.partes[v.id]!, 0)}`)
+        const partes = ordenarPorPeso(cortas, pesos).filter((v) => r.partes[v.id] !== undefined && (pesos[v.id] ?? 0) > 0).map((v) => `${v.nombre} ${fmt(r.partes[v.id]!, 0)}`)
         return {
           titulo,
           valor: fmt(r.indice, 0),
@@ -607,18 +630,18 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
 
   // Rangos aceptados: qué comunas cumplen todos y, de la elegida, en qué variables queda fuera.
   const valoresAnio = useMemo(() => filasDe(idx), [filasDe, idx])
-  const limites = useMemo(() => resolverLimites(rangos, data.variables, valoresAnio.map((f) => f.valores)), [rangos, data.variables, valoresAnio])
+  const limites = useMemo(() => resolverLimites(rangos, variablesIndice, valoresAnio.map((f) => f.valores)), [rangos, variablesIndice, valoresAnio])
   const hayLimites = Object.values(limites).some((v) => v !== null)
   const dentro = useMemo(
-    () => (hayLimites ? new Set(valoresAnio.filter((f) => fueraDeRango(f.valores, limites, data.variables).length === 0).map((f) => f.codigo)) : null),
-    [hayLimites, valoresAnio, limites, data.variables],
+    () => (hayLimites ? new Set(valoresAnio.filter((f) => fueraDeRango(f.valores, limites, variablesIndice).length === 0).map((f) => f.codigo)) : null),
+    [hayLimites, valoresAnio, limites, variablesIndice],
   )
 
   /** Comunas que cumplen los rangos de una búsqueda (el estado aún no los tiene cuando se termina la entrada). */
   const cumplenDe = (b: Busqueda) => {
     const filasAnio = filasDe(idx)
-    const lim = resolverLimites(b.rangos, data.variables, filasAnio.map((f) => f.valores))
-    return new Set(filasAnio.filter((f) => fueraDeRango(f.valores, lim, data.variables).length === 0).map((f) => f.codigo))
+    const lim = resolverLimites(b.rangos, variablesIndice, filasAnio.map((f) => f.valores))
+    return new Set(filasAnio.filter((f) => fueraDeRango(f.valores, lim, variablesIndice).length === 0).map((f) => f.codigo))
   }
 
   /** Pide a Claude que redacte la guía de las comunas que quedan primeras con estas prioridades. */
@@ -626,9 +649,12 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
     const url = urlGuia(import.meta.env.VITE_GUIA_URL as string | undefined)
     if (!url || !b.contexto) return
     const cumple = cumplenDe(b)
-    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades)
+    const filasAnio = filasDe(idx)
+    const valoresDe = new Map(filasAnio.map((f) => [f.codigo, f.valores]))
+    const top = calcularRiesgo(filasAnio, variablesIndice, prioridades)
       .filas.filter((f) => f.indice !== null && cumple.has(f.codigo))
       .slice(0, 3)
+    const activas = ordenarPorPeso(cortas, prioridades).filter((v) => (prioridades[v.id] ?? 0) > 0)
     setGuiaIA({ cargando: true })
     void pedirGuia(url, {
       perfil: casoDe(b.caso).titulo,
@@ -639,10 +665,11 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
       top: top.map((f) => ({
         comuna: nombre(f.codigo),
         riesgo: Math.round(f.indice!),
-        variables: cortas.map((v) => ({
+        variables: activas.map((v) => ({
           nombre: v.nombre,
-          // rounded as the card shows it, so Claude never cites 2019,985 next to a card that says 2.020
-          valor: ((p) => (p === undefined ? null : redondear(p)))(punto(data, escenario.id, f.codigo, v.id, idx)?.p50),
+          // the same row the index ranked (p50 or the indicator's value), rounded as the card shows it, so
+          // Claude never cites 2019,985 next to a card that says 2.020
+          valor: ((x) => (x === undefined ? null : redondear(x)))(valoresDe.get(f.codigo)?.[v.id]),
           unidad: v.unidad,
           riesgo: Math.round(f.partes[v.id] ?? 0),
         })),
@@ -655,7 +682,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
 
   /** Aplica unas prioridades: ordena, elige la primera comuna que cumple los rangos y la deja seleccionada. */
   const aplicarPrioridades = (prioridades: Record<string, number>, cumple?: ReadonlySet<string> | null) => {
-    const top = calcularRiesgo(filasDe(idx), data.variables, prioridades).filas.find((f) => f.indice !== null && (!cumple || cumple.has(f.codigo)))
+    const top = calcularRiesgo(filasDe(idx), variablesIndice, prioridades).filas.find((f) => f.indice !== null && (!cumple || cumple.has(f.codigo)))
     setPesos(prioridades)
     if (top) setSeleccionada(top.codigo)
   }
@@ -858,29 +885,12 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
     [features, agua, zonasSim, cargando],
   )
 
-  const comunaGeoRiesgo = seleccionada ? (features.find((f) => f.properties.simCodigo === seleccionada)?.properties.codigo ?? seleccionada) : null
-  // Variables de inversión: solo para quien llegó con un caso de empresa o inversión (mentoría: «las 7 que más les interesan»).
-  const inversionReal = useMemo(() => leerInversion(inversionRaw), [inversionRaw])
-  const casoInversion = busqueda?.caso === 'energia' || busqueda?.caso === 'industria'
-  const extras = useMemo(
-    () => (casoInversion ? indicadoresInversion(inversionReal, data.clima, anio) : []),
-    [casoInversion, inversionReal, data.clima, anio],
-  )
-  const extrasComuna = extras.map((x) => ({
-    id: x.id,
-    nombre: x.nombre,
-    que: `${x.que}. ${x.origen === 'real' ? 'Dato real' : 'Simulado'}: ${x.fuente}`,
-    unidad: x.unidad,
-    origen: x.origen,
-    valor: comunaGeoRiesgo ? (x.valores.get(comunaGeoRiesgo) ?? null) : null,
-    riesgo: comunaGeoRiesgo ? (x.riesgo.get(comunaGeoRiesgo) ?? null) : null,
-  }))
-
   let hoja: ReactNode = null
   if (vista === 'riesgo') {
     const cod = comunaSel?.codigo
     const valores: Record<string, number | undefined> = {}
-    if (cod) for (const v of cortas) valores[v.id] = punto(data, escenario.id, cod, v.id, idx)?.p50
+    // la fila con que el índice ordenó: p50 de las simuladas y el valor de cada indicador
+    if (cod) Object.assign(valores, valoresAnio.find((f) => f.codigo === cod)?.valores)
     // El aire tiene norma: si la comuna la supera o la roza, eso manda sobre su posición.
     const sellos: Record<string, { estado: 'riesgo' | 'limite'; texto: string } | undefined> = {}
     const vAire = valores[varAire.id]
@@ -902,7 +912,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         tipos={data.tipos_hogar}
         perfilId={perfilId}
         pesos={pesos}
-        extras={extrasComuna}
+        extras={extrasIds}
         rangos={rangos}
         onRango={(k, id) => setRangos((x) => ({ ...x, [k]: id }))}
         onPerfil={(id) => {
@@ -932,7 +942,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         valores={valores}
         sellos={sellos}
         dentro={dentro}
-        fuera={cod ? fueraDeRango(valores, limites, data.variables) : []}
+        fuera={cod ? fueraDeRango(valores, limites, variablesIndice) : []}
         detalle={
           s
             ? {

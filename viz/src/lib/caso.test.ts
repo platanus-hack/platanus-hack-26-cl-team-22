@@ -92,7 +92,7 @@ describe('ESQUEMA_INTERPRETACION', () => {
     expect(s.required).toEqual(['perfil', 'ajustes', 'indicadores', 'no_medido'])
     const ajuste = s.properties.ajustes.items
     expect(ajuste.additionalProperties).toBe(false)
-    expect(ajuste.properties.variable.enum).toEqual(['pm25_anual', 'seguridad', 'crecimiento_poblacion'])
+    expect(ajuste.properties.variable.enum).toEqual(['pm25_anual', 'seguridad', 'crecimiento_poblacion', 'sequia_futura', 'escasez_hidrica', 'red_electrica', 'inversion_evaluada'])
     expect(ajuste.properties.grado.enum).toEqual([0, 3, 5, 8, 10])
     expect(JSON.stringify(s)).not.toMatch(/comuna/)
   })
@@ -137,6 +137,11 @@ describe('profile chosen by Claude', () => {
   })
   it('tells Claude the keyword profile is only a guess', () => {
     expect(mensajeCaso('hola', 'Familia con niños', {})).toMatch(/^Perfil sugerido por palabras clave \(puede estar mal\): Familia con niños\./)
+  })
+  it('explains the four extra indicators so Claude can raise or lower them', () => {
+    for (const id of ['sequia_futura', 'escasez_hidrica', 'red_electrica', 'inversion_evaluada']) expect(INSTRUCCIONES_CASO).toContain(`- ${id}:`)
+    expect(INSTRUCCIONES_CASO).toMatch(/maquinaria|consumo eléctrico/)
+    expect(INSTRUCCIONES_CASO).toMatch(/En el perfil energia no las subas/)
   })
   it('uses the general profile only when the case gives no clue', () => {
     expect(INSTRUCCIONES_CASO).toMatch(/con familia, hijos o colegios es familia/)

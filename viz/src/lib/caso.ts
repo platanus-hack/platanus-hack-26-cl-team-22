@@ -8,7 +8,7 @@
  * Shared by the interface and by the intermediary server (servidor-guia/), so this file has no imports.
  */
 
-export const VARIABLES_CASO = ['pm25_anual', 'seguridad', 'crecimiento_poblacion'] as const
+export const VARIABLES_CASO = ['pm25_anual', 'seguridad', 'crecimiento_poblacion', 'sequia_futura', 'escasez_hidrica', 'red_electrica', 'inversion_evaluada'] as const
 export type VariableCaso = (typeof VARIABLES_CASO)[number]
 
 /** Same five grades as the guided entry (onboarding.ts). */
@@ -41,15 +41,15 @@ export type NoMedido = keyof typeof NO_MEDIDO
  * servidor-guia imports this file directly.
  */
 export const PERFILES = [
-  { id: 'familia', titulo: 'Familia con niños', describe: 'vivir con hijos, en especial pequeños', prioridades: { pm25_anual: 10, seguridad: 8, crecimiento_poblacion: 3 } },
-  { id: 'mayor', titulo: 'Adulto mayor', describe: 'vivir personas mayores o jubiladas, que buscan tranquilidad', prioridades: { pm25_anual: 10, seguridad: 8, crecimiento_poblacion: 0 } },
-  { id: 'joven', titulo: 'Joven que arrienda', describe: 'estudiante o joven que arrienda o vive solo', prioridades: { pm25_anual: 3, seguridad: 8, crecimiento_poblacion: 5 } },
-  { id: 'inversion', titulo: 'Inversionista inmobiliario', describe: 'comprar para arrendar o para que la propiedad se valorice', prioridades: { pm25_anual: 3, seguridad: 5, crecimiento_poblacion: 10 } },
-  { id: 'emprendedor', titulo: 'Emprendedor o comercio', describe: 'abrir un local, tienda o negocio de barrio que vive de clientes cercanos', prioridades: { pm25_anual: 0, seguridad: 8, crecimiento_poblacion: 10 } },
-  { id: 'empresario', titulo: 'Empresario joven u oficina', describe: 'instalar una empresa, startup u oficina', prioridades: { pm25_anual: 3, seguridad: 5, crecimiento_poblacion: 8 } },
-  { id: 'industria', titulo: 'Industria y logística', describe: 'planta, bodega, centro de distribución o transporte', prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8 } },
-  { id: 'energia', titulo: 'Energía', describe: 'central hidroeléctrica, solar u otra fuente de energía', prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8 } },
-  { id: 'general', titulo: 'Evaluación general', describe: 'cualquier otro caso o uno sin detalles', prioridades: { pm25_anual: 5, seguridad: 5, crecimiento_poblacion: 5 } },
+  { id: 'familia', titulo: 'Familia con niños', describe: 'vivir con hijos, en especial pequeños', prioridades: { pm25_anual: 10, seguridad: 8, crecimiento_poblacion: 3, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 0, inversion_evaluada: 0 } },
+  { id: 'mayor', titulo: 'Adulto mayor', describe: 'vivir personas mayores o jubiladas, que buscan tranquilidad', prioridades: { pm25_anual: 10, seguridad: 8, crecimiento_poblacion: 0, sequia_futura: 0, escasez_hidrica: 5, red_electrica: 0, inversion_evaluada: 0 } },
+  { id: 'joven', titulo: 'Joven que arrienda', describe: 'estudiante o joven que arrienda o vive solo', prioridades: { pm25_anual: 3, seguridad: 8, crecimiento_poblacion: 5, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 0, inversion_evaluada: 0 } },
+  { id: 'inversion', titulo: 'Inversionista inmobiliario', describe: 'comprar para arrendar o para que la propiedad se valorice', prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 10, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 0, inversion_evaluada: 8 } },
+  { id: 'emprendedor', titulo: 'Emprendedor o comercio', describe: 'abrir un local, tienda o negocio de barrio que vive de clientes cercanos', prioridades: { pm25_anual: 0, seguridad: 8, crecimiento_poblacion: 10, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 0, inversion_evaluada: 5 } },
+  { id: 'empresario', titulo: 'Empresario joven u oficina', describe: 'instalar una empresa, startup u oficina', prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 5, inversion_evaluada: 0 } },
+  { id: 'industria', titulo: 'Industria y logística', describe: 'planta, bodega, centro de distribución o transporte', prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 10, inversion_evaluada: 0 } },
+  { id: 'energia', titulo: 'Energía', describe: 'central hidroeléctrica, solar u otra fuente de energía', prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 10, inversion_evaluada: 0 } },
+  { id: 'general', titulo: 'Evaluación general', describe: 'cualquier otro caso o uno sin detalles', prioridades: { pm25_anual: 5, seguridad: 5, crecimiento_poblacion: 5, sequia_futura: 0, escasez_hidrica: 0, red_electrica: 0, inversion_evaluada: 0 } },
 ] as const satisfies readonly { id: string; titulo: string; describe: string; prioridades: Record<VariableCaso, number> }[]
 export type CasoId = (typeof PERFILES)[number]['id']
 const IDS_PERFIL: readonly string[] = PERFILES.map((p) => p.id)
@@ -100,10 +100,14 @@ export const ESQUEMA_INTERPRETACION = {
 /** Instructions for the model. Stable text first so the prompt can be cached. */
 export const INSTRUCCIONES_CASO = `Lees el caso que escribe una persona que busca dónde vivir o invertir en las 52 comunas de la Región Metropolitana de Santiago, y propones cómo ajustar sus prioridades en un análisis que ya existe.
 
-El análisis ordena las comunas con tres variables:
+El análisis ordena las comunas con siete variables; cada perfil deja activas como mucho tres (las demás en 0):
 - pm25_anual: contaminación del aire (PM2,5 media anual).
 - seguridad: delitos por habitante.
 - crecimiento_poblacion: cuánto crece la población de la comuna.
+- sequia_futura: cuánto aumentará la frecuencia de sequía (clima simulado).
+- escasez_hidrica: años con decreto de escasez hídrica.
+- red_electrica: capacidad de la red eléctrica disponible en la comuna.
+- inversion_evaluada: proyectos de inversión evaluados en la comuna (dinamismo).
 
 Cada prioridad tiene un grado: 0 Nada, 3 Poco, 5 Medio, 8 Mucho, 10 Clave.
 
@@ -116,6 +120,10 @@ Reglas:
 - Una enfermedad respiratoria, niños pequeños o personas mayores justifican subir la contaminación del aire.
 - En los perfiles Emprendedor o comercio, Industria y logística y Energía la calidad del aire no pesa: nunca la subas ni sugieras indicadores de aire. Ahí pesan la seguridad (equipos, mercadería, turnos de noche) y el crecimiento (clientes, trabajadores, demanda).
 - Horarios nocturnos, vivir solo o temor a robos justifican subir la seguridad.
+- Consumir agua (riego, procesos, una familia o un negocio que depende del agua) justifica subir escasez_hidrica y sequia_futura. En el perfil energia no las subas: miden el riesgo para quien consume agua, no dónde cabe una central.
+- Maquinaria, consumo eléctrico alto, cargar vehículos o inyectar energía justifican subir red_electrica.
+- Buscar una zona con otros proyectos o donde se está invirtiendo justifica subir inversion_evaluada.
+- Deja en 0 lo que el caso no necesita, y no dejes más de tres variables activas: si subes una que estaba en 0, baja a 0 la menos importante para el caso.
 - Querer que la zona gane población o clientes, o que la propiedad se valorice ("que se valorice", plusvalía), justifica subir el crecimiento; buscar tranquilidad puede justificar bajarlo.
 - En "indicadores" sugiere solo los que ayuden a este caso. En "no_medido" marca lo que la persona menciona y el análisis no mide.
 - Nunca escribas nombres de comunas ni números sobre comunas: el orden lo calcula el análisis.

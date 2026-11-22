@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import logoRoot from '../assets/logo-root.png'
-import { pedirInterpretacion, type Interpretacion } from '../lib/caso'
+import { pedirInterpretacion, VARIABLES_CASO, type Interpretacion } from '../lib/caso'
 import { CASOS, casoDe, LARGO_CASO, leerCaso, prioridadesDe, type CasoId } from '../lib/onboarding'
 import type { VariableCorta } from '../lib/variables'
 
 export interface Busqueda {
   caso: CasoId
-  /** peso de 0 a 10 por variable simulada */
+  /** peso de 0 a 10 por variable del índice (las simuladas y los indicadores) */
   prioridades: Record<string, number>
   /** id del rango elegido por variable simulada */
   rangos: Record<string, string>
@@ -44,7 +44,9 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }
   const [pensando, setPensando] = useState(false)
   const [saliendo, setSaliendo] = useState(false)
   const hoja = useRef<HTMLDivElement>(null)
-  const ids = variables.map((v) => v.id)
+  // Every profile grades all seven variables. Taking the ids from the profile list too keeps an indicator
+  // whose file has not loaded yet from falling back to prioridadesDe's default of 5.
+  const ids = [...new Set([...variables.map((v) => v.id), ...VARIABLES_CASO])]
 
   useEffect(() => {
     hoja.current?.querySelector<HTMLElement>('textarea')?.focus()

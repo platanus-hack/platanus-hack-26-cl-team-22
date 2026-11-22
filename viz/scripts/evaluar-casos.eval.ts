@@ -8,12 +8,13 @@
  * Each case states the weights a sensible reading should end with; the report is written to
  * docs/evaluacion-casos.md.
  */
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import datos from '../datos/simulacion.json'
 import { aplicarAjustes, pedirInterpretacion, type Interpretacion, type NoMedido } from '../src/lib/caso'
 import { punto, variablesConDato } from '../src/lib/data'
+import { comoVariables, indicadoresInversion, leerInversion, sumarIndicadores } from '../src/lib/inversion'
 import { casoDe, leerCaso, prioridadesDe, type CasoId } from '../src/lib/onboarding'
 import { calcularRiesgo } from '../src/lib/riesgo'
 import { escenarioInicial } from '../src/lib/scenario'
@@ -31,6 +32,8 @@ interface CasoEval {
   aire?: Rango
   seguridad?: Rango
   crecimiento?: Rango
+  sequia?: Rango
+  escasez?: Rango
   no_medido?: NoMedido[]
   nota?: string
 }
@@ -60,9 +63,9 @@ const CASOS: CasoEval[] = [
   { texto: 'Planta de manufactura con trabajadores al aire libre todo el día.', perfil: 'industria', aire: [0, 0] },
   { texto: 'Una empresa de transporte con galpón para camiones.', perfil: 'industria', aire: [0, 0] },
   // Energía
-  { texto: 'Quiero instalar una central hidroeléctrica de pasada y vender la energía a la red.', perfil: 'energia', aire: [0, 0] },
-  { texto: 'Central de pasada en un sector aislado; me preocupa que roben cables y equipos.', perfil: 'energia', seguridad: [8, 10], aire: [0, 0] },
-  { texto: 'Busco un terreno para un parque solar.', perfil: 'energia', aire: [0, 0] },
+  { texto: 'Quiero instalar una central hidroeléctrica de pasada y vender la energía a la red.', perfil: 'energia', aire: [0, 0], sequia: [0, 0], escasez: [0, 0] },
+  { texto: 'Central de pasada en un sector aislado; me preocupa que roben cables y equipos.', perfil: 'energia', seguridad: [8, 10], aire: [0, 0], sequia: [0, 0], escasez: [0, 0] },
+  { texto: 'Busco un terreno para un parque solar.', perfil: 'energia', aire: [0, 0], sequia: [0, 0], escasez: [0, 0] },
   { texto: 'Quiero poner paneles solares en mi casa nueva para la familia.', perfil: 'familia', aire: [8, 10], nota: '"solar" confundía el perfil' },
   // Evaluación general
   { texto: 'Lo único que me importa es la seguridad.', perfil: 'general', seguridad: [8, 10] },
@@ -75,15 +78,19 @@ const CASOS: CasoEval[] = [
 ]
 
 const data = datos as unknown as Simulacion
-const ids = [...variablesConDato(data)]
+const simuladas = [...variablesConDato(data)]
 const escenario = escenarioInicial(data.escenarios).id
-const filas = data.comunas.map((c) => ({
-  codigo: c.codigo,
-  valores: Object.fromEntries(ids.map((v) => [v, punto(data, escenario, c.codigo, v, 0)?.p50])),
-}))
+// The seven-variable index: the three simulated variables plus the four indicators of the first year.
+const inds = indicadoresInversion(leerInversion(JSON.parse(readFileSync(resolve(__dirname, '../public/datos/inversion.json'), 'utf8'))), data.clima, data.meta.anios[0]!)
+const variables = [...data.variables, ...comoVariables(inds)]
+const ids = variables.map((v) => v.id)
+const filas = sumarIndicadores(
+  data.comunas.map((c) => ({ codigo: c.codigo, valores: Object.fromEntries(simuladas.map((v) => [v, punto(data, escenario, c.codigo, v, 0)?.p50])) })),
+  inds,
+)
 const nombre = new Map(data.comunas.map((c) => [c.codigo, c.nombre]))
 
-const VAR = { aire: 'pm25_anual', seguridad: 'seguridad', crecimiento: 'crecimiento_poblacion' } as const
+const VAR = { aire: 'pm25_anual', seguridad: 'seguridad', crecimiento: 'crecimiento_poblacion', sequia: 'sequia_futura', escasez: 'escasez_hidrica' } as const
 
 interface Fila {
   caso: CasoEval
@@ -114,7 +121,7 @@ describe('cómo se ajustan los pesos según la frase inicial', () => {
     const perfil = lectura?.perfil ?? sugerido
     const base = prioridadesDe(casoDe(perfil), ids)
     const pesos = lectura ? aplicarAjustes(base, lectura) : base
-    const top = calcularRiesgo(filas, data.variables, pesos)
+    const top = calcularRiesgo(filas, variables, pesos)
       .filas.filter((f) => f.indice !== null)
       .slice(0, 3)
       .map((f) => nombre.get(f.codigo) ?? f.codigo)
@@ -123,12 +130,14 @@ describe('cómo se ajustan los pesos según la frase inicial', () => {
     const esperados: readonly CasoId[] = typeof c.perfil === 'string' ? [c.perfil] : c.perfil
     if (!esperados.includes(perfil)) fallas.push(`perfil ${perfil}, se esperaba ${esperados.join(' o ')}`)
     if (!lectura) fallas.push('sin lectura de Claude')
-    for (const k of ['aire', 'seguridad', 'crecimiento'] as const) {
+    for (const k of ['aire', 'seguridad', 'crecimiento', 'sequia', 'escasez'] as const) {
       const r = c[k]
       const v = pesos[VAR[k]]
       if (r && (v === undefined || v < r[0] || v > r[1])) fallas.push(`${k} ${v}, se esperaba ${r[0] === r[1] ? r[0] : `${r[0]}–${r[1]}`}`)
     }
     for (const m of c.no_medido ?? []) if (!lectura?.no_medido.includes(m)) fallas.push(`no marcó "${m}" como no medido`)
+    const activos = Object.values(pesos).filter((w) => w > 0).length
+    if (activos > 3) fallas.push(`${activos} variables activas, se esperaban 3 como mucho`)
 
     filasReporte.push({ caso: c, perfil, sugerido, lectura, pesos, top, fallas })
     await esperar(PAUSA_MS)
@@ -143,15 +152,16 @@ describe('cómo se ajustan los pesos según la frase inicial', () => {
       '',
       `Generado con \`npm run evaluar\` (viz/scripts/evaluar-casos.eval.ts) el ${new Date().toISOString().slice(0, 10)}, con el modelo real.`,
       'Cada fila sigue el camino de la app: perfil sugerido por palabras clave → lectura de Claude (que elige el perfil) → pesos finales → las 3 comunas de menor riesgo en el primer año.',
-      'Pesos en grados: 0 Nada, 3 Poco, 5 Medio, 8 Mucho, 10 Clave (aire / seguridad / crecimiento).',
+      'Índice de 7 variables (aire, seguridad, crecimiento, sequía futura, escasez hídrica, red eléctrica, inversión evaluada), como mucho 3 activas.',
+      'Pesos en grados: 0 Nada, 3 Poco, 5 Medio, 8 Mucho, 10 Clave; la columna lista solo los activos.',
       '',
       `**${ok} de ${filasReporte.length} casos** quedan como se esperaba.`,
       '',
-      '| # | Frase | Perfil | Ajustes de Claude | Pesos A/S/C | Top 3 | No medido | Resultado |',
+      '| # | Frase | Perfil | Ajustes de Claude | Pesos activos | Top 3 | No medido | Resultado |',
       '|---|---|---|---|---|---|---|---|',
       ...filasReporte.map((f, i) => {
         const ajustes = f.lectura?.ajustes.map((a) => `${a.variable}=${a.grado} («${a.cita}»)`).join('<br>') || '—'
-        const pesos = `${f.pesos[VAR.aire]} / ${f.pesos[VAR.seguridad]} / ${f.pesos[VAR.crecimiento]}`
+        const pesos = Object.entries(f.pesos).filter(([, w]) => w > 0).map(([k, w]) => `${k} ${w}`).join('<br>')
         const resultado = f.fallas.length ? `✗ ${f.fallas.join('; ')}` : '✓'
         const frase = f.caso.nota ? `${f.caso.texto}<br>*${f.caso.nota}*` : f.caso.texto
         return `| ${i + 1} | ${celda(frase)} | ${f.perfil === f.sugerido ? f.perfil : `${f.perfil} (palabras: ${f.sugerido})`} | ${celda(ajustes)} | ${pesos} | ${f.top.join(', ')} | ${f.lectura?.no_medido.join(', ') || '—'} | ${celda(resultado)} |`

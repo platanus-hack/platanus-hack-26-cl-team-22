@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { indicadoresInversion, indicadorSequia, leerInversion } from './inversion'
+import { comoVariables, indicadoresInversion, indicadorSequia, leerInversion, sumarIndicadores, unionIndicadores } from './inversion'
+import { calcularRiesgo } from './riesgo'
 
 const codigos = Array.from({ length: 30 }, (_, i) => String(13101 + i))
 const archivo = (extra: Record<string, unknown> = {}) => ({
@@ -57,5 +58,38 @@ describe('indicadores de inversión', () => {
     const ids = indicadoresInversion(leerInversion(archivo()), clima([2026]), 2026).map((x) => x.id)
     expect(ids).toEqual(['sequia_futura', 'escasez_hidrica', 'red_electrica'])
     expect(indicadoresInversion(leerInversion(archivo()), null, 2026).map((x) => x.id)).toEqual(['escasez_hidrica', 'red_electrica'])
+  })
+})
+
+describe('los indicadores dentro del índice', () => {
+  const inds = indicadoresInversion(leerInversion(archivo()), clima([2026, 2027]), 2026)
+  const filas = codigos.map((codigo) => ({ codigo, valores: { pm25_anual: 20 } as Record<string, number | undefined> }))
+
+  it('se vuelven variables del índice con su nombre, unidad y sentido', () => {
+    expect(comoVariables(inds)).toEqual([
+      { id: 'sequia_futura', nombre: 'Sequía futura', unidad: 'pp', mejor: 'menor' },
+      { id: 'escasez_hidrica', nombre: 'Escasez hídrica', unidad: 'años', mejor: 'menor' },
+      { id: 'red_electrica', nombre: 'Red eléctrica', unidad: 'MVA', mejor: 'mayor' },
+    ])
+  })
+
+  it('suma el valor de cada indicador a la fila de su comuna, sin tocar lo que ya tenía', () => {
+    const con = sumarIndicadores(filas, inds)
+    expect(con[3]!.valores).toEqual({ pm25_anual: 20, sequia_futura: 3, escasez_hidrica: 3, red_electrica: 30 })
+    expect(filas[3]!.valores).toEqual({ pm25_anual: 20 })
+  })
+
+  it('con peso solo en la red eléctrica, el índice ordena por la red: más capacidad, menos riesgo', () => {
+    const r = calcularRiesgo(sumarIndicadores(filas, inds), [{ id: 'pm25_anual', nombre: 'Aire', unidad: 'µg/m³', mejor: 'menor' }, ...comoVariables(inds)], { red_electrica: 10 })
+    expect(r.filas[0]!.codigo).toBe(codigos[29])
+    expect(r.usadas).toEqual(['red_electrica'])
+  })
+
+  it('une los indicadores de todos los años sin repetir: sequía cuenta aunque falte en algún año', () => {
+    const reales = leerInversion(archivo())
+    const porAnio = [2025, 2026, 2027].map((a) => indicadoresInversion(reales, clima([2026, 2027]), a))
+    expect(porAnio[0]!.map((x) => x.id)).toEqual(['escasez_hidrica', 'red_electrica'])
+    expect(unionIndicadores(porAnio).map((x) => x.id)).toEqual(['sequia_futura', 'escasez_hidrica', 'red_electrica'])
+    expect(unionIndicadores([])).toEqual([])
   })
 })

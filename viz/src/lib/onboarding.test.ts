@@ -56,19 +56,23 @@ describe('grados y prioridades', () => {
     expect(casoDe('industria').prioridades.pm25_anual).toBe(0)
     expect(casoDe('energia').prioridades.pm25_anual).toBe(0)
   })
-  it('nueve perfiles con los pesos aprobados (aire / seguridad / crecimiento)', () => {
-    const tabla = Object.fromEntries(CASOS.map((c) => [c.id, [c.prioridades.pm25_anual, c.prioridades.seguridad, c.prioridades.crecimiento_poblacion]]))
+  it('nueve perfiles con los pesos aprobados: aire, seguridad, crecimiento, sequía, escasez, red, inversión', () => {
+    const ids = ['pm25_anual', 'seguridad', 'crecimiento_poblacion', 'sequia_futura', 'escasez_hidrica', 'red_electrica', 'inversion_evaluada']
+    const tabla = Object.fromEntries(CASOS.map((c) => [c.id, ids.map((id) => c.prioridades[id])]))
     expect(tabla).toEqual({
-      familia: [10, 8, 3],
-      mayor: [10, 8, 0],
-      joven: [3, 8, 5],
-      inversion: [3, 5, 10],
-      emprendedor: [0, 8, 10],
-      empresario: [3, 5, 8],
-      industria: [0, 5, 8],
-      energia: [0, 5, 8],
-      general: [5, 5, 5],
+      familia: [10, 8, 3, 0, 0, 0, 0],
+      mayor: [10, 8, 0, 0, 5, 0, 0],
+      joven: [3, 8, 5, 0, 0, 0, 0],
+      inversion: [0, 5, 10, 0, 0, 0, 8],
+      emprendedor: [0, 8, 10, 0, 0, 0, 5],
+      empresario: [0, 5, 8, 0, 0, 5, 0],
+      industria: [0, 5, 8, 0, 0, 10, 0],
+      energia: [0, 5, 8, 0, 0, 10, 0],
+      general: [5, 5, 5, 0, 0, 0, 0],
     })
+  })
+  it('cada perfil deja como mucho tres indicadores activos', () => {
+    for (const c of CASOS) expect(Object.values(c.prioridades).filter((w) => w > 0).length).toBeLessThanOrEqual(3)
   })
 })
 
