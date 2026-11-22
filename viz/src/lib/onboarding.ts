@@ -106,6 +106,51 @@ export function leerCaso(texto: string): CasoId {
   return (CASOS.find((c) => c.id !== 'general' && c.palabras.test(t)) ?? GENERAL).id
 }
 
+/* ---------- Modificar el requerimiento después del resumen ---------- */
+
+export const LARGO_CAMBIO = 200
+
+/** Qué palabras hablan de cada variable simulada. */
+const TEMAS: readonly { id: string; palabras: RegExp }[] = [
+  { id: 'pm25_anual', palabras: /aire|contamina|asma|respir|smog|humo|alergi/ },
+  { id: 'seguridad', palabras: /segur|delit|robo|delincuen|asalto|de noche|nocturn/ },
+  { id: 'crecimiento_poblacion', palabras: /crec|poblacion|clientes|demanda|habitantes/ },
+]
+const NADA = /no (me )?(importa|interesa|preocupa)|da igual|sin importar|ignora|quita/
+const MENOS = /menos|baja|no tanto|no es tan/
+const CLAVE = /clave|lo mas importante|sobre todo|principal|prioridad|mucho mas|fundamental|critic/
+
+/**
+ * Lectura sin modelo de lenguaje de un cambio escrito («ahora me importa más la seguridad y no el aire»):
+ * por cada frase, la variable que nombra sube a «Mucho» o «Clave», o baja a «Poco» o «Nada» si la frase lo dice.
+ * Devuelve las prioridades nuevas y qué variables cambió. Lo que no nombra queda como estaba.
+ */
+export function ajustarPorTexto(texto: string, prioridades: Readonly<Record<string, number>>): { prioridades: Record<string, number>; cambiadas: string[] } {
+  const out = { ...prioridades }
+  const cambiadas: string[] = []
+  const frases = sinTildes(texto.slice(0, LARGO_CAMBIO * 4))
+    .split(/[,.;:\n]| pero | y | aunque /)
+    .map((f) => f.trim())
+    .filter(Boolean)
+  for (const f of frases) {
+    const grado = NADA.test(f) ? 0 : MENOS.test(f) ? 3 : CLAVE.test(f) ? 10 : 8
+    for (const t of TEMAS) {
+      if (!(t.id in out) || !t.palabras.test(f)) continue
+      if (out[t.id] !== grado) cambiadas.push(t.id)
+      out[t.id] = grado
+    }
+  }
+  return { prioridades: out, cambiadas: [...new Set(cambiadas)] }
+}
+
+/** El caso escrito antes más el cambio, acotado: es lo que lee Claude cuando el intermediario está. */
+export function sumarCambio(contexto: string, cambio: string, max: number): string {
+  const c = cambio.replace(/\s+/g, ' ').trim().slice(0, LARGO_CAMBIO)
+  if (!c) return contexto
+  const base = contexto.trim()
+  return (base ? `${base.slice(0, Math.max(0, max - c.length - 1))}\n${c}` : c).slice(0, max)
+}
+
 /** Cinco grados en vez de una escala de once: menos que decidir. */
 export const GRADOS: readonly { valor: number; texto: string }[] = [
   { valor: 0, texto: 'Nada' },

@@ -48,7 +48,7 @@ import { VistaAportes } from './components/VistaAportes'
 import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, type SeccionId } from './lib/pestanas'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
-import { casoDe, explicar, fueraDeRango, GRADOS, resolverLimites } from './lib/onboarding'
+import { ajustarPorTexto, casoDe, explicar, fueraDeRango, GRADOS, leerCaso, prioridadesDe, resolverLimites, sumarCambio } from './lib/onboarding'
 import { aplicarAjustes, INDICADORES, LARGO_CASO_MAX, NO_MEDIDO, pedirInterpretacion, type Interpretacion } from './lib/caso'
 import type { Escenario, Simulacion } from './lib/types'
 
@@ -763,6 +763,24 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         ...(lecturaCaso.r.no_medido.length > 0 ? [`El modelo no mide ${lecturaCaso.r.no_medido.map((k) => NO_MEDIDO[k]).join(', ')}.`] : []),
       ]
     : []
+  /**
+   * Cambia el requerimiento con una frase. Si la frase describe otro tipo de caso, parte de sus prioridades;
+   * si no, de las actuales. El texto se suma al caso para que Claude, si está, lo lea completo.
+   */
+  const modificarBusqueda = (cambio: string) => {
+    if (!busqueda) return
+    const otro = leerCaso(cambio)
+    const caso = casoDe(otro === 'general' ? busqueda.caso : otro)
+    const base = caso.id === busqueda.caso ? pesos : prioridadesDe(caso, cortas.map((v) => v.id))
+    terminarEntrada({
+      caso: caso.id,
+      prioridades: ajustarPorTexto(cambio, base).prioridades,
+      rangos,
+      contexto: sumarCambio(busqueda.contexto, cambio, LARGO_CASO_MAX),
+      sinDatos: caso.referencia.map((r) => r.nombre),
+    })
+  }
+
   const guia = busqueda
     ? {
         titulo: casoDe(busqueda.caso).titulo,
@@ -784,6 +802,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
         porIA: !!guiaIA?.texto,
         onCambiar: () => setOnb(true),
+        onModificar: modificarBusqueda,
         onAgua: agua && busqueda.caso === 'hidro' ? irAAgua : undefined,
         leyendo: !!lecturaCaso?.cargando,
         ajustes: ajustesGuia,

@@ -3782,3 +3782,61 @@ div.agua-sim-pie {
   opacity: 0.4;
   cursor: default;
 }
+
+/* ---------- Cambiar el requerimiento desde el resumen ---------- */
+.guia-modificar {
+  display: grid;
+  gap: calc(var(--u) * 0.3);
+  margin-top: calc(var(--u) * 0.7);
+}
+.guia-modificar label {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--tinta-2);
+}
+.guia-modificar-fila {
+  display: flex;
+  gap: calc(var(--u) * 0.4);
+}
+.guia-modificar input {
+  flex: 1;
+  min-width: 0;
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.7);
+  border: 0;
+  box-shadow: inset 0 0 0 1.5px var(--tinta);
+  background: var(--papel);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--t-s);
+}
+.guia-modificar input::placeholder {
+  color: var(--tinta-2);
+}
+.guia-modificar input:focus-visible {
+  outline: 3px solid var(--agua);
+  outline-offset: 1px;
+}
+.guia-modificar .lectura {
+  background: var(--tinta);
+  color: var(--papel);
+  font-weight: 800;
+}
+.guia-modificar .lectura:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* la etiqueta queda para lectores de pantalla: el texto de ejemplo ya dice qué hace el campo */
+.guia-modificar label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.guia-modificar {
+  margin-top: calc(var(--u) * 0.5);
+}
+/* con siete filas y el campo, la nota final repetía la leyenda del mapa y obligaba a desplazarse */
+.ficha-compacta > .nota {
+  display: none;
+}

@@ -1,4 +1,4 @@
-import { rangosDe } from '../lib/onboarding'
+import { LARGO_CAMBIO, rangosDe } from '../lib/onboarding'
 import { Desplegable } from './Desplegable'
 import { useEffect, useRef, useState } from 'react'
 import { PAPELES_POLITICA } from '../lib/capas'
@@ -44,6 +44,8 @@ interface Props {
     cargando: boolean
     porIA: boolean
     onCambiar: () => void
+    /** cambia el requerimiento con una frase («ahora me importa más la seguridad») y reordena */
+    onModificar?: (texto: string) => void
     /** el caso depende del agua y hay caudales medidos: lleva a verlos */
     onAgua?: () => void
     /** Claude está leyendo el caso */
@@ -95,6 +97,39 @@ interface Props {
   anios: number[]
   idxAnio: number
   politicas: Politica[]
+}
+
+/** Una línea para cambiar el requerimiento en lenguaje natural, sin volver a la entrada. */
+function Modificar({ onEnviar, ocupado }: { onEnviar: (texto: string) => void; ocupado: boolean }) {
+  const [texto, setTexto] = useState('')
+  const listo = texto.trim().length >= 3 && !ocupado
+  return (
+    <form
+      className="guia-modificar"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (!listo) return
+        onEnviar(texto.trim())
+        setTexto('')
+      }}
+    >
+      <label htmlFor="guia-modificar">Cambia tu requerimiento</label>
+      <div className="guia-modificar-fila">
+        <input
+          id="guia-modificar"
+          type="text"
+          value={texto}
+          maxLength={LARGO_CAMBIO}
+          autoComplete="off"
+          placeholder="Cambia tu requerimiento: «ahora me importa más la seguridad que el aire»"
+          onChange={(e) => setTexto(e.target.value)}
+        />
+        <button type="submit" className="lectura" disabled={!listo}>
+          Actualizar
+        </button>
+      </div>
+    </form>
+  )
 }
 
 export function VistaRiesgo(p: Props) {
@@ -187,6 +222,7 @@ function General(p: Props) {
             )}
             {p.guia.notas && p.guia.notas.length > 0 && <p className="guia-pie">{p.guia.notas.join(' ')}</p>}
             {p.guia.porIA && <p className="guia-pie">Redactado por Claude con los números del modelo</p>}
+            {p.guia.onModificar && <Modificar onEnviar={p.guia.onModificar} ocupado={!!p.guia.cargando} />}
           </div>
         ) : (
           <div className="perfiles" role="radiogroup" aria-label="Perfil de prioridades">
