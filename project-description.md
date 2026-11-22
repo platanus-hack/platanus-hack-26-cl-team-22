@@ -73,7 +73,7 @@ Cada mecanismo se ajusta con un período y se prueba con otro, contra dos altern
 - **Pruebas:** ~230 tests en Python, ~280 en la interfaz y 28 en el servidor de Claude; CI corre lint y
   pytest en cada PR.
 
-## Por qué no usamos fine-tuning (ni agentes LLM)
+## Por qué Claude por API (y no IA local, fine-tuning ni agentes LLM)
 
 Claude solo clasifica el caso en un catálogo cerrado; nunca produce números. Para eso, un prompt con
 **salida estructurada** (`json_schema`) más **validación en el servidor** (se descarta toda variable fuera
@@ -82,6 +82,7 @@ se esperaba con el modelo real, incluida una inyección de prompt.
 
 | Alternativa | Por qué no |
 |---|---|
+| IA local (modelo abierto con llama-server, Ollama o vLLM) | Exige un servidor con GPU encendido todo el día, o una CPU demasiado lenta para responder en el momento. Con la API, el servidor es un proceso Node pequeño sin GPU, se paga solo por llamada y un tope diario fija el gasto máximo. Un modelo pequeño además entiende peor los casos ambiguos. |
 | Fine-tuning | No hay casos etiquetados; habría que inventarlos. El catálogo cambió varias veces en 36 horas, y cada cambio obligaría a reentrenar. Con prompt + esquema, se edita y se reevalúa en minutos. |
 | RAG sobre las comunas | El LLM terminaría citando cifras; los números deben venir solo del simulador validado. |
 | Agentes LLM en la simulación | 260 000 decisiones por escenario, no reproducibles por semilla y sin datos para validarlas. |
