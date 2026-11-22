@@ -107,7 +107,7 @@ function contador(texto: string) {
   return { c, llamadas: () => llamadas, soltar: () => soltar() }
 }
 
-const LECTURA = JSON.stringify({ ajustes: [], indicadores: [], no_medido: [], preguntas: ['¿Es para vivir o para una empresa?'] })
+const LECTURA = JSON.stringify({ ajustes: [], indicadores: [], no_medido: [], preguntas: ['¿Trabajan de noche?'] })
 const post = (base: string, body: string) => fetch(`${base}/interpretar`, { method: 'POST', headers: { 'content-type': 'application/json' }, body })
 
 test('an identical request is answered from the cache: one model call, and it does not use up the limit', async () => {

@@ -102,8 +102,10 @@ Reglas:
 - En "indicadores" sugiere solo los que ayuden a este caso. En "no_medido" marca lo que la persona menciona y el análisis no mide.
 - Nunca escribas nombres de comunas ni números sobre comunas: el orden lo calcula el análisis.
 
+El propósito (vivir allí, una empresa o una inversión) lo infieres del caso y del perfil; nunca lo preguntes. Si el caso no lo aclara, toma el del perfil.
+
 En "preguntas" pides lo que falta, en la misma respuesta, para no hacer otra consulta:
-- Datos que suelen cambiar el análisis: si es para vivir (residencial) o para una empresa o inversión; si vivirán niños pequeños, personas mayores o con enfermedades respiratorias o cardíacas (asma, EPOC); si es una empresa, de qué depende (clientes y población que crece, personal al aire libre, horarios nocturnos).
+- Datos que suelen cambiar el análisis: si vivirán niños pequeños, personas mayores o con enfermedades respiratorias o cardíacas (asma, EPOC); si es una empresa, de qué depende (clientes y población que crece, personal al aire libre, horarios nocturnos).
 - Pregunta solo lo que falta y cambiaría el análisis. Si el caso ya lo dice, o ya trae respuestas a preguntas anteriores, devuelve la lista vacía.
 - Máximo ${MAX_PREGUNTAS} preguntas, de ${LARGO_PREGUNTA_MAX} caracteres como mucho, en español y de respuesta corta. Una pregunta por dato.`
 
@@ -113,6 +115,9 @@ En "preguntas" pides lo que falta, en la misma respuesta, para no hacer otra con
  */
 const PIDE_DE_MAS = /https?:|www\.|\.(com|cl|net|org)\b|@|\brut\b|correo|e-?mail|telefono|celular|whatsapp|contrasena|tarjeta|cuenta bancaria|direccion exacta|tu nombre|apellido/
 
+/** The purpose (to live in, a business or an investment) is inferred from the case and profile, never asked. */
+const PIDE_PROPOSITO = /\bpara vivir\b|\bresidencial\b/
+
 /** Keeps at most MAX_PREGUNTAS distinct, short questions. Never throws. */
 export function validarPreguntas(raw: unknown): string[] {
   if (!esObjeto(raw) || !Array.isArray(raw.preguntas)) return []
@@ -121,7 +126,7 @@ export function validarPreguntas(raw: unknown): string[] {
   for (const q of raw.preguntas) {
     if (typeof q !== 'string') continue
     const t = q.replace(/\s+/g, ' ').trim()
-    if (t.length < 8 || t.length > LARGO_PREGUNTA_MAX || !t.includes('?') || PIDE_DE_MAS.test(normalizar(t)) || vistas.has(normalizar(t))) continue
+    if (t.length < 8 || t.length > LARGO_PREGUNTA_MAX || !t.includes('?') || PIDE_DE_MAS.test(normalizar(t)) || PIDE_PROPOSITO.test(normalizar(t)) || vistas.has(normalizar(t))) continue
     vistas.add(normalizar(t))
     out.push(t)
     if (out.length === MAX_PREGUNTAS) break
