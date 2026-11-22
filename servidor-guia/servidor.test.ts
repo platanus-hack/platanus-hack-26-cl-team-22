@@ -188,3 +188,15 @@ test('past the daily cap the server answers 429 without calling Claude, but cach
     await new Promise((ok) => s.close(ok))
   }
 })
+
+test('GET /salud shows how the rate limit sees the caller, to set PROXIES_CONFIABLES from evidence', async () => {
+  const s = crearServidor(() => null, [ORIGEN], { proxies: 1 })
+  await new Promise<void>((ok) => s.listen(0, '127.0.0.1', ok))
+  const base = `http://127.0.0.1:${(s.address() as AddressInfo).port}`
+  try {
+    const r = await (await fetch(`${base}/salud`, { headers: { 'x-forwarded-for': '6.6.6.6, 200.1.1.1' } })).json()
+    assert.deepEqual(r, { ok: true, clave: false, ip: '200.1.1.1', proxies: 1, cadena: ['6.6.6.6', '200.1.1.1'], directa: '127.0.0.1' })
+  } finally {
+    await new Promise((ok) => s.close(ok))
+  }
+})

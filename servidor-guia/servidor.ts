@@ -4,7 +4,7 @@
  *
  *   POST /interpretar  { caso, perfil, prioridades }  -> { ajustes, indicadores, no_medido, preguntas }
  *   POST /guia         PedidoGuia (viz/src/lib/guia.ts) -> { texto }
- *   GET  /salud        -> { ok, clave }
+ *   GET  /salud        -> { ok, clave, ip, proxies, cadena, directa }  (cadena: X-Forwarded-For as received)
  *
  * Run:  ANTHROPIC_API_KEY=... node servidor.ts     (PORT, default 8787; ORIGENES, comma separated)
  */
@@ -75,9 +75,22 @@ function crearLimitador(porMinuto: number) {
 export function ipCliente(req: IncomingMessage, proxies: number): string {
   const directa = req.socket.remoteAddress ?? 'desconocido'
   if (proxies <= 0) return directa
-  const cabecera = req.headers['x-forwarded-for']
-  const lista = (Array.isArray(cabecera) ? cabecera.join(',') : (cabecera ?? '')).split(',').map((s) => s.trim()).filter(Boolean)
+  const lista = cadenaReenvio(req)
   return lista[lista.length - proxies] ?? directa
+}
+
+/** X-Forwarded-For as a list, first entry first (as the client or the first proxy wrote it). */
+function cadenaReenvio(req: IncomingMessage): string[] {
+  const cabecera = req.headers['x-forwarded-for']
+  return (Array.isArray(cabecera) ? cabecera.join(',') : (cabecera ?? '')).split(',').map((s) => s.trim()).filter(Boolean)
+}
+
+/**
+ * What GET /salud shows so PROXIES_CONFIABLES can be set from evidence: Render's docs do not say how
+ * many hops it adds. Only the caller's own request headers are echoed back.
+ */
+export function diagnosticoIp(req: IncomingMessage, proxies: number) {
+  return { ip: ipCliente(req, proxies), proxies, cadena: cadenaReenvio(req), directa: req.socket.remoteAddress ?? null }
 }
 
 /**
@@ -132,7 +145,7 @@ export function crearServidor(
       res.setHeader('vary', 'origin')
     }
     if (req.method === 'OPTIONS') return void res.writeHead(204).end()
-    if (req.method === 'GET' && req.url === '/salud') return responder(res, 200, { ok: true, clave: obtenerCliente() !== null, ip: ipCliente(req, proxies) })
+    if (req.method === 'GET' && req.url === '/salud') return responder(res, 200, { ok: true, clave: obtenerCliente() !== null, ...diagnosticoIp(req, proxies) })
     if (req.method !== 'POST' || (req.url !== '/interpretar' && req.url !== '/guia')) return responder(res, 404, { error: 'no existe' })
 
     const cliente = obtenerCliente()
@@ -179,7 +192,8 @@ if (import.meta.main) {
   const cliente = clave ? (new Anthropic({ timeout: 20_000, maxRetries: 1 }) as unknown as ClienteClaude) : null
   const origenes = process.env.ORIGENES ? process.env.ORIGENES.split(',').map((s) => s.trim()) : ORIGENES_DEFECTO
   const puerto = Number(process.env.PORT ?? 8787)
-  // Trusted proxy hops in front of this process (Render: 1). Check GET /salud shows your own address.
+  // Trusted proxy hops in front of this process. Render's docs do not state it: set it from GET /salud
+  // (see README, «Operación»).
   const proxies = Number(process.env.PROXIES_CONFIABLES ?? 0) || 0
   // Model calls per UTC day for the whole service (0 = no cap).
   const topeDiario = Number(process.env.TOPE_DIARIO ?? 0) || 0
