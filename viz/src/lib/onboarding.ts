@@ -158,12 +158,16 @@ const TEMAS: readonly { id: string; palabras: RegExp }[] = [
 ]
 const NADA = /no (me )?(importa|interesa|preocupa)|da igual|sin importar|ignora|quita/
 const MENOS = /menos|baja|no tanto|no es tan/
+/** Pesos activos (mayores que 0) que puede tener un perfil a la vez. */
+export const MAX_ACTIVAS = 3
+
 const CLAVE = /clave|lo mas importante|sobre todo|principal|prioridad|mucho mas|fundamental|critic/
 
 /**
  * Lectura sin modelo de lenguaje de un cambio escrito («ahora me importa más la seguridad y no el aire»):
  * por cada frase, la variable que nombra sube a «Mucho» o «Clave», o baja a «Poco» o «Nada» si la frase lo dice.
- * Devuelve las prioridades nuevas y qué variables cambió. Lo que no nombra queda como estaba.
+ * Devuelve las prioridades nuevas y qué variables cambió. Lo que no nombra queda como estaba, salvo que
+ * una subida deje más de MAX_ACTIVAS pesos activos: entonces baja a 0 la menos importante de las otras.
  */
 export function ajustarPorTexto(texto: string, prioridades: Readonly<Record<string, number>>): { prioridades: Record<string, number>; cambiadas: string[] } {
   const out = { ...prioridades }
@@ -180,8 +184,22 @@ export function ajustarPorTexto(texto: string, prioridades: Readonly<Record<stri
       out[t.id] = grado
     }
   }
+  // Como mucho tres pesos activos por perfil: cada peso que el texto activó desplaza a la menos importante
+  // de las demás. Si el texto no activó ninguno, no se recorta nada aunque ya hubiera más de tres.
+  const subidas = new Set(cambiadas.filter((id) => !(prioridades[id]! > 0) && out[id]! > 0))
+  for (let i = 0; i < subidas.size; i++) {
+    const activas = Object.keys(out).filter((id) => out[id]! > 0)
+    if (activas.length <= MAX_ACTIVAS) break
+    const candidatas = activas.filter((id) => !subidas.has(id))
+    if (!candidatas.length) break
+    // la de menor peso; si empatan, la última en el orden de las variables
+    const baja = candidatas.reduce((m, id) => (out[id]! <= out[m]! ? id : m))
+    out[baja] = 0
+    cambiadas.push(baja)
+  }
   return { prioridades: out, cambiadas: [...new Set(cambiadas)] }
 }
+
 
 /** El caso escrito antes más el cambio, acotado: es lo que lee Claude cuando el intermediario está. */
 export function sumarCambio(contexto: string, cambio: string, max: number): string {

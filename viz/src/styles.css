@@ -3581,12 +3581,6 @@ div.agua-sim-pie {
   display: grid;
 }
 
-/* En la ficha compacta el estado frente a la norma baja a su propia línea: junto al nombre se cortaba. */
-.ficha-compacta .dimension-nombre .dimension-norma {
-  display: block;
-  margin-left: 0;
-}
-
 /* ---------- Aporte de cada proyecto y de cada licitación (issue #36) ---------- */
 .v-aportes {
   display: grid;
@@ -3691,6 +3685,61 @@ div.agua-sim-pie {
   background: var(--papel-2);
   box-shadow: inset 3px 0 0 var(--tinta);
 }
+/* Licitaciones: el aporte propio va primero y es lo que más se ve de la fila. */
+.aporte-lic {
+  grid-template-columns: max-content minmax(0, 1fr) auto;
+}
+.aporte-lic .aporte-puntos {
+  justify-self: start;
+  min-width: 7.5em;
+  text-align: right;
+  font-size: var(--t-m);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.aporte-flecha {
+  width: 0.75em;
+  height: 0.5em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  transition: transform 0.15s;
+}
+.aporte-abierto .aporte-flecha {
+  transform: rotate(180deg);
+}
+.aporte-efecto {
+  margin: 0 0 calc(var(--u) * 0.4);
+  font-size: var(--t-s);
+}
+.aporte-detalle dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px calc(var(--u) * 0.7);
+  margin: 0;
+}
+.aporte-detalle dt {
+  font-weight: 700;
+  color: var(--tinta-2);
+}
+.aporte-detalle dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.aportes-avisos {
+  margin: 0;
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.7) calc(var(--u) * 0.4) calc(var(--u) * 1.6);
+  font-size: var(--t-xs);
+  line-height: 1.35;
+  background: var(--papel-2);
+  box-shadow: inset 3px 0 0 var(--cafe);
+}
+@media (prefers-reduced-motion: reduce) {
+  .aporte-flecha {
+    transition: none;
+  }
+}
 .aportes-paginas {
   justify-content: flex-end;
   font-size: var(--t-xs);
@@ -3753,8 +3802,4 @@ div.agua-sim-pie {
 }
 .guia-modificar {
   margin-top: calc(var(--u) * 0.5);
-}
-/* con siete filas y el campo, la nota final repetía la leyenda del mapa y obligaba a desplazarse */
-.ficha-compacta > .nota {
-  display: none;
 }

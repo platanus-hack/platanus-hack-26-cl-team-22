@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aportePorEstado, filtrarLicitaciones, leerLicitaciones, leerProyectos, montoDe, pagina, pesosCortos, urlSeia } from './aportes'
+import { aportePorEstado, credibilidadSin, filtrarLicitaciones, leerLicitaciones, leerProyectos, montoDe, ordenInicial, pagina, pesosCortos, puntosCredibilidad, urlSeia } from './aportes'
 import { fmt } from './format'
 
 const proyectos = {
@@ -70,6 +70,19 @@ describe('licitaciones de una comuna', () => {
     expect(filtrarLicitaciones(c.licitaciones, null, 'aporte')[0]!.codigo).toBe('A-2')
     expect(montoDe(c.licitaciones[1]!)).toBe(2e9)
   })
+  it('a igual aporte, ordena primero la de mayor monto', () => {
+    expect(filtrarLicitaciones(c.licitaciones, 'adjudicada', 'aporte').map((l) => l.codigo)).toEqual(['A-1', 'A-3'])
+  })
+  it('parte ordenada por aporte solo si la comuna entra al modelo', () => {
+    expect(ordenInicial(true)).toBe('aporte')
+    expect(ordenInicial(false)).toBe('monto')
+  })
+  it('dice cuánto sería la credibilidad sin esa licitación, y nada si no la movió', () => {
+    expect(credibilidadSin(c, c.licitaciones[0]!)).toBeCloseTo(0.852 - 0.00013, 10)
+    expect(credibilidadSin(c, c.licitaciones[3]!)).toBeNull()
+    const fuera = leerLicitaciones({ ...lics, afecta_modelo: false })!
+    expect(credibilidadSin(fuera, fuera.licitaciones[0]!)).toBeNull()
+  })
   it('hay un aporte por estado', () => {
     expect(aportePorEstado(c)).toEqual({ adjudicada: 0.00013, fallida: -0.0012, abierta: 0 })
   })
@@ -92,5 +105,10 @@ describe('página y montos', () => {
     expect(pesosCortos(5_062_910, fmt)).toBe('$ 5,1 millones')
     expect(pesosCortos(850_000, fmt)).toBe('$ 850 mil')
     expect(pesosCortos(null, fmt)).toBe('sin monto')
+  })
+  it('escribe el aporte en puntos de credibilidad, con signo', () => {
+    expect(puntosCredibilidad(0.00013, fmt)).toBe(`+${fmt(0.013, 3)} pt`)
+    expect(puntosCredibilidad(-0.0012, fmt)).toBe(`−${fmt(0.12, 3)} pt`)
+    expect(puntosCredibilidad(0, fmt)).toBe(`${fmt(0, 3)} pt`)
   })
 })
