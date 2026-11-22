@@ -50,11 +50,11 @@ export interface Interpretacion {
   preguntas: string[]
 }
 
-/** The written case (400) plus up to two answered follow-ups (see componerCaso). */
+/** The written case (400) plus the answered follow-up (see componerCaso). */
 export const LARGO_CASO_MAX = 800
 
 /** Follow-up questions Claude may ask before reading the case: never more than this, in a single round. */
-export const MAX_PREGUNTAS = 2
+export const MAX_PREGUNTAS = 1
 export const LARGO_PREGUNTA_MAX = 90
 export const LARGO_RESPUESTA_MAX = 100
 
@@ -102,16 +102,23 @@ Reglas:
 - En "indicadores" sugiere solo los que ayuden a este caso. En "no_medido" marca lo que la persona menciona y el análisis no mide.
 - Nunca escribas nombres de comunas ni números sobre comunas: el orden lo calcula el análisis.
 
-En "preguntas" pides lo que falta, en la misma respuesta, para no hacer otra consulta:
-- Datos que suelen cambiar el análisis: si es para vivir (residencial) o para una empresa o inversión; si vivirán niños pequeños, personas mayores o con enfermedades respiratorias o cardíacas (asma, EPOC); si es una empresa, de qué depende (clientes y población que crece, personal al aire libre, horarios nocturnos).
-- Pregunta solo lo que falta y cambiaría el análisis. Si el caso ya lo dice, o ya trae respuestas a preguntas anteriores, devuelve la lista vacía.
-- Máximo ${MAX_PREGUNTAS} preguntas, de ${LARGO_PREGUNTA_MAX} caracteres como mucho, en español y de respuesta corta. Una pregunta por dato.`
+El propósito (vivir allí, una empresa o una inversión) lo infieres del caso y del perfil; nunca lo preguntes. Si el caso no lo aclara, toma el del perfil.
+
+En "preguntas" haces una sola pregunta, en la misma respuesta, para no hacer otra consulta: la que más cambiaría las prioridades de este perfil y el caso no responde. Preguntas comunes por perfil, de la que más mueve a la que menos:
+- Vivienda: si vivirán niños pequeños, personas mayores o alguien con asma, EPOC o una enfermedad cardíaca (aire); si llegarán tarde de noche o vivirán solos (seguridad).
+- Energía hidráulica: si habrá personal o equipos en terreno de noche (seguridad); si venderá a la red o a consumidores cercanos que crecen (crecimiento).
+- Industria y logística: si depende de clientes y trabajadores cercanos (crecimiento); si opera de noche o guarda mercadería de valor (seguridad); si hay personal al aire libre (aire).
+- Evaluación general: qué le importa más entre el aire, la seguridad y que la zona crezca.
+Nunca preguntes por una variable que ya está en tus "ajustes" ni por algo que el caso ya dice: pasa a la siguiente de su perfil; si ya trae una respuesta, o nada cambiaría el análisis, devuelve la lista vacía. Como mucho ${LARGO_PREGUNTA_MAX} caracteres, en español y de respuesta corta.`
 
 /**
  * Questions the page must never show, whatever the case said: links, or asking for personal data the
  * analysis does not need (matched on the normalized text, without accents).
  */
 const PIDE_DE_MAS = /https?:|www\.|\.(com|cl|net|org)\b|@|\brut\b|correo|e-?mail|telefono|celular|whatsapp|contrasena|tarjeta|cuenta bancaria|direccion exacta|tu nombre|apellido/
+
+/** The purpose (to live in, a business or an investment) is inferred from the case and profile, never asked. */
+const PIDE_PROPOSITO = /\bpara vivir\b|\bresidencial\b/
 
 /** Keeps at most MAX_PREGUNTAS distinct, short questions. Never throws. */
 export function validarPreguntas(raw: unknown): string[] {
@@ -121,7 +128,7 @@ export function validarPreguntas(raw: unknown): string[] {
   for (const q of raw.preguntas) {
     if (typeof q !== 'string') continue
     const t = q.replace(/\s+/g, ' ').trim()
-    if (t.length < 8 || t.length > LARGO_PREGUNTA_MAX || !t.includes('?') || PIDE_DE_MAS.test(normalizar(t)) || vistas.has(normalizar(t))) continue
+    if (t.length < 8 || t.length > LARGO_PREGUNTA_MAX || !t.includes('?') || PIDE_DE_MAS.test(normalizar(t)) || PIDE_PROPOSITO.test(normalizar(t)) || vistas.has(normalizar(t))) continue
     vistas.add(normalizar(t))
     out.push(t)
     if (out.length === MAX_PREGUNTAS) break

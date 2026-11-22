@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { componerCaso, MAX_PREGUNTAS, mensajeCaso, sinDelimitador, validarPreguntas, aplicarAjustes, ESQUEMA_INTERPRETACION, LARGO_CASO_MAX, pedirInterpretacion, validarInterpretacion, type Interpretacion } from './caso'
+import { componerCaso, MAX_PREGUNTAS, mensajeCaso, sinDelimitador, validarPreguntas, aplicarAjustes, ESQUEMA_INTERPRETACION, INSTRUCCIONES_CASO, LARGO_CASO_MAX, pedirInterpretacion, validarInterpretacion, type Interpretacion } from './caso'
 
 const caso = 'Busco departamento para mi familia; mi hijo tiene asma y trabajo de noche.'
 
@@ -125,10 +125,22 @@ describe('pedirInterpretacion', () => {
 })
 
 describe('follow-up questions', () => {
-  it('keeps at most two distinct, short questions', () => {
-    const q = validarPreguntas({ preguntas: ['¿Es para vivir o para una empresa?', '¿Es para vivir o para una empresa?', '¿Hay niños o personas con asma?', '¿Una tercera pregunta?'] })
-    expect(q).toEqual(['¿Es para vivir o para una empresa?', '¿Hay niños o personas con asma?'])
-    expect(q.length).toBeLessThanOrEqual(MAX_PREGUNTAS)
+  it('keeps a single question: never a second one', () => {
+    const q = validarPreguntas({ preguntas: ['¿Trabajan de noche?', '¿Hay niños o personas con asma?'] })
+    expect(q).toEqual(['¿Trabajan de noche?'])
+    expect(MAX_PREGUNTAS).toBe(1)
+  })
+
+  it('tells Claude which common question moves the indicators for each example profile', () => {
+    for (const perfil of ['Vivienda', 'Energía hidráulica', 'Industria y logística', 'Evaluación general']) expect(INSTRUCCIONES_CASO).toContain(perfil)
+    expect(INSTRUCCIONES_CASO).toMatch(/una sola pregunta/)
+    expect(INSTRUCCIONES_CASO).toMatch(/Nunca preguntes por una variable que ya está en tus "ajustes"/)
+  })
+
+  it('never asks whether it is to live in or for a business: Claude infers it from the case and profile', () => {
+    const q = validarPreguntas({ preguntas: ['¿Es para vivir allí o para una empresa o inversión?', '¿Es para uso residencial?', '¿Vivirán niños pequeños?'] })
+    expect(q).toEqual(['¿Vivirán niños pequeños?'])
+    expect(INSTRUCCIONES_CASO).toMatch(/nunca lo preguntes/)
   })
 
   it('drops non-strings, empty and overlong questions, and anything that is not the expected shape', () => {
@@ -144,8 +156,8 @@ describe('follow-up questions', () => {
   })
 
   it('comes back inside the interpretation, so one call reads the case and asks what is missing', () => {
-    const r = validarInterpretacion({ ajustes: [], indicadores: [], no_medido: [], preguntas: ['¿Es para vivir o para una empresa?', 'x', '¿Hay niños o personas con asma?', '¿Una tercera pregunta?'] }, caso)
-    expect(r?.preguntas).toEqual(['¿Es para vivir o para una empresa?', '¿Hay niños o personas con asma?'])
+    const r = validarInterpretacion({ ajustes: [], indicadores: [], no_medido: [], preguntas: ['x', '¿Trabajan de noche?', '¿Hay niños o personas con asma?'] }, caso)
+    expect(r?.preguntas).toEqual(['¿Trabajan de noche?'])
     expect(ESQUEMA_INTERPRETACION.required).toContain('preguntas')
     expect(validarInterpretacion({ ajustes: [], indicadores: [], no_medido: [] }, caso)?.preguntas).toEqual([])
   })

@@ -95,7 +95,8 @@ Reglas:
 - Usa solo los nombres y números que recibes; no agregues datos, comunas ni cifras.
 - "riesgo" va de 0 a 100: es la posición entre las 52 comunas, 0 la mejor.
 - Si recibes "falta", menciona en una frase lo que el análisis no mide.
-- Sin saltos de línea, sin listas y sin títulos.`
+- Sin saltos de línea, sin listas y sin títulos.
+- Menos de 500 caracteres en total.`
 
 const corto = (x: unknown, max: number) => typeof x === 'string' && x.length <= max
 const numero = (x: unknown) => typeof x === 'number' && Number.isFinite(x)
@@ -116,13 +117,28 @@ export function validarPedidoGuia(raw: unknown): PedidoGuia | null {
     for (const v of c.variables)
       if (!corto(v?.nombre, 60) || !corto(v?.unidad, 40) || !numero(v?.riesgo) || !(v?.valor === null || numero(v?.valor))) return null
   }
-  return raw as PedidoGuia
+  // Rebuilt from the checked fields only: the whole request goes into the prompt, so any extra
+  // property would reach the model unchecked.
+  const pedido: PedidoGuia = {
+    perfil: r.perfil,
+    contexto: r.contexto,
+    prioridades: { ...p },
+    anio: r.anio,
+    top: r.top.map((c: Record<string, any>) => ({
+      comuna: c.comuna,
+      riesgo: c.riesgo,
+      variables: c.variables.map((v: Record<string, any>) => ({ nombre: v.nombre, valor: v.valor, unidad: v.unidad, riesgo: v.riesgo })),
+    })),
+  }
+  if (r.falta !== undefined) pedido.falta = r.falta
+  return pedido
 }
 
 export async function redactarGuia(cliente: ClienteClaude, pedido: PedidoGuia, signal?: AbortSignal): Promise<Guia | null> {
   const r = await cliente.beta.messages.create({
     model: MODELO,
-    max_tokens: 16000,
+    // One paragraph of at most 600 characters: this cap bounds what a single call can cost.
+    max_tokens: 2000,
     ...FALLBACK,
     output_config: { effort: 'low' },
     system: [{ type: 'text', text: INSTRUCCIONES_GUIA, cache_control: { type: 'ephemeral' } }],
