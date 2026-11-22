@@ -101,6 +101,32 @@ El modelo de aire acierta cuánto mejora la región, pero todavía **no qué com
 Donde hay estación (10 comunas), el nivel parte de lo medido y el modelo calcula el cambio.
 Más detalle en [`docs/sim-spec.md`](docs/sim-spec.md#validación).
 
+## Decisiones técnicas
+
+Los números salen del Monte Carlo, no de un modelo de lenguaje. La IA cumple un solo papel: leer el caso
+que la persona escribe («mi hijo tiene asma», «quiero instalar una bodega») y elegirle un perfil y unos
+pesos dentro de un **catálogo cerrado**. Nunca escribe cifras sobre las comunas.
+
+Para eso usamos **Claude Sonnet 5.5 por la API de Anthropic**, con salida estructurada (`json_schema`),
+validación en el servidor (se descarta toda variable fuera del catálogo y toda cita que no esté textual en
+el caso), esfuerzo bajo y caché de prompt y de respuestas. Resultado con el modelo real: **29 de 29**
+frases de prueba quedan como se esperaba, incluida una inyección de prompt
+([`docs/evaluacion-casos.md`](docs/evaluacion-casos.md)).
+
+Evaluamos las alternativas y las descartamos a propósito:
+
+| Alternativa | Por qué no |
+|---|---|
+| IA local (modelo abierto servido con llama-server, Ollama o vLLM) | Desplegarla exige un servidor con GPU encendido todo el día, o una CPU demasiado lenta para responder en el momento. Con la API, el servidor es un proceso Node pequeño sin GPU, se paga solo por llamada y un tope diario fija el gasto máximo. Además, un modelo pequeño entiende peor los casos ambiguos o en otro idioma. |
+| Fine-tuning (LoRA/QLoRA o por API) | No existen casos etiquetados; habría que inventarlos (dataset sintético, riesgo de colapso de modo). El catálogo cambió varias veces en 36 horas (de 3 a 7 variables, de 5 a 9 perfiles) y cada cambio obligaría a reentrenar. Con prompt + esquema, se edita y se reevalúa en minutos con `npm run evaluar`. |
+| RAG sobre documentos de las comunas | El LLM terminaría citando cifras; los números deben venir solo del simulador validado. |
+| Agentes LLM dentro de la simulación | 500 réplicas × 52 comunas × 10 años = 260 000 decisiones por escenario, no reproducibles por semilla y sin datos para validarlas. Los hogares se modelan como flujos calibrados con el censo ([ADR-0002](docs/adr/0002-hogares-como-flujos-agregados.md)). |
+
+La clave de Anthropic vive solo en `servidor-guia/`, con tope por IP y tope diario. Si el servidor no
+responde, la página sigue funcionando con detección por palabras clave. Detalle en
+[ADR-0007](docs/adr/0007-claude-sin-fine-tuning.md); todas las decisiones de ingeniería (modelo,
+validación, despliegue, seguridad, reproducibilidad) en [`docs/decisiones-tecnicas.md`](docs/decisiones-tecnicas.md).
+
 ## Cómo ejecutar
 
 ```bash
