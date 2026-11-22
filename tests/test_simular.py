@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -84,3 +85,11 @@ def test_climate_block_has_both_scenarios_one_run_per_replica_and_years_to_2060(
         assert scenario["anios"] == list(range(YEARS[0], 2061))
         assert len(scenario["corridas"]) == REPLICAS
         assert all(0 <= i < len(scenario["corridas_disponibles"]) for i in scenario["corridas"])
+
+
+def test_simulation_shows_the_same_validation_as_make_validate():
+    root = Path(__file__).resolve().parents[1]
+    sim = json.loads((root / "viz" / "datos" / "simulacion.json").read_text(encoding="utf-8"))
+    report = json.loads((root / "results" / "validacion.json").read_text(encoding="utf-8"))
+    assert sim["validacion"]["pruebas"] == report["filas"]
+    assert sim["validacion"]["tolerancia"] == report["protocolo_empate"]

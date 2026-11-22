@@ -30,3 +30,17 @@ describe('leerValidacion', () => {
     expect(leerValidacion({ solo_texto: { unidad: 'personas', aviso: 'x' } })).toBeUndefined()
   })
 })
+
+describe('leerValidacion: unified tests from make validate', () => {
+  const fila = { variable: 'Aire', prueba: 'PM2,5 2022-2024', metrica: 'RMSE µg/m³', modelo: 1.9, sin_cambio: 2.4, tendencia: null, gana: 'modelo', notas: 'x' }
+
+  it('keeps well-formed rows and the tie tolerance, and drops malformed ones', () => {
+    const v = leerValidacion({ pruebas: [fila, { variable: 'Mal', modelo: 'uno' }, 'texto'], tolerancia: 0.02 })
+    expect(v?.pruebas).toEqual([{ variable: 'Aire', prueba: 'PM2,5 2022-2024', metrica: 'RMSE µg/m³', modelo: 1.9, sin_cambio: 2.4, tendencia: null, gana: 'modelo' }])
+    expect(v?.tolerancia).toBe(0.02)
+  })
+
+  it('does not turn the rows array into an old-style block', () => {
+    expect(leerValidacion({ pruebas: [fila] })?.bloques).toEqual([])
+  })
+})

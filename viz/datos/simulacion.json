@@ -88142,7 +88142,75 @@
    "rmse_gravedad_permisos": 9572.2,
    "rmse_radiacion": 14900.1,
    "aviso": "La vivienda nueva central la ocuparon llegadas desde el extranjero: los permisos no mejoran los destinos de las mudanzas internas."
-  }
+  },
+  "pruebas": [
+   {
+    "variable": "Aire",
+    "prueba": "PM2,5 por estación 2022-2024 desde 2019 (ajuste 2017-2019)",
+    "metrica": "RMSE µg/m³",
+    "modelo": 1.905,
+    "sin_cambio": 2.401,
+    "tendencia": 4.243,
+    "cobertura_80": 0.741,
+    "n": "27 pares, 9 estaciones",
+    "gana": "modelo",
+    "fuente": "python -m experiments.validar",
+    "notas": "Banda del motor sola: 22%. El mismo cambio en todas las estaciones: 1.94."
+   },
+   {
+    "variable": "Hogares",
+    "prueba": "Migración neta por comuna 2019-2024 (ajuste 2012-2017)",
+    "metrica": "RMSE personas",
+    "modelo": 4334.8,
+    "sin_cambio": 7716.2,
+    "tendencia": 5054.0,
+    "cobertura_80": null,
+    "n": "52 comunas",
+    "gana": "modelo",
+    "fuente": "python -m experiments.calibrar_hogares",
+    "notas": "Modelo determinista: sin banda."
+   },
+   {
+    "variable": "Población",
+    "prueba": "Población por comuna 2024 desde 2017 (tasas 2012-2017)",
+    "metrica": "RMSE personas",
+    "modelo": 16903.6,
+    "sin_cambio": 15046.3,
+    "tendencia": null,
+    "cobertura_80": null,
+    "n": "52 comunas",
+    "gana": "sin_cambio",
+    "fuente": "python -m experiments.validar_poblacion",
+    "notas": "Proyección oficial del INE: 18,391 (no es una tendencia de los años de ajuste). Sistema cerrado: no suma nacimientos ni llegadas."
+   },
+   {
+    "variable": "Seguridad",
+    "prueba": "Tasa de delitos 2024 a 1 año (comunas fuera del ajuste)",
+    "metrica": "RMSE log (≈ error relativo)",
+    "modelo": 0.085,
+    "sin_cambio": 0.0739,
+    "tendencia": 0.1305,
+    "cobertura_80": 0.702,
+    "n": "52 comunas",
+    "gana": "sin_cambio",
+    "fuente": "python -m experiments.calibrar_seguridad",
+    "notas": "A un año, la tasa cambia poco y repetirla es difícil de batir."
+   },
+   {
+    "variable": "Seguridad",
+    "prueba": "Tasa de delitos 2024 a 2 años (comunas fuera del ajuste)",
+    "metrica": "RMSE log (≈ error relativo)",
+    "modelo": 0.1078,
+    "sin_cambio": 0.124,
+    "tendencia": null,
+    "cobertura_80": 0.663,
+    "n": "52 comunas",
+    "gana": "modelo",
+    "fuente": "python -m experiments.calibrar_seguridad",
+    "notas": "Sin tendencia comparable: la de 2022-2023 usa un año que el modelo no ve."
+   }
+  ],
+  "tolerancia": 0.02
  },
  "promesas": {
   "fuente": "results/promesas.json",
