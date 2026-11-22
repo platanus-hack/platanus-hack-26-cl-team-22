@@ -1,4 +1,5 @@
 import { textoPosicion, type Riesgo } from './riesgo'
+import { PERFILES, type CasoId } from './caso'
 import type { Variable } from './types'
 
 /**
@@ -10,7 +11,7 @@ import type { Variable } from './types'
  *  - de referencia: lo que ese caso además necesitaría medir. No tienen datos en esta versión,
  *    no entran al cálculo y no muestran ningún número.
  */
-export type CasoId = 'hidro' | 'vivienda' | 'industria' | 'general'
+export type { CasoId } from './caso'
 
 export interface CriterioReferencia {
   id: string
@@ -22,7 +23,7 @@ export interface CriterioReferencia {
 export interface Caso {
   id: CasoId
   titulo: string
-  /** palabras que delatan el caso en el texto libre */
+  /** fallback keyword reading, used only when Claude does not answer (leerCaso) */
   palabras: RegExp
   /** prioridad de 0 a 10 por id de variable; las que falten parten en 5 */
   prioridades: Record<string, number>
@@ -30,39 +31,62 @@ export interface Caso {
   ejemplo: string
 }
 
-export const CASOS: readonly Caso[] = [
-  {
-    id: 'hidro',
-    titulo: 'Energía hidráulica',
-    // solo lo propio de una central: «agua» o «energía» a secas también las pide cualquier empresa
-    palabras: /hidr|represa|embalse|turbina|caudal|central de pasada|minicentral|\brio\b/,
-    prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8 },
-    referencia: [
-      { id: 'caudal', nombre: 'Caudal medio del río', que: 'Agua disponible para turbinar', unidad: 'm³/s' },
-      { id: 'caida', nombre: 'Caída disponible', que: 'Desnivel entre la toma y la casa de máquinas', unidad: 'm' },
-      { id: 'variabilidad', nombre: 'Variabilidad del caudal', que: 'Cuánto cambia entre años secos y lluviosos', unidad: '%' },
-      { id: 'transmision', nombre: 'Distancia a la red de transmisión', que: 'Línea más cercana donde inyectar', unidad: 'km' },
-    ],
-    ejemplo: 'Quiero instalar una central hidroeléctrica de pasada y vender la energía a la red.',
-  },
-  {
-    id: 'vivienda',
-    titulo: 'Vivienda',
-    palabras: /vivienda|casa|depart|depto|familia|hij|vivir|mudar|arriend|barrio|hogar/,
-    prioridades: { pm25_anual: 8, seguridad: 8, crecimiento_poblacion: 3 },
-    referencia: [
-      { id: 'precio', nombre: 'Precio del suelo', que: 'Valor por metro cuadrado', unidad: 'UF/m²' },
-      { id: 'viaje', nombre: 'Tiempo de viaje al trabajo', que: 'En transporte público, hora punta', unidad: 'min' },
-      { id: 'servicios', nombre: 'Colegios y salud cerca', que: 'Establecimientos a distancia caminable' },
-      { id: 'verde', nombre: 'Áreas verdes', que: 'Superficie por habitante', unidad: 'm²/hab' },
-    ],
+const VIVIR: readonly CriterioReferencia[] = [
+  { id: 'precio', nombre: 'Precio del suelo', que: 'Valor por metro cuadrado', unidad: 'UF/m²' },
+  { id: 'viaje', nombre: 'Tiempo de viaje al trabajo', que: 'En transporte público, hora punta', unidad: 'min' },
+  { id: 'servicios', nombre: 'Colegios y salud cerca', que: 'Establecimientos a distancia caminable' },
+  { id: 'verde', nombre: 'Áreas verdes', que: 'Superficie por habitante', unidad: 'm²/hab' },
+]
+
+/** Per profile: fallback keywords (on text without accents), what it would also need to measure, and an example. */
+const EXTRA: Record<CasoId, Omit<Caso, 'id' | 'titulo' | 'prioridades'>> = {
+  familia: {
+    palabras: /familia|\bhij|\bnin[oa]s?\b|guagua|\bbebe|colegio/,
+    referencia: VIVIR,
     ejemplo: 'Busco departamento para mi familia; mi hijo tiene asma.',
   },
-  {
-    id: 'industria',
-    titulo: 'Industria y logística',
-    palabras: /industr|planta|fabric|bodega|logist|distribu|manufact|empresa|galpon|comerci|local|negocio|centro de datos|data ?center|servidores|oficina|inver|instalar|energia|renovable|eolic|solar|central|mineria|agricol|proyecto/,
-    prioridades: { pm25_anual: 3, seguridad: 5, crecimiento_poblacion: 8 },
+  mayor: {
+    palabras: /adult[oa]s? mayor|personas mayores|ya estan mayores|jubil|tercera edad|abuel/,
+    referencia: [VIVIR[0]!, { id: 'salud', nombre: 'Centros de salud', que: 'Consultorios y hospitales cerca' }, VIVIR[3]!],
+    ejemplo: '',
+  },
+  joven: {
+    palabras: /estudiant|universid|\barriend|vivo sol|primer depto|\bpieza\b/,
+    referencia: [
+      { id: 'arriendo', nombre: 'Precio del arriendo', que: 'Arriendo mensual de un departamento chico', unidad: 'UF' },
+      VIVIR[1]!,
+    ],
+    ejemplo: '',
+  },
+  inversion: {
+    palabras: /inversionista|invertir en (un|una) (depto|departamento|casa|propiedad)|valoriz|plusvalia|arrendarl[oa]|rentabil/,
+    referencia: [
+      VIVIR[0]!,
+      { id: 'plusvalia', nombre: 'Plusvalía histórica', que: 'Cuánto subió el valor en los últimos años', unidad: '%' },
+      { id: 'demanda', nombre: 'Demanda de arriendo', que: 'Tiempo que tarda en arrendarse', unidad: 'días' },
+    ],
+    ejemplo: 'Quiero comprar un departamento para arrendarlo y que se valorice con los años.',
+  },
+  emprendedor: {
+    palabras: /emprend|local comercial|\bnegocio|tienda|almacen|cafeteria|restaurant|\bpyme|comercio/,
+    referencia: [
+      { id: 'flujo', nombre: 'Flujo de personas', que: 'Gente que pasa frente al local' },
+      { id: 'arriendo_local', nombre: 'Arriendo comercial', que: 'Valor por metro cuadrado', unidad: 'UF/m²' },
+      { id: 'competencia', nombre: 'Competencia cercana', que: 'Negocios parecidos en el barrio' },
+    ],
+    ejemplo: 'Quiero abrir un local comercial donde haya cada vez más clientes.',
+  },
+  empresario: {
+    palabras: /empresa|oficina|startup|casa matriz|software|cowork/,
+    referencia: [
+      { id: 'conectividad', nombre: 'Conectividad', que: 'Acceso a metro y autopistas' },
+      { id: 'oficinas', nombre: 'Oferta de oficinas', que: 'Metros disponibles para arrendar', unidad: 'm²' },
+      { id: 'talento', nombre: 'Talento disponible', que: 'Profesionales a 30 min' },
+    ],
+    ejemplo: 'Busco oficina para mi startup de software.',
+  },
+  industria: {
+    palabras: /industr|planta de|fabric|bodega|logist|distribu|manufact|galpon|transporte|camion/,
     referencia: [
       { id: 'suelo', nombre: 'Suelo industrial disponible', que: 'Terrenos con uso de suelo permitido', unidad: 'ha' },
       { id: 'autopista', nombre: 'Acceso a autopistas', que: 'Distancia al enlace más cercano', unidad: 'km' },
@@ -71,20 +95,35 @@ export const CASOS: readonly Caso[] = [
     ],
     ejemplo: 'Quiero abrir un centro de distribución y necesito que la zona gane población.',
   },
-  {
-    id: 'general',
-    titulo: 'Evaluación general',
+  energia: {
+    palabras: /hidroelectric|central (hidro|de pasada|solar)|represa|embalse|turbina|caudal|renovable|eolic|(planta|parque|energia|proyecto de energia) solar/,
+    referencia: [
+      { id: 'caudal', nombre: 'Caudal medio del río', que: 'Agua disponible para turbinar', unidad: 'm³/s' },
+      { id: 'caida', nombre: 'Caída disponible', que: 'Desnivel entre la toma y la casa de máquinas', unidad: 'm' },
+      { id: 'variabilidad', nombre: 'Variabilidad del caudal', que: 'Cuánto cambia entre años secos y lluviosos', unidad: '%' },
+      { id: 'transmision', nombre: 'Distancia a la red de transmisión', que: 'Línea más cercana donde inyectar', unidad: 'km' },
+    ],
+    ejemplo: 'Quiero instalar una central hidroeléctrica de pasada y vender la energía a la red.',
+  },
+  general: {
     palabras: /^$/,
-    prioridades: { pm25_anual: 5, seguridad: 5, crecimiento_poblacion: 5 },
     referencia: [
       { id: 'precio', nombre: 'Costo del suelo', que: 'Valor por metro cuadrado', unidad: 'UF/m²' },
       { id: 'conectividad', nombre: 'Conectividad', que: 'Acceso a transporte y autopistas' },
     ],
     ejemplo: '',
   },
-]
+}
 
-const GENERAL = CASOS[CASOS.length - 1]!
+/** Housing words with no other clue read as a family home, the most common housing case. */
+const VIVIENDA = /vivienda|\bcasa\b|depart|\bdepto|\bvivir|\bmudar|\bhogar|\bbarrio/
+
+/** Profiles in fallback order: the most specific keywords first, the general evaluation last. */
+const ORDEN_LECTURA: readonly CasoId[] = ['energia', 'industria', 'emprendedor', 'empresario', 'inversion', 'mayor', 'familia', 'joven', 'general']
+
+export const CASOS: readonly Caso[] = PERFILES.map((p) => ({ id: p.id, titulo: p.titulo, prioridades: p.prioridades, ...EXTRA[p.id] }))
+
+const GENERAL = CASOS.find((c) => c.id === 'general')!
 
 export function casoDe(id: CasoId): Caso {
   return CASOS.find((c) => c.id === id) ?? GENERAL
@@ -103,7 +142,8 @@ const sinTildes = (s: string) =>
 export function leerCaso(texto: string): CasoId {
   const t = sinTildes(texto)
   if (!t.trim()) return 'general'
-  return (CASOS.find((c) => c.id !== 'general' && c.palabras.test(t)) ?? GENERAL).id
+  const id = ORDEN_LECTURA.find((k) => k !== 'general' && casoDe(k).palabras.test(t))
+  return id ?? (VIVIENDA.test(t) ? 'familia' : 'general')
 }
 
 /* ---------- Modificar el requerimiento después del resumen ---------- */
@@ -289,10 +329,9 @@ export function explicar(
   if (!a) {
     t = conIndice.length > 0 ? 'Ninguna comuna cumple todos tus rangos: prueba con uno más amplio.' : 'No hay datos suficientes para ordenar las comunas.'
   } else {
-    // Se nombra aquello en que de verdad destaca (tercio mejor de la región); si en nada, lo que más pesa.
-    const conPeso = variables.filter((v) => (pesos[v.id] ?? 0) > 0 && a.partes[v.id] !== undefined)
-    const destaca = conPeso.filter((v) => a.partes[v.id]! <= 100 / 3)
-    const clave = (destaca.length > 0 ? destaca : conPeso).sort((x, y) => (pesos[y.id] ?? 0) - (pesos[x.id] ?? 0) || a.partes[x.id]! - a.partes[y.id]!)[0]
+    const clave = variables
+      .filter((v) => (pesos[v.id] ?? 0) > 0 && a.partes[v.id] !== undefined)
+      .sort((x, y) => (pesos[y.id] ?? 0) - (pesos[x.id] ?? 0) || a.partes[x.id]! - a.partes[y.id]!)[0]
     t = `${nombre(a.codigo)} es la de menor riesgo${o.dentro ? ' dentro de tus rangos' : ' para ti'}`
     if (clave) t += `: ${textoPosicion(a.partes[clave.id]!)} en ${clave.nombre.toLowerCase()}`
     t += '.'

@@ -35,7 +35,7 @@ test('interpretarCaso asks Claude for strict JSON with the closed schema, low ef
   assert.equal(MODELO, 'claude-sonnet-5-5')
   assert.equal(p.output_config.effort, 'low')
   assert.equal(p.output_config.format.type, 'json_schema')
-  assert.deepEqual(p.output_config.format.schema.required, ['ajustes', 'indicadores', 'no_medido', 'preguntas'])
+  assert.deepEqual(p.output_config.format.schema.required, ['perfil', 'ajustes', 'indicadores', 'no_medido'])
   assert.equal(p.fallbacks, 'default')
   assert.deepEqual(p.betas, ['server-side-fallback-2026-07-01'])
   assert.equal(p.system[0].cache_control.type, 'ephemeral')

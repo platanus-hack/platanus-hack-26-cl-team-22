@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import logoRoot from '../assets/logo-root.png'
-import { componerCaso, LARGO_RESPUESTA_MAX, pedirInterpretacion, type Interpretacion } from '../lib/caso'
+import { pedirInterpretacion, VARIABLES_CASO, type Interpretacion } from '../lib/caso'
 import { CASOS, casoDe, LARGO_CASO, leerCaso, prioridadesDe, type CasoId } from '../lib/onboarding'
 import type { VariableCorta } from '../lib/variables'
 
 export interface Busqueda {
   caso: CasoId
-  /** peso de 0 a 10 por variable simulada */
+  /** peso de 0 a 10 por variable del índice (las simuladas y los indicadores) */
   prioridades: Record<string, number>
   /** id del rango elegido por variable simulada */
   rangos: Record<string, string>
@@ -42,12 +42,11 @@ const orden = (i: number) => ({ '--i': i }) as CSSProperties
 export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }: Props) {
   const [contexto, setContexto] = useState('')
   const [pensando, setPensando] = useState(false)
-  const [preguntas, setPreguntas] = useState<string[]>([])
-  const [respuestas, setRespuestas] = useState<string[]>([])
-  const [primera, setPrimera] = useState<Interpretacion | null>(null)
   const [saliendo, setSaliendo] = useState(false)
   const hoja = useRef<HTMLDivElement>(null)
-  const ids = variables.map((v) => v.id)
+  // Every profile grades all seven variables. Taking the ids from the profile list too keeps an indicator
+  // whose file has not loaded yet from falling back to prioridadesDe's default of 5.
+  const ids = [...new Set([...variables.map((v) => v.id), ...VARIABLES_CASO])]
 
   useEffect(() => {
     hoja.current?.querySelector<HTMLElement>('textarea')?.focus()
@@ -60,7 +59,8 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }
     window.setTimeout(() => onListo(b), quieto ? 0 : SALIDA_MS)
   }
   const terminar = (texto: string, lectura?: Interpretacion | null) => {
-    const caso = casoDe(texto ? leerCaso(texto) : 'general')
+    // Claude's profile wins; the keyword reading only fills in when Claude did not answer.
+    const caso = casoDe(lectura?.perfil ?? (texto ? leerCaso(texto) : 'general'))
     cerrar({
       caso: caso.id,
       prioridades: prioridadesDe(caso, ids),
@@ -73,23 +73,14 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }
   const entrar = () => {
     if (saliendo || pensando) return
     const texto = contexto.trim()
-    // Second step: the person answered (or skipped) Claude's questions. With no answers the case is
-    // unchanged and the first reading still holds, so it is reused instead of asking again.
-    if (preguntas.length > 0) {
-      const final = componerCaso(texto, preguntas, respuestas)
-      return terminar(final, final === texto ? primera : undefined)
-    }
     if (!urlCaso || !texto) return terminar(texto)
-    // One call reads the case and says what is missing (at most two questions). When nothing is
-    // missing, that same reading goes to the map, which then skips its own call.
+    // One call reads the case, with no follow-up questions; the map reuses that reading instead of
+    // asking again.
     const caso = casoDe(leerCaso(texto))
     setPensando(true)
     void pedirInterpretacion(urlCaso, { caso: texto, perfil: caso.titulo, prioridades: prioridadesDe(caso, ids) }).then((r) => {
       setPensando(false)
-      if (!r || r.preguntas.length === 0) return terminar(texto, r)
-      setPrimera(r)
-      setPreguntas(r.preguntas)
-      setRespuestas(r.preguntas.map(() => ''))
+      terminar(texto, r)
     })
   }
 
@@ -111,7 +102,6 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }
             <span className="solo-lector">Tu caso</span>
             <textarea
               value={contexto}
-              readOnly={preguntas.length > 0}
               maxLength={LARGO_CASO}
               rows={4}
               placeholder="Cuéntame qué quieres evaluar y para quién: ¿una vivienda o una empresa? ¿Hay niños, mayores o personas con asma?"
@@ -127,30 +117,7 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }
               {contexto.length} / {LARGO_CASO}
             </span>
           </label>
-          {preguntas.length > 0 && (
-            <div className="onb-preguntas" role="group" aria-label="Preguntas para entender tu caso">
-              <p className="onb-bajada">Para afinar el resultado, ¿me ayudas con esto? Puedes dejarlo en blanco.</p>
-              {preguntas.map((q, i) => (
-                <label key={q} className="onb-pregunta">
-                  <span>{q}</span>
-                  <input
-                    type="text"
-                    value={respuestas[i] ?? ''}
-                    maxLength={LARGO_RESPUESTA_MAX}
-                    autoFocus={i === 0}
-                    onChange={(e) => setRespuestas((r) => r.map((x, j) => (j === i ? e.target.value : x)))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        entrar()
-                      }
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-          )}
-          <div className="onb-ejemplos" style={orden(2)} hidden={preguntas.length > 0}>
+          <div className="onb-ejemplos" style={orden(2)}>
             <span>Por ejemplo:</span>
             {CASOS.filter((c) => c.ejemplo).map((c) => (
               <button key={c.id} type="button" className="onb-chip" onClick={() => setContexto(c.ejemplo)}>

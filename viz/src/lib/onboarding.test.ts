@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
+import { PERFILES } from './caso'
 import { limpiarGuia, pedirGuia, urlGuia } from './guia'
-import { ajustarPorTexto, casoDe, explicar, fueraDeRango, gradoDe, leerCaso, limpiarCriterio, prioridadesDe, resolverLimites, sumarCambio } from './onboarding'
+import { ajustarPorTexto, CASOS, casoDe, explicar, fueraDeRango, gradoDe, leerCaso, limpiarCriterio, prioridadesDe, resolverLimites, sumarCambio } from './onboarding'
 import { calcularRiesgo } from './riesgo'
 import type { Variable } from './types'
 
@@ -16,22 +17,27 @@ const filas = [
 const nombre = (c: string) => ({ a: 'Lampa', b: 'Buin', c: 'Renca' })[c] ?? c
 
 describe('leer el caso', () => {
-  it('reconoce el caso por palabras clave, con o sin tildes', () => {
-    expect(leerCaso('Quiero instalar una central HIDROELÉCTRICA de pasada')).toBe('hidro')
-    expect(leerCaso('Busco depto para mi familia')).toBe('vivienda')
+  it('reconoce el perfil por palabras clave, con o sin tildes (respaldo cuando Claude no responde)', () => {
+    expect(leerCaso('Quiero instalar una central HIDROELÉCTRICA de pasada')).toBe('energia')
+    expect(leerCaso('Busco depto para mi familia')).toBe('familia')
     expect(leerCaso('abrir una bodega de logística')).toBe('industria')
-    // agua y energía en un caso de empresa no lo vuelven una central hidroeléctrica
-    expect(leerCaso('Quiero instalar un centro de datos; me preocupa el agua, la energía y los permisos')).toBe('industria')
-    expect(leerCaso('un parque solar para vender energía')).toBe('industria')
-    expect(leerCaso('una minicentral en el río Maipo')).toBe('hidro')
-    expect(leerCaso('Busco casa: quiero instalarme con mi familia')).toBe('vivienda')
+    expect(leerCaso('Mis papás ya están mayores y quieren mudarse')).toBe('mayor')
+    expect(leerCaso('Soy estudiante y busco arriendo barato')).toBe('joven')
+    expect(leerCaso('Quiero comprar un departamento para arrendarlo y que se valorice')).toBe('inversion')
+    expect(leerCaso('Quiero abrir un local comercial con más clientes')).toBe('emprendedor')
+    expect(leerCaso('Busco oficina para mi startup')).toBe('empresario')
+  })
+  it('las palabras que antes confundían el perfil ya no lo hacen', () => {
+    expect(leerCaso('Quiero instalar la casa matriz de mi empresa de software.')).toBe('empresario')
+    expect(leerCaso('Busco oficina para el departamento de logística de mi empresa.')).toBe('industria')
+    expect(leerCaso('Quiero poner paneles solares en mi casa nueva para la familia.')).toBe('familia')
   })
   it('lo que no reconoce o viene vacío es una evaluación general', () => {
     expect(leerCaso('asdf qwer')).toBe('general')
     expect(leerCaso('   ')).toBe('general')
   })
   it('cada caso trae entre cinco y siete criterios contando los tres simulados', () => {
-    for (const id of ['hidro', 'vivienda', 'industria', 'general'] as const) {
+    for (const id of PERFILES.map((p) => p.id)) {
       const n = casoDe(id).referencia.length + 3
       expect(n).toBeGreaterThanOrEqual(5)
       expect(n).toBeLessThanOrEqual(7)
@@ -45,6 +51,28 @@ describe('grados y prioridades', () => {
   })
   it('solo da prioridades para variables que existen; las desconocidas parten en medio', () => {
     expect(prioridadesDe(casoDe('industria'), ['crecimiento_poblacion', 'otra'])).toEqual({ crecimiento_poblacion: 8, otra: 5 })
+  })
+  it('en industria y energía el aire no pesa: pesan seguridad y crecimiento', () => {
+    expect(casoDe('industria').prioridades.pm25_anual).toBe(0)
+    expect(casoDe('energia').prioridades.pm25_anual).toBe(0)
+  })
+  it('nueve perfiles con los pesos aprobados: aire, seguridad, crecimiento, sequía, escasez, red, inversión', () => {
+    const ids = ['pm25_anual', 'seguridad', 'crecimiento_poblacion', 'sequia_futura', 'escasez_hidrica', 'red_electrica', 'inversion_evaluada']
+    const tabla = Object.fromEntries(CASOS.map((c) => [c.id, ids.map((id) => c.prioridades[id])]))
+    expect(tabla).toEqual({
+      familia: [10, 8, 3, 0, 0, 0, 0],
+      mayor: [10, 8, 0, 0, 5, 0, 0],
+      joven: [3, 8, 5, 0, 0, 0, 0],
+      inversion: [0, 5, 10, 0, 0, 0, 8],
+      emprendedor: [0, 8, 10, 0, 0, 0, 5],
+      empresario: [0, 5, 8, 0, 0, 5, 0],
+      industria: [0, 5, 8, 0, 0, 10, 0],
+      energia: [0, 5, 8, 0, 0, 10, 0],
+      general: [5, 5, 5, 0, 0, 0, 0],
+    })
+  })
+  it('cada perfil deja como mucho tres indicadores activos', () => {
+    for (const c of CASOS) expect(Object.values(c.prioridades).filter((w) => w > 0).length).toBeLessThanOrEqual(3)
   })
 })
 

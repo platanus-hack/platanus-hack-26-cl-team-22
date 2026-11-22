@@ -55,22 +55,7 @@ export function riesgoPorPosicion(valores: ReadonlyMap<string, number>, mejor: V
   return out
 }
 
-/**
- * Un indicador que ya viene como posición de 0 a 100 por comuna (los de inversión: datos reales y clima).
- * Entra al promedio con su peso, igual que una variable simulada.
- */
-export interface ParteExtra {
-  id: string
-  peso: number
-  riesgo: ReadonlyMap<string, number>
-}
-
-export function calcularRiesgo(
-  filas: readonly FilaValores[],
-  variables: readonly Variable[],
-  pesos: Readonly<Record<string, number>>,
-  extras: readonly ParteExtra[] = [],
-): Riesgo {
+export function calcularRiesgo(filas: readonly FilaValores[], variables: readonly Variable[], pesos: Readonly<Record<string, number>>): Riesgo {
   const partesPorVar = new Map<string, Map<string, number>>()
   for (const v of variables) {
     const vals = new Map<string, number>()
@@ -80,7 +65,7 @@ export function calcularRiesgo(
     }
     if (vals.size > 0) partesPorVar.set(v.id, riesgoPorPosicion(vals, v.mejor))
   }
-  const usadas = [...[...partesPorVar.keys()].filter((id) => (pesos[id] ?? 0) > 0), ...extras.filter((x) => x.peso > 0 && x.riesgo.size > 0).map((x) => x.id)]
+  const usadas = [...partesPorVar.keys()].filter((id) => (pesos[id] ?? 0) > 0)
 
   const out: RiesgoComuna[] = filas.map((f) => {
     const partes: Record<string, number> = {}
@@ -94,15 +79,6 @@ export function calcularRiesgo(
       if (w > 0) {
         suma += w * r
         wTot += w
-      }
-    }
-    for (const x of extras) {
-      const r = x.riesgo.get(f.codigo)
-      if (r === undefined) continue
-      partes[x.id] = r
-      if (x.peso > 0) {
-        suma += x.peso * r
-        wTot += x.peso
       }
     }
     return { codigo: f.codigo, indice: wTot > 0 ? suma / wTot : null, partes, puesto: null }
