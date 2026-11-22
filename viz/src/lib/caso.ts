@@ -100,7 +100,7 @@ export const ESQUEMA_INTERPRETACION = {
 /** Instructions for the model. Stable text first so the prompt can be cached. */
 export const INSTRUCCIONES_CASO = `Lees el caso que escribe una persona que busca dónde vivir o invertir en las 52 comunas de la Región Metropolitana de Santiago, y propones cómo ajustar sus prioridades en un análisis que ya existe.
 
-El análisis ordena las comunas con siete variables; cada perfil deja activas como mucho tres (las demás en 0):
+El análisis ordena las comunas con siete variables; cada perfil parte con tres activas (las demás en 0):
 - pm25_anual: contaminación del aire (PM2,5 media anual).
 - seguridad: delitos por habitante.
 - crecimiento_poblacion: cuánto crece la población de la comuna.
@@ -123,7 +123,7 @@ Reglas:
 - Consumir agua (riego, procesos, una familia o un negocio que depende del agua) justifica subir escasez_hidrica y sequia_futura. En el perfil energia no las subas: miden el riesgo para quien consume agua, no dónde cabe una central.
 - Maquinaria, consumo eléctrico alto, cargar vehículos o inyectar energía justifican subir red_electrica.
 - Buscar una zona con otros proyectos o donde se está invirtiendo justifica subir inversion_evaluada.
-- Deja en 0 lo que el caso no necesita, y no dejes más de tres variables activas: si subes una que estaba en 0, baja a 0 la menos importante para el caso.
+- Tres variables activas es la base de cada perfil, no un tope. Si el caso pide algo más, súbelo sin apagar las otras; baja a 0 solo lo que el caso dice que no le importa.
 - Querer que la zona gane población o clientes, o que la propiedad se valorice ("que se valorice", plusvalía), justifica subir el crecimiento; buscar tranquilidad puede justificar bajarlo.
 - En "indicadores" sugiere solo los que ayuden a este caso. En "no_medido" marca lo que la persona menciona y el análisis no mide.
 - Nunca escribas nombres de comunas ni números sobre comunas: el orden lo calcula el análisis.

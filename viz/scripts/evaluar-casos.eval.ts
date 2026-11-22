@@ -136,8 +136,6 @@ describe('cómo se ajustan los pesos según la frase inicial', () => {
       if (r && (v === undefined || v < r[0] || v > r[1])) fallas.push(`${k} ${v}, se esperaba ${r[0] === r[1] ? r[0] : `${r[0]}–${r[1]}`}`)
     }
     for (const m of c.no_medido ?? []) if (!lectura?.no_medido.includes(m)) fallas.push(`no marcó "${m}" como no medido`)
-    const activos = Object.values(pesos).filter((w) => w > 0).length
-    if (activos > 3) fallas.push(`${activos} variables activas, se esperaban 3 como mucho`)
 
     filasReporte.push({ caso: c, perfil, sugerido, lectura, pesos, top, fallas })
     await esperar(PAUSA_MS)
@@ -152,7 +150,7 @@ describe('cómo se ajustan los pesos según la frase inicial', () => {
       '',
       `Generado con \`npm run evaluar\` (viz/scripts/evaluar-casos.eval.ts) el ${new Date().toISOString().slice(0, 10)}, con el modelo real.`,
       'Cada fila sigue el camino de la app: perfil sugerido por palabras clave → lectura de Claude (que elige el perfil) → pesos finales → las 3 comunas de menor riesgo en el primer año.',
-      'Índice de 7 variables (aire, seguridad, crecimiento, sequía futura, escasez hídrica, red eléctrica, inversión evaluada), como mucho 3 activas.',
+      'Índice de 7 variables (aire, seguridad, crecimiento, sequía futura, escasez hídrica, red eléctrica, inversión evaluada), cada perfil parte con 3 activas.',
       'Pesos en grados: 0 Nada, 3 Poco, 5 Medio, 8 Mucho, 10 Clave; la columna lista solo los activos.',
       '',
       `**${ok} de ${filasReporte.length} casos** quedan como se esperaba.`,
