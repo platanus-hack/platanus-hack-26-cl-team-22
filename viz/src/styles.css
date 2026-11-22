@@ -3589,3 +3589,50 @@ p.agua-sim-pie {
   color: var(--tinta-2);
   margin-bottom: calc(var(--u) * 0.3);
 }
+
+/* ---------- Segunda tanda tras el QA ---------- */
+.dimension-norma {
+  margin-left: 0.6em;
+  font-size: var(--t-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.dimension-norma-riesgo { color: var(--nivel-4); }
+.dimension-norma-limite { color: var(--cafe); }
+/* Teclas de los planes: a la vista solo al pasar o al enfocar con teclado */
+.plan-tecla {
+  opacity: 0;
+  transition: opacity var(--t-capa) var(--ease);
+}
+.plan-item:hover .plan-tecla,
+.plan-item:focus-within .plan-tecla,
+.plan-lista:focus-within .plan-tecla {
+  opacity: 1;
+}
+.g-txt-ref {
+  paint-order: stroke;
+  stroke: var(--hoja);
+  stroke-width: 3px;
+}
+/* Aire y leña: que los títulos de las otras secciones queden a la vista */
+.pliegue-cuerpo .v-lena .lena-titular {
+  font-size: calc(var(--u) * 1.25);
+  margin: calc(var(--u) * 0.4) 0;
+}
+.pliegue-cuerpo .v-lena .etiqueta-real {
+  margin-bottom: calc(var(--u) * 0.4);
+}
+.pliegue-cuerpo:has(> .v-lena),
+.pliegue-cuerpo:has(> .v-riesgo) {
+  padding: calc(var(--u) * 0.7) 0 calc(var(--u) * 0.3);
+}
+.agua-dato.agua-resultado {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: calc(var(--u) * 1);
+}
+.agua-dato.agua-resultado b {
+  font-size: calc(var(--u) * 3);
+}
+div.agua-sim-pie {
+  display: grid;
+}

@@ -258,14 +258,20 @@ function General(p: Props) {
               const parte = sel.partes[v.id]
               if (parte === undefined) return null
               const fuera = p.fuera.includes(v.id)
-              const propio = fuera ? { estado: 'riesgo' as const, texto: 'Fuera de tu rango' } : p.sellos[v.id]
+              // El sello dice la posición entre comunas, igual en todas las filas. Lo que diga la norma (solo el
+              // aire la tiene) va junto al nombre: una comuna puede estar entre las mejores y aun así sobre la norma.
+              const propio = fuera ? { estado: 'riesgo' as const, texto: 'Fuera de tu rango' } : undefined
+              const norma = p.sellos[v.id]
               const n = nivelRiesgo(parte)
               const estado = propio?.estado ?? ESTADO_DE_RIESGO[n]
               const apagada = !((p.pesos[v.id] ?? 0) > 0)
               return (
                 <li key={v.id}>
                   <button type="button" className={`dimension${apagada ? ' dimension-apagada' : ''}`} onClick={() => p.onCapa(v.id)} title={`Ver el detalle de ${v.nombre.toLowerCase()}`}>
-                    <span className="dimension-nombre">{v.nombre}</span>
+                    <span className="dimension-nombre">
+                      {v.nombre}
+                      {norma && <small className={`dimension-norma dimension-norma-${norma.estado}`}>{norma.texto.toLowerCase()}</small>}
+                    </span>
                     <span className="dimension-pista" aria-hidden="true">
                       <span className={`dimension-barra sello-${estado}`} style={{ width: `${Math.max(3, parte)}%` }} />
                     </span>

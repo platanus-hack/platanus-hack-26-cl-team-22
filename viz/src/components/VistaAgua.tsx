@@ -306,19 +306,19 @@ function Simulado({ sim, onSim, onOtraDecada, onAnioSim, normal }: Props & { sim
         </svg>
       </section>
 
-      <div className="agua-resultado">
-        <p className="agua-dato">
-          <b>{fmt(sim.resumen.racha3 * 100, 0)} %</b>
-          <span>
-            de las {sim.replicas} décadas simuladas tienen tres años críticos seguidos. En promedio, {fmt(sim.resumen.aniosCriticos, 1)} de {n} años quedan en
-            caudal crítico; en {sim.anios[sim.idx]}, el {fmt(prob * 100, 0)} % de las décadas.
-          </span>
-        </p>
+      <p className="agua-dato agua-resultado">
+        <b>{fmt(sim.resumen.racha3 * 100, 0)} %</b>
+        <span>
+          de las {sim.replicas} décadas simuladas tienen tres años críticos seguidos. En promedio, {fmt(sim.resumen.aniosCriticos, 1)} de {n} años quedan en caudal
+          crítico; en {sim.anios[sim.idx]}, el {fmt(prob * 100, 0)} % de las décadas.
+        </span>
+      </p>
+      <div className="agua-sim-pie">
         <button type="button" className="agua-jugar" onClick={onOtraDecada}>
           Otra década posible
         </button>
+        <span>Banda: 8 de cada 10 décadas. Sorteo de años medidos por la DGA; no es un pronóstico del clima.</span>
       </div>
-      <p className="agua-sim-pie">Banda: 8 de cada 10 décadas. Sorteo de años medidos por la DGA; no es un pronóstico del clima.</p>
     </>
   )
 }

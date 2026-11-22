@@ -6,14 +6,14 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import urlWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 setWorkerUrl(urlWorker)
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { anchoRio, caucesMedidos, claveCauce, estadoCaudal, radioEstacion, type EstadoCaudal, type Estacion } from '../lib/agua'
+import { anchoRio, claveCauce, estadoCaudal, radioEstacion, type EstadoCaudal, type Estacion } from '../lib/agua'
 import { apilarNivel } from '../lib/capas'
 import { claseFondo, variableDeClase } from '../lib/fondo'
 import { radioDisco } from '../lib/lena'
 import { poligonoMayor, proyectarGeometria, puntoInterior, type Pt } from '../lib/proyeccion'
-import { anchoCauces, porCauce, aRgb, CAPAS, CAPAS_RIOS, curva, estiloRelieve, filtroCauces, mezclar, textoRgb, TRAZOS_FLUJO, type RGB } from '../lib/relieve'
+import { aRgb, CAPAS, curva, estiloRelieve, mezclar, textoRgb, TRAZOS_FLUJO, type RGB } from '../lib/relieve'
 import { esGranSantiago, limitesDe, type Limites } from '../lib/vista'
-import type { PropsMapa } from './MapaPapel'
+import { caudalDeRio, estadoDeRio, type PropsMapa } from './MapaPapel'
 import { TarjetaMapa } from './Papel'
 
 interface Props extends PropsMapa {
@@ -35,6 +35,12 @@ const RADIO_DISCO_M = 7000
 /** cada cuánto avanza el brillo de los ríos y cuánto dura un latido de las estaciones */
 const PASO_FLUJO_MS = 55
 const DURACION_CAUDAL = 380
+/** Opacidad de la red de fondo y de las estaciones cuando se muestra el agua (los ríos con nombre usan el estado de cada tramo). */
+const OPACIDAD_AGUA: readonly [string, 'line-opacity', number][] = [
+  [CAPAS.riosBase, 'line-opacity', 0.8],
+  [CAPAS.flujoBase, 'line-opacity', 0.7],
+]
+
 /** papel de cada estado del caudal: el del río y el del punto de su estación */
 const PAPEL_ESTADO: Record<EstadoCaudal, string> = { sin: '--tinta-2', normal: '--agua', bajo: '--agua-baja', critico: '--agua-critica' }
 /** cuánto se ve el brillo que corre: un río en estado crítico casi no corre */
@@ -193,7 +199,8 @@ export default function MapaRelieve(p: Props) {
     // Estaciones de caudal: se eligen con un clic y muestran su tarjeta al pasar.
     const estacionDe = (e: MapLayerMouseEvent) => {
       const codigo = e.features?.[0]?.properties?.codigo
-      return typeof codigo === 'string' ? ultimo.current.agua?.porCodigo.get(codigo) : undefined
+      // fuera del agua los puntos siguen cargados pero transparentes: no deben responder
+      return typeof codigo === 'string' && ultimo.current.modo === 'agua' ? ultimo.current.agua?.porCodigo.get(codigo) : undefined
     }
     m.on('mousemove', CAPAS.estaciones, (e: MapLayerMouseEvent) => {
       const est = estacionDe(e)
@@ -310,40 +317,46 @@ export default function MapaRelieve(p: Props) {
     ;(m.getSource('discos') as GeoJSONSource | undefined)?.setData(fc(discos))
   }, [listo, prep, p.features, p.modo, p.lena])
 
-  // El agua: los cauces son los de las teselas. Se encienden con el modo, se filtran por nombre y su ancho
-  // sigue al caudal del año mostrado, con una transición corta.
+  // El agua. Los ríos con nombre se cargan una vez desde nuestro trazado; ancho, color y brillo son estado de
+  // cada tramo y siguen al caudal de lo que se mira (el ancho, con una transición corta). Se muestran u
+  // ocultan con el estado `ver`, no vaciando la fuente (ver capaRio en relieve.ts).
   const aguaActiva = p.modo === 'agua' ? p.agua : null
-  const cauces = useMemo(() => (aguaActiva ? caucesMedidos(aguaActiva.estaciones, aguaActiva.cauces) : []), [aguaActiva?.estaciones, aguaActiva?.cauces])
+  const riosCargados = useRef<unknown>(null)
   const anchos = useRef<number[]>([])
   useEffect(() => {
     const m = mapa.current
-    if (!m || !listo) return
+    const agua = p.agua
+    if (!m || !listo || !agua) return
     const hay = !!aguaActiva
-    for (const id of CAPAS_RIOS) if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', hay ? 'visible' : 'none')
-    if (!aguaActiva) {
+    for (const [id, prop, valor] of OPACIDAD_AGUA) if (m.getLayer(id)) m.setPaintProperty(id, prop, hay ? valor : 0)
+    if (riosCargados.current !== agua.rios) {
+      riosCargados.current = agua.rios
       anchos.current = []
+      ;(m.getSource('rios') as GeoJSONSource | undefined)?.setData(
+        fc(agua.rios.map((r, i) => ({ type: 'Feature', id: i, properties: {}, geometry: { type: 'LineString', coordinates: r.coords } }))),
+      )
+    }
+    if (!hay) {
+      agua.rios.forEach((_, i) => m.setFeatureState({ source: 'rios', id: i }, { ver: 0 }))
       return
     }
-    const nombrados = (w: number[]) => cauces.map((c, i) => ({ nombres: c.nombres, ancho: w[i]! }))
-    const filtro = filtroCauces(nombrados(cauces.map(() => 1)), prep.limites.region) as Parameters<MapaGL['setFilter']>[1]
-    for (const id of [CAPAS.riosFilo, CAPAS.rios, CAPAS.flujo]) if (m.getLayer(id)) m.setFilter(id, filtro)
-    const destino = cauces.map((c) => anchoRio(aguaActiva.caudalDe(c.estacion) ?? c.estacion.medio, 'river'))
-    // Color y brillo según el estado del caudal de cada río en lo que se mira.
     const cs = getComputedStyle(document.documentElement)
-    const estados = cauces.map((c) => estadoCaudal(aguaActiva.fraccionDe(c.estacion)))
-    const color = porCauce(cauces.map((c, i) => ({ nombres: c.nombres, valor: cs.getPropertyValue(PAPEL_ESTADO[estados[i]!]).trim() || '#1f6fb2' })), cs.getPropertyValue('--agua').trim() || '#1f6fb2')
-    const brillo = porCauce(cauces.map((c, i) => ({ nombres: c.nombres, valor: BRILLO_ESTADO[estados[i]!] })), 0.9)
-    if (m.getLayer(CAPAS.rios)) m.setPaintProperty(CAPAS.rios, 'line-color', color as string)
-    if (m.getLayer(CAPAS.flujo)) m.setPaintProperty(CAPAS.flujo, 'line-opacity', brillo as number)
+    const papel = (e: EstadoCaudal) => cs.getPropertyValue(PAPEL_ESTADO[e]).trim() || '#1f6fb2'
+    const destino = agua.rios.map((r) => anchoRio(caudalDeRio(r, agua), r.clase))
+    agua.rios.forEach((r, i) => {
+      const e = estadoDeRio(r, agua)
+      m.setFeatureState(
+        { source: 'rios', id: i },
+        { ver: 1, color: papel(e), brillo: BRILLO_ESTADO[e], sel: !!r.nombre && claveCauce(r.nombre) === agua.cauceElegido },
+      )
+    })
     const desde = anchos.current.length === destino.length ? [...anchos.current] : destino
-    type Ancho = number // la expresión se arma en relieve.ts sin los tipos de MapLibre
     const poner = (t: number) => {
-      const w = destino.map((d, i) => desde[i]! + (d - desde[i]!) * t)
-      anchos.current = w
-      const c = nombrados(w)
-      if (m.getLayer(CAPAS.riosFilo)) m.setPaintProperty(CAPAS.riosFilo, 'line-width', anchoCauces(c, 1, 2.4) as unknown as Ancho)
-      if (m.getLayer(CAPAS.rios)) m.setPaintProperty(CAPAS.rios, 'line-width', anchoCauces(c) as unknown as Ancho)
-      if (m.getLayer(CAPAS.flujo)) m.setPaintProperty(CAPAS.flujo, 'line-width', anchoCauces(c, 0.42, 0, 0.7) as unknown as Ancho)
+      destino.forEach((w, i) => {
+        const a = desde[i]! + (w - desde[i]!) * t
+        anchos.current[i] = a
+        m.setFeatureState({ source: 'rios', id: i }, { ancho: a })
+      })
     }
     if (p.reducido || desde === destino) {
       poner(1)
@@ -356,32 +369,41 @@ export default function MapaRelieve(p: Props) {
       if (t < 1) cuadro = requestAnimationFrame(paso)
     })
     return () => cancelAnimationFrame(cuadro)
-  }, [listo, aguaActiva, cauces, aguaActiva?.clave, prep.limites.region, p.reducido])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listo, !!aguaActiva, p.agua?.rios, p.agua?.clave, p.agua?.cauceElegido, p.reducido])
 
-  // Estaciones: un punto por estación, del color de su caída en la megasequía.
+  // Estaciones: los puntos se cargan una vez; el color del estado del caudal, cuál está elegida y si se ven
+  // son estado de cada punto, igual que en los ríos.
+  const estacionesCargadas = useRef<unknown>(null)
   useEffect(() => {
     const m = mapa.current
-    if (!m || !listo) return
-    const cs = getComputedStyle(document.documentElement)
-    const puntos = aguaActiva
-      ? aguaActiva.estaciones.map((e) => {
-          const estado = estadoCaudal(aguaActiva.fraccionDe(e))
-          return {
+    const agua = p.agua
+    if (!m || !listo || !agua) return
+    if (estacionesCargadas.current !== agua.estaciones) {
+      estacionesCargadas.current = agua.estaciones
+      ;(m.getSource('estaciones') as GeoJSONSource | undefined)?.setData(
+        fc(
+          agua.estaciones.map((e, i) => ({
             type: 'Feature',
-            properties: {
-              codigo: e.codigo,
-              r: radioEstacion(e.medio),
-              color: cs.getPropertyValue(PAPEL_ESTADO[estado]).trim() || '#1f6fb2',
-              sel: e.codigo === aguaActiva.elegida,
-              rotulo: e.nombre.slice(0, 44),
-            },
+            id: i,
+            properties: { codigo: e.codigo, r: radioEstacion(e.medio), rotulo: e.nombre.slice(0, 44) },
             geometry: { type: 'Point', coordinates: [e.lon, e.lat] },
-          }
-        })
-      : []
-    ;(m.getSource('estaciones') as GeoJSONSource | undefined)?.setData(fc(puntos))
-    if (!aguaActiva) setSobreEstacion(null)
-  }, [listo, aguaActiva, aguaActiva?.estaciones, aguaActiva?.elegida, aguaActiva?.clave])
+          })),
+        ),
+      )
+    }
+    if (!aguaActiva) {
+      setSobreEstacion(null)
+      agua.estaciones.forEach((_, i) => m.setFeatureState({ source: 'estaciones', id: i }, { ver: 0 }))
+      return
+    }
+    const cs = getComputedStyle(document.documentElement)
+    agua.estaciones.forEach((e, i) => {
+      const color = cs.getPropertyValue(PAPEL_ESTADO[estadoCaudal(agua.fraccionDe(e))]).trim() || '#1f6fb2'
+      m.setFeatureState({ source: 'estaciones', id: i }, { ver: 1, color, sel: e.codigo === agua.elegida })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listo, !!aguaActiva, p.agua?.estaciones, p.agua?.elegida, p.agua?.clave])
 
   // Movimiento del agua: el brillo corre aguas abajo. Quieto si se pidió menos movimiento.
   const hayAgua = !!aguaActiva
@@ -402,19 +424,17 @@ export default function MapaRelieve(p: Props) {
 
   // Río elegido: se le pone un contorno oscuro y la cámara va a él, para que cambiar de río se vea en el mapa.
   const focoPrevio = useRef<string | null>(null)
+  const [vuelta, setVuelta] = useState(0)
   useEffect(() => {
     const m = mapa.current
     if (!m || !listo) return
-    const elegido = aguaActiva ? cauces.find((c) => claveCauce(c.estacion.rio) === aguaActiva.cauceElegido) : undefined
-    if (m.getLayer(CAPAS.rioElegido)) {
-      const nombrados = elegido ? [{ nombres: elegido.nombres, ancho: anchoRio(aguaActiva!.caudalDe(elegido.estacion) ?? elegido.estacion.medio, 'river') }] : []
-      m.setFilter(CAPAS.rioElegido, filtroCauces(nombrados, prep.limites.region) as Parameters<MapaGL['setFilter']>[1])
-      m.setPaintProperty(CAPAS.rioElegido, 'line-width', anchoCauces(nombrados, 1, 6.5) as unknown as number)
-    }
     const foco = aguaActiva?.foco ?? null
     const clave = foco ? foco.join(',') : null
     if (!foco || clave === focoPrevio.current) {
-      if (!foco) focoPrevio.current = null
+      if (!foco && focoPrevio.current !== null) {
+        focoPrevio.current = null
+        setVuelta((n) => n + 1) // se salió del agua: la cámara vuelve al encuadre elegido
+      }
       return
     }
     const primera = focoPrevio.current === null
@@ -435,7 +455,7 @@ export default function MapaRelieve(p: Props) {
     const destino = { center: centro, zoom: c.zoom - 0.25, bearing: cam.bearing, pitch: cam.pitch }
     if (p.reducido) m.jumpTo(destino)
     else m.easeTo({ ...destino, duration: 1300 })
-  }, [listo, aguaActiva, cauces, aguaActiva?.cauceElegido, aguaActiva?.foco, aguaActiva?.clave, prep.limites.region, p.reducido])
+  }, [listo, aguaActiva, aguaActiva?.foco, p.reducido])
 
   // Encuadre: Gran Santiago o toda la región; `reencuadre` fuerza volver aunque no cambie.
   const encuadrado = useRef(false)
@@ -461,7 +481,7 @@ export default function MapaRelieve(p: Props) {
     else m.easeTo({ ...destino, duration: 1100 })
     encuadrado.current = true
     tamPrevio.current = tam
-  }, [listo, prep, p.encuadre, p.reencuadre, p.reducido, tam])
+  }, [listo, prep, p.encuadre, p.reencuadre, p.reducido, tam, vuelta])
 
   const hov = hover ? p.features[hover.i] : undefined
   const tag = hov ? p.etiqueta(hov) : null

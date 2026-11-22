@@ -90,7 +90,7 @@ const estado = (k: string) => ['boolean', ['feature-state', k], false]
 const ES_RIO = ['==', ['get', 'class'], 'river']
 const NINGUNO = ['==', ['get', 'class'], '__ninguno__']
 
-/** Capa de línea sobre los cauces de las teselas del mapa base; oculta hasta que se muestra el agua. */
+/** Capa de línea sobre los cauces de las teselas del mapa base; transparente hasta que se muestra el agua. */
 function capaRio(id: string, filter: unknown, paint: Record<string, unknown>, redonda: boolean): Record<string, unknown> {
   return {
     id,
@@ -98,13 +98,23 @@ function capaRio(id: string, filter: unknown, paint: Record<string, unknown>, re
     source: 'openmaptiles',
     'source-layer': 'waterway',
     filter,
-    layout: { visibility: 'none', 'line-join': 'round', ...(redonda ? { 'line-cap': 'round' } : {}) },
-    paint,
+    layout: { 'line-join': 'round', ...(redonda ? { 'line-cap': 'round' } : {}) },
+    // Parten transparentes y la pantalla les da opacidad. No se usa `visibility`: sobre el terreno, ocultar una
+    // capa o vaciar su fuente no vuelve a pintar lo ya dibujado y quedan restos; cambiar la opacidad sí.
+    paint: { ...paint, 'line-opacity': 0 },
   }
 }
 
+const ANCHO_TRAMO = ['coalesce', ['feature-state', 'ancho'], 1.2]
+const VER_TRAMO = ['coalesce', ['feature-state', 'ver'], 0]
+
+/** Capa de línea sobre los ríos con nombre (fuente `rios`); su opacidad sale del estado `ver` de cada tramo. */
+function capaTramo(id: string, paint: Record<string, unknown>, redonda: boolean): Record<string, unknown> {
+  return { id, type: 'line', source: 'rios', layout: { 'line-join': 'round', ...(redonda ? { 'line-cap': 'round' } : {}) }, paint }
+}
+
 /** Capas de ríos, de abajo hacia arriba. */
-export const CAPAS_RIOS = ['rios-elegido', 'rios-filo', 'rios-base', 'rios', 'rios-flujo-base', 'rios-flujo'] as const
+export const CAPAS_RIOS = ['rios-base', 'rios-flujo-base', 'rios-elegido', 'rios-filo', 'rios', 'rios-flujo'] as const
 
 export interface CauceAncho {
   /** nombres con que el cauce puede venir en las teselas */
@@ -173,7 +183,7 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
   if (!fuentes['relieve-dem']) fuentes['relieve-dem'] = { type: 'raster-dem', url: RELIEVE_LINEA }
   // Una fuente aparte para las sombras: compartirla con el terreno baja la calidad del sombreado.
   fuentes['relieve-sombra'] = { ...(fuentes['relieve-dem'] as object) }
-  for (const id of ['comunas', 'rotulos', 'cintas', 'discos', 'estaciones']) fuentes[id] = { type: 'geojson', data: VACIO }
+  for (const id of ['comunas', 'rotulos', 'cintas', 'discos', 'rios', 'estaciones']) fuentes[id] = { type: 'geojson', data: VACIO }
 
   const capas = (base.layers as Record<string, unknown>[]).filter(
     (l) => l.source !== 'ne2_shaded' && !(l.type === 'symbol' && l['source-layer'] === 'place'),
@@ -239,25 +249,38 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
         'circle-stroke-width': 1.5,
       },
     },
-    // Ríos: salen de la capa de cauces de las mismas teselas del mapa base, así que no hay otro archivo que
-    // cargar. Los medidos llevan un filo de papel y un ancho según su caudal; todos, un brillo de trazos que
-    // corre aguas abajo. Parten ocultos: la pantalla los enciende, les da el filtro y el ancho.
-    capaRio(CAPAS.rioElegido, NINGUNO, { 'line-color': c.tinta, 'line-width': 8 }, true),
-    capaRio('rios-filo', NINGUNO, { 'line-color': c.papel, 'line-opacity': 0.85, 'line-width': 3 }, true),
-    capaRio(CAPAS.riosBase, ES_RIO, { 'line-color': c.agua, 'line-width': 1.3 }, true),
-    capaRio(CAPAS.rios, NINGUNO, { 'line-color': c.agua, 'line-width': 2 }, true),
-    capaRio(CAPAS.flujoBase, ES_RIO, { 'line-color': c.aguaClara, 'line-opacity': 0.9, 'line-width': 0.7, 'line-dasharray': TRAZOS_FLUJO[0] }, false),
-    capaRio(CAPAS.flujo, NINGUNO, { 'line-color': c.aguaClara, 'line-opacity': 0.9, 'line-width': 1, 'line-dasharray': TRAZOS_FLUJO[0] }, false),
+    // Ríos. La red fina de fondo sale de los cauces de las teselas del mapa base. Los ríos con nombre de la
+    // región van aparte, de nuestro propio trazado (geo/rios_rm.geojson): las teselas traen esos cauces sin
+    // nombre a algunos niveles de zoom y no se pueden reconocer. Ancho, color y brillo son estado de cada
+    // tramo, para animarlos sin volver a cargar las líneas; `ver` los muestra u oculta (ver capaRio).
+    capaRio(CAPAS.riosBase, ES_RIO, { 'line-color': c.agua, 'line-width': 1.1 }, true),
+    capaRio(CAPAS.flujoBase, ES_RIO, { 'line-color': c.aguaClara, 'line-width': 0.6, 'line-dasharray': TRAZOS_FLUJO[0] }, false),
+    capaTramo(CAPAS.rioElegido, { 'line-color': c.tinta, 'line-width': ['+', ANCHO_TRAMO, 6.5], 'line-opacity': ['*', VER_TRAMO, ['case', estado('sel'), 1, 0]] }, true),
+    capaTramo(CAPAS.riosFilo, { 'line-color': c.papel, 'line-width': ['+', ANCHO_TRAMO, 2.4], 'line-opacity': ['*', VER_TRAMO, 0.85] }, true),
+    capaTramo(CAPAS.rios, { 'line-color': ['to-color', ['coalesce', ['feature-state', 'color'], c.agua]], 'line-width': ANCHO_TRAMO, 'line-opacity': VER_TRAMO }, true),
+    capaTramo(
+      CAPAS.flujo,
+      {
+        'line-color': c.aguaClara,
+        'line-width': ['max', 0.7, ['*', ANCHO_TRAMO, 0.42]],
+        'line-opacity': ['*', VER_TRAMO, ['coalesce', ['feature-state', 'brillo'], 0.9]],
+        'line-dasharray': TRAZOS_FLUJO[0],
+      },
+      false,
+    ),
+    // Estaciones: los puntos se cargan una vez; color, elegida y visibilidad son estado de cada punto.
     {
       id: CAPAS.estaciones,
       type: 'circle',
       source: 'estaciones',
       paint: {
-        'circle-radius': ['case', ['get', 'sel'], ['+', ['get', 'r'], 2], ['get', 'r']],
-        'circle-color': ['get', 'color'],
-        'circle-stroke-color': ['case', ['get', 'sel'], c.tinta, c.papel],
-        'circle-stroke-width': ['case', ['get', 'sel'], 3.5, 1.8],
+        'circle-radius': ['case', estado('sel'), ['+', ['get', 'r'], 2], ['get', 'r']],
+        'circle-color': ['to-color', ['coalesce', ['feature-state', 'color'], c.agua]],
+        'circle-stroke-color': ['case', estado('sel'), c.tinta, c.papel],
+        'circle-stroke-width': ['case', estado('sel'), 3.5, 1.8],
         'circle-pitch-alignment': 'map',
+        'circle-opacity': VER_TRAMO,
+        'circle-stroke-opacity': VER_TRAMO,
       },
     },
     { id: 'c-hover', type: 'line', source: 'comunas', paint: { 'line-color': c.tinta, 'line-width': ['case', estado('hover'), 2.6, 0] } },
@@ -283,7 +306,6 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
     id: CAPAS.estacionNombre,
     type: 'symbol',
     source: 'estaciones',
-    filter: ['==', ['get', 'sel'], true],
     layout: {
       'text-field': ['get', 'rotulo'],
       'text-font': ['Noto Sans Bold'],
@@ -293,7 +315,7 @@ export function estiloRelieve(baseRaw: unknown, c: ColoresRelieve, exageracion =
       'text-max-width': 9,
       'text-allow-overlap': true,
     },
-    paint: { 'text-color': c.papel, 'text-halo-color': c.tinta, 'text-halo-width': 2.2 },
+    paint: { 'text-color': c.papel, 'text-halo-color': c.tinta, 'text-halo-width': 2.2, 'text-opacity': ['*', VER_TRAMO, ['case', estado('sel'), 1, 0]] },
   })
   capas.push({
     id: CAPAS.nombres,

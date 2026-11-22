@@ -65,7 +65,11 @@ cada cauce con un ancho que crece con la raíz de su caudal y un brillo que corr
 el caudal es crítico; cada punto es una estación de la DGA y **late solo si su caudal está en nivel crítico**
 (la leyenda lo dice). Se puede mirar la megasequía 2010–2017 (lo primero que se ve), el promedio 1980–2017 o
 un año, y «Ver año por año» los recorre. La hoja muestra además el régimen (de deshielo o de lluvia, por el
-mes de más agua) y la variabilidad. Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
+mes de más agua) y la variabilidad. En el mapa en relieve los ríos con nombre salen de `geo/rios_rm.geojson` y no de las teselas del mapa base,
+que a algunos niveles de zoom traen esos cauces sin nombre; la red fina de fondo sí es la de las teselas. Ancho,
+color y elegido son estado de cada tramo y de cada estación (`setFeatureState`), y las capas del agua se
+ocultan por opacidad: sobre el terreno, ocultar una capa o vaciar su fuente deja restos dibujados.
+Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
 tiene. Cada río con nombre trae las comunas por donde pasa, de aguas arriba a aguas abajo (`cauces` en
 `caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el caso «Energía hidráulica» el resumen ofrece un botón directo a esta sección. El caudal no entra
 al índice de riesgo: solo 14 estaciones cumplen el filtro y no hay un valor por comuna.

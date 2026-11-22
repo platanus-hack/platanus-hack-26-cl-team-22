@@ -77,7 +77,7 @@ export function VistaPlan(p: PlanProps) {
         <h3>Planes</h3>
         {p.lecturas.length > 1 && (
           <Desplegable
-            etiqueta="Lo que no tiene evidencia"
+            etiqueta="Planes sin historial: suponer"
             valor={p.lectura}
             onCambiar={p.onLectura}
             opciones={p.lecturas.map((l) => ({ id: l.id, titulo: tituloLectura(l.id), detalle: l.texto }))}
@@ -207,7 +207,6 @@ export function VistaPrueba({ validacion, aviso, unidad }: { validacion: Validac
   const n = contarPruebas(filas)
   return (
     <div className="v-prueba">
-      <h2 className="lena-titular">El modelo contra datos que no vio</h2>
       <Cifras
         items={[
           { etiqueta: 'Gana', valor: fmt(n.gana, 0), nota: `de ${filas.length} pruebas`, tono: n.gana > 0 ? 'mejora' : undefined },
