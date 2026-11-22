@@ -5,7 +5,7 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 
 | Ruta | Pedido | Respuesta | Para qué |
 |---|---|---|---|
-| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido, preguntas }` | Lee el caso, propone ajustes de prioridad y, en la misma llamada, hasta 2 preguntas sobre lo que falta (vivienda o empresa, niños, mayores, asma) |
+| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido, preguntas }` | Lee el caso, propone ajustes de prioridad y, en la misma llamada, una sola pregunta sobre lo que falta, la que más mueve los indicadores de ese perfil (niños, asma, horarios de noche, clientes cercanos); el propósito lo infiere |
 | `POST /guia` | `PedidoGuia` (`viz/src/lib/guia.ts`) | `{ texto }` | Redacta la explicación de las comunas que quedaron primeras |
 | `GET /salud` | — | `{ ok, clave, ip, proxies, cadena, directa }` | Saber si hay clave y cómo ve el límite a quien consulta (`cadena` es `X-Forwarded-For` tal como llegó) |
 
