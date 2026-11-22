@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { aPrioridad, calcularRiesgo, nivelRiesgo, riesgoPorPosicion, textoPosicion, veredictoGeneral, veredictoVariable } from './riesgo'
+import { aPrioridad, calcularRiesgo, nivelRiesgo, redondear, riesgoPorPosicion, textoPosicion, veredictoGeneral, veredictoVariable } from './riesgo'
+
+describe('redondear', () => {
+  it('deja un valor con los decimales con que se muestra', () => {
+    expect(redondear(2019.985)).toBe(2020)
+    expect(redondear(15.958)).toBe(16)
+    expect(redondear(1.216)).toBe(1.2)
+    expect(redondear(-0.04)).toBe(-0)
+  })
+})
 import type { Variable } from './types'
 
 const aire: Variable = { id: 'aire', nombre: 'Aire', unidad: 'µg/m³', mejor: 'menor' }

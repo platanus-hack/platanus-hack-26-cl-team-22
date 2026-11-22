@@ -132,6 +132,11 @@ export function decimales(v: number): number {
   return Math.abs(v) >= 100 ? 0 : 1
 }
 
+/** El valor redondeado como se muestra, para que un texto que lo cite diga lo mismo que la tarjeta. */
+export function redondear(v: number): number {
+  return Number(v.toFixed(decimales(v)))
+}
+
 /** Veredicto del índice general: nivel, puesto y hacia dónde va al final de la proyección. */
 export function veredictoGeneral(r: RiesgoComuna, total: number, fin?: { indice: number | null; anio: number }): Veredicto | null {
   if (r.indice === null) return null

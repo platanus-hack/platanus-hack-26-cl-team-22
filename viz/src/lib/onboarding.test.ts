@@ -86,7 +86,15 @@ describe('explicar', () => {
 describe('guía del intermediario', () => {
   it('se queda solo con el texto, sin saltos y acotado', () => {
     expect(limpiarGuia({ texto: '  Hola\n mundo ', otra: { cosa: 1 } })).toEqual({ texto: 'Hola mundo' })
-    expect(limpiarGuia({ texto: 'x'.repeat(5000) })!.texto).toHaveLength(600)
+    expect(limpiarGuia({ texto: 'x'.repeat(5000) })!.texto.length).toBeLessThanOrEqual(600)
+  })
+
+  it('al acortar corta en el fin de una frase, nunca a mitad de palabra', () => {
+    const frases = 'María Pinto encabeza. Le siguen Alhué y El Monte. '
+    expect(limpiarGuia({ texto: frases + 'no mide precio del suelo '.repeat(40) })!.texto).toBe(frases.trim())
+    const sinPunto = limpiarGuia({ texto: 'palabra '.repeat(200) })!.texto
+    expect(sinPunto.length).toBeLessThanOrEqual(600)
+    expect(sinPunto).toMatch(/ palabra…$/)
   })
   it('rechaza lo que no calza', () => {
     expect(limpiarGuia({ texto: 5 })).toBeNull()

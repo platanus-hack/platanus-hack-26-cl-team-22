@@ -25,12 +25,25 @@ export interface Guia {
 export const LARGO_GUIA = 600
 const ESPERA_MS = 12_000
 
+/**
+ * Shortens to LARGO_GUIA at the last full sentence; with no sentence end in range, at the last word
+ * followed by an ellipsis, so the page never shows a word cut in half.
+ */
+function acortar(texto: string): string {
+  if (texto.length <= LARGO_GUIA) return texto
+  const cabe = texto.slice(0, LARGO_GUIA)
+  const fin = Math.max(cabe.lastIndexOf('. '), cabe.lastIndexOf('; '))
+  if (fin > 0) return cabe.slice(0, fin + 1)
+  const espacio = cabe.lastIndexOf(' ', LARGO_GUIA - 1)
+  return (espacio > 0 ? cabe.slice(0, espacio) : cabe.slice(0, LARGO_GUIA - 1)) + '…'
+}
+
 /** Valida lo que llega de fuera: solo texto, sin saltos y acotado. */
 export function limpiarGuia(raw: unknown): Guia | null {
   if (typeof raw !== 'object' || raw === null) return null
   const r = raw as Record<string, unknown>
   if (typeof r.texto !== 'string') return null
-  const texto = r.texto.replace(/\s+/g, ' ').trim().slice(0, LARGO_GUIA)
+  const texto = acortar(r.texto.replace(/\s+/g, ' ').trim())
   if (!texto) return null
   return { texto }
 }
