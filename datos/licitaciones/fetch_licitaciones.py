@@ -25,8 +25,10 @@ from pathlib import Path
 from datos.licitaciones.esquema import (
     CHILECOMPRA_URL_TEMPLATE,
     ROOT,
+    DedupTender,
     TenderLineRecord,
-    aggregate_records,
+    aggregate_tenders,
+    deduplicate_tenders,
     iter_records_from_zip,
     load_rm_commune_index,
 )
@@ -34,6 +36,21 @@ from datos.licitaciones.esquema import (
 RAW = ROOT / "data" / "raw" / "licitaciones"
 OUT = ROOT / "data" / "licitaciones"
 _YM_RE = re.compile(r"^(\d{4})-(\d{1,2})$")
+DETAIL_CSV_NAME = "licitaciones_detalle.csv"
+DETAIL_FIELDS = [
+    "codigo_comuna",
+    "anio",
+    "codigo_externo",
+    "nombre",
+    "estado",
+    "estado_chilecompra",
+    "sector",
+    "monto_estimado_clp",
+    "monto_adjudicado_clp",
+    "numero_oferentes",
+    "dias_pub_cierre",
+    "dias_pub_adj",
+]
 
 
 def month_range(desde: str, hasta: str) -> list[tuple[int, int]]:
@@ -148,13 +165,46 @@ def _csv_val(val: object) -> object:
     return "" if val is None else val
 
 
+def write_detail_csv(tenders: Sequence[DedupTender], path: Path) -> None:
+    """One row per deduplicated tender, sorted by commune, year and code.
+
+    `estado` is the state the aggregates count it under (adjudicada / fallida / abierta);
+    `estado_chilecompra` keeps the raw label. An empty `monto_adjudicado_clp` means no line
+    reported an awarded peso amount.
+    """
+    with path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=DETAIL_FIELDS)
+        writer.writeheader()
+        for t in sorted(tenders, key=lambda t: (t.codigo_comuna, t.anio, t.codigo_externo)):
+            writer.writerow({
+                "codigo_comuna": t.codigo_comuna,
+                "anio": t.anio,
+                "codigo_externo": t.codigo_externo,
+                "nombre": t.nombre,
+                "estado": t.estado_resumen,
+                "estado_chilecompra": t.estado,
+                "sector": t.sector,
+                "monto_estimado_clp": _csv_val(t.monto_estimado),
+                "monto_adjudicado_clp": (
+                    round(t.monto_adjudicado, 2) if t.con_monto_adjudicado else ""
+                ),
+                "numero_oferentes": _csv_val(t.numero_oferentes),
+                "dias_pub_cierre": _csv_val(t.dias_pub_cierre),
+                "dias_pub_adj": _csv_val(t.dias_pub_adj),
+            })
+
+
 def build_tables_from_zips(
     zip_paths: Sequence[Path],
     out_dir: Path,
     commune_index: Mapping[str, str],
     manifest_files: dict[str, dict[str, object]],
 ) -> dict[str, object]:
-    """Parse local ChileCompra ZIP files, aggregate RM metrics, and write CSV + manifest."""
+    """Parse local ChileCompra ZIP files, aggregate RM metrics, and write CSVs + manifest.
+
+    Writes the per-tender detail (`licitaciones_detalle.csv`) from the same deduplicated
+    tenders the aggregates count, so their per-commune counts match exactly.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     diagnostics: dict[str, int] = {
         "total_filas": 0,
@@ -174,7 +224,9 @@ def build_tables_from_zips(
             )
         )
 
-    year_metrics, sector_metrics = aggregate_records(records)
+    tenders = deduplicate_tenders(records)
+    year_metrics, sector_metrics = aggregate_tenders(tenders)
+    write_detail_csv(tenders, out_dir / DETAIL_CSV_NAME)
 
     year_csv = out_dir / "resumen_comuna_anio.csv"
     year_fields = [

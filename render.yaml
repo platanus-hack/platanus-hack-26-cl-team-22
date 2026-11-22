@@ -1,5 +1,8 @@
-# Render Blueprint: builds the React landing page in web/ and serves it as a static site.
-# https://render.com/docs/blueprint-spec
+# Render Blueprint: the React landing (web/) as a static site, plus the small server that
+# talks to Claude (servidor-guia/). https://render.com/docs/blueprint-spec
+#
+# Values marked `sync: false` are asked for in the Render dashboard the first time the
+# Blueprint is applied (they are never stored in this file). See .env.render.example.
 services:
   - type: web
     name: root-landing
@@ -9,3 +12,36 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+      # Public address of servidor-guia (its /interpretar and /guia routes). Vite bakes
+      # these into the build, so changing them needs a new deploy of this site.
+      - key: VITE_CASO_URL
+        sync: false
+      - key: VITE_GUIA_URL
+        sync: false
+
+  - type: web
+    name: root-guia
+    runtime: node
+    rootDir: servidor-guia
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /salud
+    envVars:
+      # servidor-guia runs TypeScript directly and needs Node 23.6 or newer.
+      - key: NODE_VERSION
+        value: 24
+      # Never a VITE_* variable: it must not reach the browser.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Trusted proxy hops in front of the service, so the rate limit sees each visitor's address
+      # (from X-Forwarded-For) instead of the proxy's. Render's docs do not state the hop count:
+      # 1 is a starting guess. Set it from GET /salud as servidor-guia/README.md («Operación») explains.
+      - key: PROXIES_CONFIABLES
+        value: 1
+      # Model calls per UTC day for the whole service; past it the routes answer 429 and the page
+      # goes on without AI. 0 = no cap. Size it to the budget (about 3 calls per visitor).
+      - key: TOPE_DIARIO
+        value: 1000
+      # Origin(s) of the landing allowed by CORS, comma separated.
+      - key: ORIGENES
+        sync: false

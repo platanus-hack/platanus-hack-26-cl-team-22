@@ -85,6 +85,7 @@ make setup      # crea .venv e instala dependencias
 make test       # 180 pruebas del núcleo y de los datos
 make simulate   # calibra, simula y escribe viz/datos/simulacion.json (~15 s)
 make validate   # prueba fuera de muestra contra sin cambio y tendencia -> docs/validacion.md
+make licitaciones-detalle  # aporte de cada licitación a la credibilidad municipal -> viz/datos/licitaciones.json
 ```
 
 El sitio publicado es la landing de `web/` con la interfaz de `viz/` dentro, en `simulador/`: `npm run build`

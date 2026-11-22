@@ -13,6 +13,10 @@ import W110 from "./data/w110.json";
 import RM from "./data/rm.json";
 import { COMUNAS, PPDA_CRED, SEIA_PROB } from "./model.js";
 
+// Communes the real simulator (viz/) ranks. The globe label shows this, not the 12 of the sample
+// model below, so the landing and the simulator never disagree on the count.
+const COMUNAS_SIMULADOR = 52;
+
 const mounted = new WeakMap();
 
 export function mountSimulator(root, opts={}){
@@ -174,7 +178,7 @@ function drawFrame(){
     const lx=p[0]+34, ly=p[1]-30;
     ctx.beginPath(); ctx.moveTo(p[0]+5,p[1]-5); ctx.lineTo(lx-6,ly+4); ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.stroke();
     ctx.textAlign="left"; ctx.textBaseline="alphabetic"; ctx.font="600 13.5px "+C.font; ctx.fillStyle=C.ink; ctx.fillText("Santiago de Chile",lx,ly);
-    ctx.font="12.5px "+C.font; ctx.fillStyle=C.muted; ctx.fillText(COMUNAS.length+" comunas simuladas",lx,ly+16);
+    ctx.font="12.5px "+C.font; ctx.fillStyle=C.muted; ctx.fillText(COMUNAS_SIMULADOR+" comunas simuladas",lx,ly+16);
     ctx.globalAlpha=1;
   }
   if(!reduced&&ma>0&&!anim) requestDraw();
@@ -350,12 +354,11 @@ canvas.addEventListener("pointerup",up); canvas.addEventListener("pointercancel"
 canvas.addEventListener("pointerleave",()=>{hideTip(); setHover(null);});
 canvas.addEventListener("wheel",e=>{e.preventDefault(); stop(); const p=pos(e); zoomAt(p[0],p[1],Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)));},{passive:false});
 function comunaAt(p){applyProj(); const g=projection.invert(p); if(!g||!isFinite(g[0])) return null; return RMF.find(f=>d3.geoContains(f,g))||null}
-function nearMarker(p){applyProj(); const m=projection(SANTIAGO); return Math.hypot(m[0]-p[0],m[1]-p[1])<Math.max(34,R0*view.k*.06)}
 const tip=document.getElementById("tip");
 function hideTip(){tip.classList.remove("on")}
 function setHover(i){ if(S.hover!==i){S.hover=i; document.querySelectorAll(".row").forEach(r=>r.classList.toggle("hover",+r.dataset.i===i)); requestDraw();} }
 function hover(p){
-  if(level()!=="region"){ canvas.classList.toggle("pointing",nearMarker(p)); hideTip(); return; }
+  if(level()!=="region"){ canvas.classList.remove("pointing"); hideTip(); return; }
   const f=comunaAt(p); canvas.classList.toggle("pointing",!!(f&&f.idx>=0));
   if(!f){hideTip(); setHover(null); return;}
   setHover(f.idx>=0?f.idx:null);
@@ -363,7 +366,9 @@ function hover(p){
   tip.style.left=p[0]+"px"; tip.style.top=p[1]+"px"; tip.classList.add("on");
 }
 function click(p){
-  if(level()!=="region"){ if(nearMarker(p)||level()==="country") go("region"); return; }
+  // Clicking the globe does nothing: only the button or scrolling enter the simulator, after their
+  // animation. A click used to fly straight to the sample model's 12 communes, off the main flow.
+  if(level()!=="region") return;
   const f=comunaAt(p); if(f&&f.idx>=0&&SIM) select(f.idx,true);
 }
 

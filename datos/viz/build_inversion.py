@@ -1,4 +1,5 @@
-"""Construye viz/public/datos/inversion.json: cuatro indicadores por comuna para quien quiere invertir.
+"""Construye viz/public/datos/inversion.json: cuatro indicadores por comuna para quien quiere invertir,
+y viz/public/datos/inversion_proyectos.json: los proyectos SEIA que forman inversion_evaluada.
 
 Entradas (ya en el repo, no se descarga nada):
   - data/comunas_rm.csv                   (las 52 comunas)
@@ -18,6 +19,11 @@ Reglas (un valor ausente es null, nunca 0, salvo donde 0 es el valor real):
   - inversion_evaluada: proyectos "Aprobado" con fecha_presentacion desde 2015-01-01; uno que
     nombra varias comunas (separadas por ";") cuenta una vez en cada una. No se suma inversion_musd.
 
+Detalle (inversion_proyectos.json): por comuna, la lista de proyectos que suman inversion_evaluada,
+sacada de la misma selección que el conteo (largo de la lista == inversion_evaluada, se verifica
+antes de escribir). Cada proyecto aporta exactamente +1 al conteo ("aporte": 1); inversion_musd se
+informa como contexto (null si falta) y no entra al indicador. Orden: fecha_presentacion descendente.
+
 Uso (desde la raíz del repo):  python -I datos/viz/build_inversion.py
 """
 
@@ -35,6 +41,7 @@ ARCLIM = ROOT / "data" / "arclim" / "componentes_comuna.csv"
 SUBESTACIONES = ROOT / "data" / "energia" / "subestaciones_rm.csv"
 SEIA = ROOT / "data" / "seia" / "proyectos_rm.csv"
 OUT = ROOT / "viz" / "public" / "datos" / "inversion.json"
+OUT_PROYECTOS = ROOT / "viz" / "public" / "datos" / "inversion_proyectos.json"
 
 ANIO_DESDE, ANIO_HASTA = 2008, 2023
 SEIA_DESDE = "2015-01-01"
@@ -67,9 +74,13 @@ def capacidad_operando(filas: list[dict]) -> float | None:
     return sum(mva) if mva else None
 
 
-def proyectos_aprobados(filas: list[dict], desde: str = SEIA_DESDE) -> dict[str, int]:
-    """Proyectos aprobados desde `desde` por comuna; los multicomuna cuentan una vez en cada una."""
-    cuenta: dict[str, int] = {}
+def seleccion_aprobados(filas: list[dict], desde: str = SEIA_DESDE) -> dict[str, list[dict]]:
+    """Filas de proyectos aprobados desde `desde`, agrupadas por comuna.
+
+    Única regla de selección de inversion_evaluada: un proyecto multicomuna aparece una vez en cada
+    comuna que nombra. El conteo y el detalle salen de aquí.
+    """
+    por_comuna: dict[str, list[dict]] = {}
     for f in filas:
         if (
             f["estado"] != "Aprobado"
@@ -78,8 +89,41 @@ def proyectos_aprobados(filas: list[dict], desde: str = SEIA_DESDE) -> dict[str,
         ):
             continue
         for cod in {c.strip() for c in f["codigos_comuna"].split(";") if c.strip()}:
-            cuenta[cod] = cuenta.get(cod, 0) + 1
-    return cuenta
+            por_comuna.setdefault(cod, []).append(f)
+    return por_comuna
+
+
+def proyectos_aprobados(filas: list[dict], desde: str = SEIA_DESDE) -> dict[str, int]:
+    """Proyectos aprobados desde `desde` por comuna; los multicomuna cuentan una vez en cada una."""
+    return {cod: len(fs) for cod, fs in seleccion_aprobados(filas, desde).items()}
+
+
+def detalle_proyecto(f: dict) -> dict:
+    """Entrada de un proyecto en inversion_proyectos.json; aporta +1 a inversion_evaluada."""
+    return {
+        "expediente_id": f["expediente_id"],
+        "nombre": f["nombre"],
+        "titular": f["titular"],
+        "tipologia": f["tipologia"],
+        "descripcion_tipologia": f["descripcion_tipologia"],
+        "inversion_musd": float(f["inversion_musd"]) if f["inversion_musd"] else None,
+        "fecha_presentacion": f["fecha_presentacion"],
+        "url_ficha": f["url_ficha"],
+        "aporte": 1,
+    }
+
+
+def proyectos_por_comuna(filas: list[dict], desde: str = SEIA_DESDE) -> dict[str, list[dict]]:
+    """Detalle de los proyectos que forman inversion_evaluada, por comuna, del más reciente al más antiguo."""
+    return {
+        cod: [
+            detalle_proyecto(f)
+            for f in sorted(
+                fs, key=lambda f: (f["fecha_presentacion"], f["expediente_id"]), reverse=True
+            )
+        ]
+        for cod, fs in seleccion_aprobados(filas, desde).items()
+    }
 
 
 def valores_por_comuna(codigos: list[str]) -> dict[str, dict]:
@@ -114,8 +158,14 @@ def main() -> int:
         print(f"Error: {len(codigos)} comunas en {COMUNAS.name}, se esperaban 52")
         return 1
     valores = valores_por_comuna(codigos)
+    filas_seia = leer(SEIA)
+    detalle = proyectos_por_comuna(filas_seia)
+    descuadre = [c for c in codigos if len(detalle.get(c, [])) != valores[c]["inversion_evaluada"]]
+    if descuadre or set(detalle) - set(codigos):
+        print(f"Error: el detalle SEIA no cuadra con inversion_evaluada en {descuadre}")
+        return 1
 
-    anio_seia = max(r["fecha_presentacion"] for r in leer(SEIA))[:4]
+    anio_seia = max(r["fecha_presentacion"] for r in filas_seia)[:4]
     indicadores = [
         {
             "id": "escasez_hidrica",
@@ -163,10 +213,33 @@ def main() -> int:
         "indicadores": indicadores,
         "comunas": [{"codigo": c, "valores": valores[c]} for c in codigos],
     }
+    salida_proyectos = {
+        "meta": {
+            "generado": date.today().isoformat(),
+            "comando": "python -I datos/viz/build_inversion.py",
+            "indicador": "inversion_evaluada",
+            "regla": f'Proyectos con estado "Aprobado" y fecha_presentacion desde {SEIA_DESDE}; '
+            "un proyecto que nombra varias comunas cuenta una vez en cada una",
+            "fuente": "SEIA (SEA), data/seia/proyectos_rm.csv",
+            "periodo": f"{SEIA_DESDE[:4]}–{anio_seia}",
+            "nota": "Cada proyecto aporta exactamente +1 al conteo (aporte); inversion_musd es "
+            "contexto (null si falta) y no se suma al indicador. Orden: fecha_presentacion descendente.",
+        },
+        "comunas": [
+            {
+                "codigo": c,
+                "inversion_evaluada": valores[c]["inversion_evaluada"],
+                "proyectos": detalle.get(c, []),
+            }
+            for c in codigos
+        ],
+    }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(
-        json.dumps(salida, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8"
-    )
+    for path, contenido in ((OUT, salida), (OUT_PROYECTOS, salida_proyectos)):
+        path.write_text(
+            json.dumps(contenido, ensure_ascii=False, separators=(",", ":")) + "\n",
+            encoding="utf-8",
+        )
 
     for ind in indicadores:
         k = ind["id"]
@@ -178,7 +251,9 @@ def main() -> int:
             f"mediana {statistics.median(nums)}, max {nums[-1]}"
         )
         print("  mejores:", orden[:3], " peores:", orden[::-1][:3])
-    print(f"Escrito {OUT.relative_to(ROOT)}")
+    total = sum(len(ps) for ps in detalle.values())
+    print(f"Detalle SEIA: {total} entradas proyecto-comuna, cuadra con inversion_evaluada")
+    print(f"Escrito {OUT.relative_to(ROOT)} y {OUT_PROYECTOS.relative_to(ROOT)}")
     return 0
 
 
