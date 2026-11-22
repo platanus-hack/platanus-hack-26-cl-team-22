@@ -737,7 +737,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
         cargando: !!guiaIA?.cargando || !!lecturaCaso?.cargando,
         porIA: !!guiaIA?.texto,
         onCambiar: () => setOnb(true),
-        onAgua: agua && busqueda.caso === 'hidro' ? irAAgua : undefined,
+        onAgua: agua && busqueda.caso === 'energia' ? irAAgua : undefined,
         leyendo: !!lecturaCaso?.cargando,
         ajustes: ajustesGuia,
         notas: notasGuia,
@@ -861,7 +861,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   const comunaGeoRiesgo = seleccionada ? (features.find((f) => f.properties.simCodigo === seleccionada)?.properties.codigo ?? seleccionada) : null
   // Variables de inversión: solo para quien llegó con un caso de empresa o inversión (mentoría: «las 7 que más les interesan»).
   const inversionReal = useMemo(() => leerInversion(inversionRaw), [inversionRaw])
-  const casoInversion = busqueda?.caso === 'hidro' || busqueda?.caso === 'industria'
+  const casoInversion = busqueda?.caso === 'energia' || busqueda?.caso === 'industria'
   const extras = useMemo(
     () => (casoInversion ? indicadoresInversion(inversionReal, data.clima, anio) : []),
     [casoInversion, inversionReal, data.clima, anio],

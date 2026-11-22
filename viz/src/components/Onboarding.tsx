@@ -57,7 +57,8 @@ export function Onboarding({ variables, onListo, inicio, hasta, urlCaso = null }
     window.setTimeout(() => onListo(b), quieto ? 0 : SALIDA_MS)
   }
   const terminar = (texto: string, lectura?: Interpretacion | null) => {
-    const caso = casoDe(texto ? leerCaso(texto) : 'general')
+    // Claude's profile wins; the keyword reading only fills in when Claude did not answer.
+    const caso = casoDe(lectura?.perfil ?? (texto ? leerCaso(texto) : 'general'))
     cerrar({
       caso: caso.id,
       prioridades: prioridadesDe(caso, ids),

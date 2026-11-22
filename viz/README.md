@@ -71,7 +71,7 @@ color y elegido son estado de cada tramo y de cada estación (`setFeatureState`)
 ocultan por opacidad: sobre el terreno, ocultar una capa o vaciar su fuente deja restos dibujados.
 Un cauce sin estación se dibuja fino y no cambia. Elegir una comuna pasa a su estación de más caudal, si
 tiene. Cada río con nombre trae las comunas por donde pasa, de aguas arriba a aguas abajo (`cauces` en
-`caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el caso «Energía hidráulica» el resumen ofrece un botón directo a esta sección. El caudal no entra
+`caudales.json`): la hoja las muestra en fila y el mapa las tiñe. En el perfil «Energía» el resumen ofrece un botón directo a esta sección. El caudal no entra
 al índice de riesgo: solo 14 estaciones cumplen el filtro y no hay un valor por comuna.
 
 **«¿Y si sigue la megasequía?»** (`src/lib/aguaSim.ts`): la parte del agua que sí es simulación. Para cada
@@ -95,8 +95,12 @@ la norma, y por eso la fila de aire marca «Sobre la norma» aunque la posición
 ### Entrada guiada
 
 Al abrir, una sola pantalla sobre el mapa (`src/components/Onboarding.tsx`): **el caso, en texto libre**.
-`leerCaso` (`src/lib/onboarding.ts`) lo clasifica por palabras clave en energía hidráulica, vivienda, industria
-o evaluación general, y de ahí salen solos los pesos de las tres variables simuladas; no hay más preguntas.
+Claude lo lee y elige uno de nueve perfiles (`PERFILES` en `src/lib/caso.ts`): familia con niños, adulto mayor,
+joven que arrienda, inversionista inmobiliario, emprendedor o comercio, empresario joven u oficina, industria y
+logística, energía o evaluación general. Cada perfil parte con sus propios pesos para las tres variables simuladas;
+`leerCaso` (`src/lib/onboarding.ts`) clasifica por palabras clave solo cuando Claude no responde. No hay más
+preguntas. `npm run evaluar` prueba frases de ejemplo contra el modelo real (`scripts/evaluar-casos.eval.ts`,
+reporte en `docs/evaluacion-casos.md`).
 Los criterios propios del caso que el modelo no mide (caída disponible, precio del suelo, etc.) **no entran al
 cálculo ni muestran número**: la guía los nombra como «aún sin datos», porque para usarlos hace falta un valor
 por comuna que hoy no existe. El caudal sí tiene datos y se ve en Climático › El agua.
@@ -122,7 +126,7 @@ a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.
   «Por lo que contaste: Aire: Clave» y puede apagarlos; el índice recalcula el orden. Detalle en
   `servidor-guia/README.md`.
   Esa misma llamada se hace desde la entrada y **no hace preguntas de seguimiento**: Claude infiere todo del caso
-  y del perfil (en Energía hidráulica e Industria y logística el aire no pesa). El mapa reusa esa lectura en vez de
+  y del perfil (en comercio, industria y energía el aire no pesa). El mapa reusa esa lectura en vez de
   pedir otra.
 
 ### Junto a la landing
