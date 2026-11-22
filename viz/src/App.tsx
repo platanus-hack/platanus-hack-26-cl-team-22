@@ -214,9 +214,10 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   // Una dimensión (el índice general) o una variable en detalle; fuera de la hoja de riesgo siempre es el aire.
   const variable = (vista === 'riesgo' && capa !== GENERAL && data.variables.find((v) => v.id === capa && conDato.has(v.id))) || varAire
   const esAire = variable.id === varAire.id
-  const general = vista === 'riesgo' && capa === GENERAL
+  // En Referencias el mapa muestra el índice general, igual que el resumen: la pestaña no trata de una variable.
+  const general = (vista === 'riesgo' && capa === GENERAL) || vista === 'fuentes' || vista === 'prueba'
   /** el mapa pinta posición de riesgo (0 a 100) en vez del valor de la variable */
-  const mapaRiesgo = vista === 'riesgo' && (general || !esAire)
+  const mapaRiesgo = general || (vista === 'riesgo' && !esAire)
   const anio = anios[idx] ?? anios[0]!
 
   // Simulación de mudanzas (vista 5): corre en un Web Worker solo mientras la vista está abierta.

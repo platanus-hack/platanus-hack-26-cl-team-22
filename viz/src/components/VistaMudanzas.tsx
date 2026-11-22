@@ -126,12 +126,6 @@ export function VistaMudanzas({ datos, resultado, calculando, opciones, onOpcion
             </div>
           </div>
 
-          {serie && (
-            <section className="tramo" aria-label={`Ocupación de la vivienda en ${comuna.nombre}`}>
-              <ClaveGrafico nivelBanda={0} />
-              <GraficoBanda anios={datos.anios} serie={serie} idxAnio={t} unidad="% de la capacidad" nivelBanda={0} alto={112} />
-            </section>
-          )}
         </>
       )}
 
@@ -155,6 +149,12 @@ export function VistaMudanzas({ datos, resultado, calculando, opciones, onOpcion
         {activosTexto.length > 0 && <p className="nota">{activosTexto.join('; ').replace(/^./, (c) => c.toUpperCase())}.</p>}
       </section>
 
+      {comuna && serie && (
+        <section className="tramo" aria-label={`Ocupación de la vivienda en ${comuna.nombre}`}>
+          <ClaveGrafico nivelBanda={0} />
+          <GraficoBanda anios={datos.anios} serie={serie} idxAnio={t} unidad="% de la capacidad" nivelBanda={0} alto={96} />
+        </section>
+      )}
       {saturadas.length > 0 && (
         <section className="tramo" aria-labelledby="h-se-llenan">
           <h3 id="h-se-llenan">
