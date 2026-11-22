@@ -13,6 +13,10 @@ import W110 from "./data/w110.json";
 import RM from "./data/rm.json";
 import { COMUNAS, PPDA_CRED, SEIA_PROB } from "./model.js";
 
+// Communes the real simulator (viz/) ranks. The globe label shows this, not the 12 of the sample
+// model below, so the landing and the simulator never disagree on the count.
+const COMUNAS_SIMULADOR = 52;
+
 const mounted = new WeakMap();
 
 export function mountSimulator(root, opts={}){
@@ -174,7 +178,7 @@ function drawFrame(){
     const lx=p[0]+34, ly=p[1]-30;
     ctx.beginPath(); ctx.moveTo(p[0]+5,p[1]-5); ctx.lineTo(lx-6,ly+4); ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.stroke();
     ctx.textAlign="left"; ctx.textBaseline="alphabetic"; ctx.font="600 13.5px "+C.font; ctx.fillStyle=C.ink; ctx.fillText("Santiago de Chile",lx,ly);
-    ctx.font="12.5px "+C.font; ctx.fillStyle=C.muted; ctx.fillText(COMUNAS.length+" comunas simuladas",lx,ly+16);
+    ctx.font="12.5px "+C.font; ctx.fillStyle=C.muted; ctx.fillText(COMUNAS_SIMULADOR+" comunas simuladas",lx,ly+16);
     ctx.globalAlpha=1;
   }
   if(!reduced&&ma>0&&!anim) requestDraw();
