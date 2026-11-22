@@ -354,12 +354,11 @@ canvas.addEventListener("pointerup",up); canvas.addEventListener("pointercancel"
 canvas.addEventListener("pointerleave",()=>{hideTip(); setHover(null);});
 canvas.addEventListener("wheel",e=>{e.preventDefault(); stop(); const p=pos(e); zoomAt(p[0],p[1],Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)));},{passive:false});
 function comunaAt(p){applyProj(); const g=projection.invert(p); if(!g||!isFinite(g[0])) return null; return RMF.find(f=>d3.geoContains(f,g))||null}
-function nearMarker(p){applyProj(); const m=projection(SANTIAGO); return Math.hypot(m[0]-p[0],m[1]-p[1])<Math.max(34,R0*view.k*.06)}
 const tip=document.getElementById("tip");
 function hideTip(){tip.classList.remove("on")}
 function setHover(i){ if(S.hover!==i){S.hover=i; document.querySelectorAll(".row").forEach(r=>r.classList.toggle("hover",+r.dataset.i===i)); requestDraw();} }
 function hover(p){
-  if(level()!=="region"){ canvas.classList.toggle("pointing",nearMarker(p)); hideTip(); return; }
+  if(level()!=="region"){ canvas.classList.remove("pointing"); hideTip(); return; }
   const f=comunaAt(p); canvas.classList.toggle("pointing",!!(f&&f.idx>=0));
   if(!f){hideTip(); setHover(null); return;}
   setHover(f.idx>=0?f.idx:null);
@@ -367,9 +366,9 @@ function hover(p){
   tip.style.left=p[0]+"px"; tip.style.top=p[1]+"px"; tip.classList.add("on");
 }
 function click(p){
-  // Clicking the globe takes the main path, the same as the button: it flies to the region and opens
-  // the real simulator. Flying here directly would land on the sample model's 12 communes instead.
-  if(level()!=="region"){ if(nearMarker(p)||level()==="country") $("cta").click(); return; }
+  // Clicking the globe does nothing: only the button or scrolling enter the simulator, after their
+  // animation. A click used to fly straight to the sample model's 12 communes, off the main flow.
+  if(level()!=="region") return;
   const f=comunaAt(p); if(f&&f.idx>=0&&SIM) select(f.idx,true);
 }
 
