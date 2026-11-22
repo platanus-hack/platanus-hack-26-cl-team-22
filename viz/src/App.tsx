@@ -44,6 +44,7 @@ import {
 import { variableCorta } from './lib/variables'
 import { Hoja, VistaFuentes } from './components/Hoja'
 import type { VistaId } from './lib/interaccion'
+import { VistaAportes } from './components/VistaAportes'
 import { lugarDe, modoDe, PESTANAS, seccionesDe, type Papel, type PestanaId, type SeccionId } from './lib/pestanas'
 import { Onboarding, type Busqueda } from './components/Onboarding'
 import { pedirGuia, urlGuia } from './lib/guia'
@@ -221,7 +222,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
   const variable = (vista === 'riesgo' && capa !== GENERAL && data.variables.find((v) => v.id === capa && conDato.has(v.id))) || varAire
   const esAire = variable.id === varAire.id
   // En Referencias el mapa muestra el índice general, igual que el resumen: la pestaña no trata de una variable.
-  const general = (vista === 'riesgo' && capa === GENERAL) || vista === 'fuentes' || vista === 'prueba'
+  const general = (vista === 'riesgo' && capa === GENERAL) || vista === 'fuentes' || vista === 'prueba' || vista === 'aportes'
   /** el mapa pinta posición de riesgo (0 a 100) en vez del valor de la variable */
   const mapaRiesgo = general || (vista === 'riesgo' && !esAire)
   const anio = anios[idx] ?? anios[0]!
@@ -1077,6 +1078,7 @@ export function Simulador({ data, geoRaw, lenaRaw, demografiaRaw, aguaRaw, inver
       />
     )
   else if (vista === 'fuentes') hoja = <VistaFuentes politicas={data.politicas} />
+  else if (vista === 'aportes') hoja = <VistaAportes codigo={comunaGeoRiesgo} nombre={comunaSel?.nombre ?? ''} />
   else if (vista === 'prueba' && data.validacion) hoja = <VistaPrueba validacion={data.validacion} aviso={data.meta.aviso} unidad={u} />
   else if (vista === 'mudanzas' && demografia)
     hoja = (

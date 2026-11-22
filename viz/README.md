@@ -244,3 +244,12 @@ src/components/ MapaPapel (mapa SVG), Vistas (las cinco hojas), TiraPolitica, Gr
                 muestras, icono), Marco (leyenda, encuadre, años)
 src/App.tsx     estado, teclado y demostración;  src/main.tsx  carga de datos y estados de error
 ```
+
+### Aporte de cada proyecto y de cada licitación
+
+En Social › «Inversión y compras públicas, una por una» (`src/components/VistaAportes.tsx`, `src/lib/aportes.ts`)
+la comuna elegida muestra sus proyectos SEIA (cada uno suma 1 a «inversión evaluada») y sus licitaciones de 2024
+con el aporte de cada una a la credibilidad municipal. Las licitaciones se piden por comuna desde
+`public/datos/licitaciones/<codigo>.json`, que genera `python -I datos/viz/partir_licitaciones.py` a partir de
+`viz/datos/licitaciones.json`. Solo cinco comunas usan las licitaciones en el modelo; en las demás la vista dice
+que son contexto. Si un archivo no carga, la sección lo indica y el resto sigue igual.

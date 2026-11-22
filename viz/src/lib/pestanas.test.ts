@@ -9,8 +9,8 @@ describe('pestañas y secciones', () => {
     expect(PESTANAS.filter((p) => !p.titulo || !p.subtitulo).map((p) => p.id)).toEqual(['resumen'])
   })
   it('una sección sin datos no aparece', () => {
-    expect(seccionesDe('social', todo).map((s) => s.id)).toEqual(['seguridad', 'crecimiento', 'urbano'])
-    expect(seccionesDe('social', { seguridad: true }).map((s) => s.id)).toEqual(['seguridad'])
+    expect(seccionesDe('social', todo).map((s) => s.id)).toEqual(['seguridad', 'crecimiento', 'urbano', 'aportes'])
+    expect(seccionesDe('social', { seguridad: true }).map((s) => s.id)).toEqual(['seguridad', 'aportes'])
     expect(seccionesDe('referencias', {}).map((s) => s.id)).toEqual(['fuentes'])
   })
 })
