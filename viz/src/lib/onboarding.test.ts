@@ -41,6 +41,10 @@ describe('grados y prioridades', () => {
   it('solo da prioridades para variables que existen; las desconocidas parten en medio', () => {
     expect(prioridadesDe(casoDe('industria'), ['crecimiento_poblacion', 'otra'])).toEqual({ crecimiento_poblacion: 8, otra: 5 })
   })
+  it('en industria y energía el aire no pesa: pesan seguridad y crecimiento', () => {
+    expect(casoDe('industria').prioridades.pm25_anual).toBe(0)
+    expect(casoDe('hidro').prioridades.pm25_anual).toBe(0)
+  })
 })
 
 describe('rangos', () => {

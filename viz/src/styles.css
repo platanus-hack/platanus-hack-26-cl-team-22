@@ -2406,29 +2406,6 @@ body:has(.estado) {
 .onb-caso textarea[readonly] {
   opacity: 0.65;
 }
-.onb-preguntas {
-  display: grid;
-  gap: calc(var(--u) * 1.1);
-  margin-top: calc(var(--u) * 1.6);
-}
-.onb-pregunta {
-  display: grid;
-  gap: calc(var(--u) * 0.4);
-  font-size: var(--t-m);
-  color: var(--tinta);
-}
-.onb-pregunta input {
-  border: 0;
-  background: var(--hoja);
-  box-shadow: inset 0 0 0 2px var(--tinta);
-  padding: calc(var(--u) * 0.9) calc(var(--u) * 1.2);
-  font: inherit;
-  color: var(--tinta);
-}
-.onb-pregunta input:focus-visible {
-  outline: 3px solid var(--pol-0);
-  outline-offset: 2px;
-}
 .onb-ejemplos,
 .onb-lectura {
   display: flex;

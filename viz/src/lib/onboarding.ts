@@ -61,7 +61,7 @@ export const CASOS: readonly Caso[] = [
     id: 'industria',
     titulo: 'Industria y logística',
     palabras: /industr|planta|fabric|bodega|logist|distribu|manufact|empresa|galpon|comerci|local|negocio/,
-    prioridades: { pm25_anual: 3, seguridad: 5, crecimiento_poblacion: 8 },
+    prioridades: { pm25_anual: 0, seguridad: 5, crecimiento_poblacion: 8 },
     referencia: [
       { id: 'suelo', nombre: 'Suelo industrial disponible', que: 'Terrenos con uso de suelo permitido', unidad: 'ha' },
       { id: 'autopista', nombre: 'Acceso a autopistas', que: 'Distancia al enlace más cercano', unidad: 'km' },
