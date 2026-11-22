@@ -74,11 +74,17 @@ AUC (0,5 = azar, 1 = las ordena perfecto). El indicador del modelo se eligió an
 resultado: cambio de la frecuencia de sequía (drought_periods, ssp245,
 2041-2060, mediana entre réplicas).
 
-| Ordena por | AUC |
-|---|---|
-| Modelo: más aumento de la frecuencia de sequía | 0,60 |
-| Fuera de la provincia de Santiago | 0,92 |
-| Menos lluvia modelada en 1991-2020 | 0,12 |
+| Ordena por | AUC | p (permutación) |
+|---|---|---|
+| Modelo: más aumento de la frecuencia de sequía | 0,60 | 0,086 |
+| Fuera de la provincia de Santiago | 0,92 | 0,000 |
+| Menos lluvia modelada en 1991-2020 | 0,12 | 1,000 |
+
+El valor p es la parte de 10,000 reordenamientos al azar de las etiquetas que ordena
+igual o mejor; un p alto significa que el AUC no se distingue del azar. Las comunas vecinas no
+son independientes, así que el p real es más alto. La lluvia modelada de 1991-2020 queda bajo
+0,5 porque ordena al revés: las comunas con decreto son las de **más** lluvia modelada (en su
+mayoría rurales o de precordillera), otra señal de que los decretos siguen a la exposición.
 
 Resultado: **el modelo no le gana a una alternativa simple**. Los decretos son actos administrativos: probablemente dependen también de
 la exposición (riego, agua de pozo, comunas rurales) y no solo del clima, y 15 de 186 se dictaron

@@ -5,7 +5,8 @@ Inputs:  data/ (communes, RETC emissions, census moves), results/aire_calibracio
 Model:   core/ciclo.py (credibility -> emissions -> coupled air) with households moving between
          communes (core/hogares.py) and, in one reading, carrying residential heating with them.
 Contract: docs/plan-comunas.md. Credibility: docs/credibilidad.md. Air: docs/modelo-aire.md.
-Households: docs/modelo-hogares.md.
+Households: docs/modelo-hogares.md. Climate risk (water, flood, heat): core/clima.py from
+data/arclim, one climate-model run drawn per replica (docs/modelo-clima.md).
 
 Usage:  python -m experiments.simular
 """

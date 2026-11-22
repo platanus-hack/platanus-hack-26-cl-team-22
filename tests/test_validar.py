@@ -87,3 +87,11 @@ def test_water_check_labels_the_24_communes_with_a_dga_decree():
     assert set(report["auc"]) == {"modelo", "fuera_provincia_santiago", "precipitacion_base"}
     assert all(0.0 <= v <= 1.0 for v in report["auc"].values())
     assert report["gana"] in {"modelo", "fuera_provincia_santiago", "precipitacion_base", "empate"}
+
+
+def test_water_check_reports_a_reproducible_permutation_p_value():
+    first = validar.water_vs_decrees(replicas=40)
+    again = validar.water_vs_decrees(replicas=40)
+    assert set(first["p_permutacion"]) == set(first["auc"])
+    assert all(0.0 < p <= 1.0 for p in first["p_permutacion"].values())
+    assert first["p_permutacion"] == again["p_permutacion"]

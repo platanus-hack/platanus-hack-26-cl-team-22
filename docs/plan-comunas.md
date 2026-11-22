@@ -47,6 +47,7 @@ con semilla fija para que la interfaz tenga la forma correcta.
 | `promesas` | Comparación aparte (no es un interruptor): muchas promesas con poca ejecución contra pocas con mucha ejecución. Por paquete: valor de planilla, bandas, probabilidad de cumplir la norma por año. Ver `docs/promesas.md` |
 | `origen_aire` | Opcional. Por escenario y comuna: lista de `{origen, fraccion}` con la parte (0 a 1) del PM2,5 de la comuna que aportan las emisiones de cada comuna de origen; puede sumar menos de 1 (el resto es fondo regional) |
 | `transformaciones` | Opcional. Por escenario: descriptor espacio-temporal pareado (`referencia`, `variable`, `tipo`, `max_abs_delta`, `epicentro`, `bbox`, `intensidad_regional` y `comunas_foco` con `delta_p50`, `incertidumbre`, `intensidad`) para transiciones dinámicas del mapa. Ver [`docs/opciones-transformacion-mapa.md`](./opciones-transformacion-mapa.md) |
+| `clima` | Opcional. Riesgo climático por escenario (`ssp245`, `ssp585`): `anios` (2026-2060), `corridas_disponibles`, `corridas` (índice de la corrida que sorteó cada réplica) y `riesgos` → `hidrico`, `inundacion`, `calor` → indicador → `unidad` y `por_comuna` con `p10`, `p50`, `p90` por año. Cambios respecto de 1991-2020 de la misma corrida, sin índice compuesto. Ver [`docs/modelo-clima.md`](./modelo-clima.md) |
 
 Reglas del contrato:
 

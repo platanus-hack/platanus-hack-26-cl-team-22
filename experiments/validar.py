@@ -25,6 +25,10 @@ Protocol (fixed before looking at the results; constants below):
     next to it so the effect of that choice is visible.
 - Households, population and security: read from their own calibration scripts, which already
   fit on one period and test on another (see the commands in the report).
+- Water risk: climate-model years are not real years, so the test is across communes. AUC of
+  the change in drought frequency (ssp245, 2041-2060) against the communes with a DGA scarcity
+  decree 2008-2023, next to two simple rankings (outside Santiago province, modelled
+  1991-2020 rainfall) and a label-permutation p value. Not part of the README table.
 
 Usage:  python -m experiments.validar   (or `make validate`, which reruns the calibrations first)
 Output: results/validacion.json, docs/validacion.md and the table in README.md (between markers).
@@ -38,6 +42,7 @@ import unicodedata
 from collections.abc import Mapping
 
 import numpy as np
+from scipy.stats import rankdata
 
 from core.aire import AirModel, distance_matrix_km, exponential_transfer
 from core.ciclo import Intervention, simulate
@@ -74,6 +79,7 @@ WATER_SCENARIO = "ssp245"
 WATER_YEAR = 2051  # window 2041-2060
 WATER_INDICATOR = "drought_periods"  # chosen before seeing the result
 AUC_TIE = 0.02
+PERMUTATIONS = 10_000
 DECREES = ROOT / "data" / "dga" / "decretos_escasez_rm.csv"
 COMMUNES = ROOT / "data" / "comunas_rm.csv"
 
@@ -340,6 +346,18 @@ def auc(scores: np.ndarray, labels: np.ndarray) -> float:
     return float(((diff > 0).sum() + 0.5 * (diff == 0).sum()) / diff.size)
 
 
+def permutation_p(scores: np.ndarray, labels: np.ndarray, n: int = PERMUTATIONS,
+                  seed: int = SEED) -> float:
+    """One-sided p: share of label shuffles whose AUC is at least the observed one."""
+    ranks = rankdata(scores)  # average ranks, so ties count half as in auc()
+    n_pos, n_neg = int(labels.sum()), int((labels == 0).sum())
+    observed = auc(scores, labels)
+    rng = np.random.default_rng(seed)
+    shuffled = np.array([rng.permutation(labels) for _ in range(n)])
+    aucs = ((shuffled * ranks).sum(axis=1) - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
+    return float((1 + (aucs >= observed - 1e-12).sum()) / (n + 1))
+
+
 def water_vs_decrees(replicas: int = REPLICAS) -> dict:
     """AUC of the model's water risk against communes with a DGA decree (2008-2023)."""
     with COMMUNES.open(encoding="utf-8") as f:
@@ -370,6 +388,7 @@ def water_vs_decrees(replicas: int = REPLICAS) -> dict:
         "comunas": len(codes),
         "con_decreto": int(labels.sum()),
         "auc": aucs,
+        "p_permutacion": {k: round(permutation_p(v, labels), 4) for k, v in scores.items()},
         "gana": "empate" if ranked[0] - ranked[1] < AUC_TIE else best,
     }
 
@@ -380,8 +399,8 @@ WATER_LABEL = {"modelo": "Modelo: más aumento de la frecuencia de sequía",
 
 
 def water_section(water: dict) -> str:
-    rows = "\n".join(f"| {WATER_LABEL[k]} | {v:.2f}".replace(".", ",") + " |"
-                     for k, v in water["auc"].items())
+    rows = "\n".join(f"| {WATER_LABEL[k]} | {v:.2f} | {water['p_permutacion'][k]:.3f}".replace(".", ",")
+                     + " |" for k, v in water["auc"].items())
     verdict = ("el modelo ordena mejor que las alternativas" if water["gana"] == "modelo" else
                "**el modelo no le gana a una alternativa simple**" if water["gana"] != "empate" else
                "**empate**: el modelo no ordena mejor que una alternativa simple")
@@ -394,9 +413,15 @@ AUC (0,5 = azar, 1 = las ordena perfecto). El indicador del modelo se eligió an
 resultado: cambio de la frecuencia de sequía ({WATER_INDICATOR}, {WATER_SCENARIO},
 {WATER_YEAR - 10}-{WATER_YEAR + 9}, mediana entre réplicas).
 
-| Ordena por | AUC |
-|---|---|
+| Ordena por | AUC | p (permutación) |
+|---|---|---|
 {rows}
+
+El valor p es la parte de {PERMUTATIONS:,} reordenamientos al azar de las etiquetas que ordena
+igual o mejor; un p alto significa que el AUC no se distingue del azar. Las comunas vecinas no
+son independientes, así que el p real es más alto. La lluvia modelada de 1991-2020 queda bajo
+0,5 porque ordena al revés: las comunas con decreto son las de **más** lluvia modelada (en su
+mayoría rurales o de precordillera), otra señal de que los decretos siguen a la exposición.
 
 Resultado: {verdict}. Los decretos son actos administrativos: probablemente dependen también de
 la exposición (riego, agua de pozo, comunas rurales) y no solo del clima, y 15 de 186 se dictaron

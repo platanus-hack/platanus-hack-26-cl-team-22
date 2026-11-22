@@ -381,6 +381,11 @@
       "fuera_provincia_santiago": 0.917,
       "precipitacion_base": 0.125
     },
+    "p_permutacion": {
+      "modelo": 0.086,
+      "fuera_provincia_santiago": 0.0001,
+      "precipitacion_base": 1.0
+    },
     "gana": "fuera_provincia_santiago"
   }
 }
