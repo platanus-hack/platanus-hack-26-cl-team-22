@@ -371,5 +371,21 @@
       "9 estaciones: no alcanza para afirmar significancia estadística.",
       "La escala del kernel quedó en el borde de la grilla (toda la cuenca como una caja): el acople entre comunas es casi uniforme."
     ]
+  },
+  "agua_decretos": {
+    "prueba": "Comunas con decreto de escasez DGA 2008-2023 contra el cambio de drought_periods ssp245 2041-2060",
+    "comunas": 52,
+    "con_decreto": 24,
+    "auc": {
+      "modelo": 0.605,
+      "fuera_provincia_santiago": 0.917,
+      "precipitacion_base": 0.125
+    },
+    "p_permutacion": {
+      "modelo": 0.086,
+      "fuera_provincia_santiago": 0.0001,
+      "precipitacion_base": 1.0
+    },
+    "gana": "fuera_provincia_santiago"
   }
 }

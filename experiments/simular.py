@@ -5,7 +5,8 @@ Inputs:  data/ (communes, RETC emissions, census moves), results/aire_calibracio
 Model:   core/ciclo.py (credibility -> emissions -> coupled air) with households moving between
          communes (core/hogares.py) and, in one reading, carrying residential heating with them.
 Contract: docs/plan-comunas.md. Credibility: docs/credibilidad.md. Air: docs/modelo-aire.md.
-Households: docs/modelo-hogares.md.
+Households: docs/modelo-hogares.md. Climate risk (water, flood, heat): core/clima.py from
+data/arclim, one climate-model run drawn per replica (docs/modelo-clima.md).
 
 Usage:  python -m experiments.simular
 """
@@ -19,6 +20,7 @@ import numpy as np
 
 from core.aire import AirModel, distance_matrix_km, exponential_transfer
 from core.ciclo import Intervention, simulate
+from core.clima import simulate_climate
 from core.credibilidad import (
     DEFAULT_RHO,
     DEFAULT_RHO_THETA,
@@ -49,6 +51,7 @@ SEED = 22
 REPLICAS = 500
 BASE_YEAR = 2023
 YEARS = list(range(2026, 2037))
+CLIMATE_LAST_YEAR = 2060  # last year whose 20-year window (2050-2069) fits the ARClim series
 YEARS_TO_FULL = 10  # assumption: the PPDA sets a 10-year horizon (art. 1)
 PM25_ANNUAL_NORM = 20.0  # ug/m3, Chilean annual PM2.5 standard (docs/politicas-aire.md)
 EXECUTOR = "ppda-rm"
@@ -291,6 +294,23 @@ def mixture_summary(components: list[BetaCredibility], draws: int = 20_000) -> d
     p10, p90 = np.quantile(x, [0.1, 0.9])
     return {"p10": float(p10), "media": float(np.mean([b.mean for b in components])),
             "p90": float(p90)}
+
+
+def climate_risk() -> dict:
+    """Water, flood and heat risk per commune and year, one ARClim run drawn per replica."""
+    years = list(range(YEARS[0], CLIMATE_LAST_YEAR + 1))
+    return {
+        "fuente": "data/arclim (ARClim, Ministerio del Medio Ambiente)",
+        "metodo": "Cada réplica sortea un modelo climático y una de sus corridas presentes en "
+                  "todos los indicadores. Cambio de la media de 20 años (año - 10 a año + 9) "
+                  "respecto de 1991-2020 de la misma corrida: % para precipitación, diferencia "
+                  "para días, puntos porcentuales y grados-día. Sin índice compuesto: cada "
+                  "riesgo muestra sus componentes en su unidad (core/clima.py).",
+        "por_escenario": {
+            scenario: simulate_climate(scenario, seed=SEED, replicas=REPLICAS, years=years)
+            for scenario in ("ssp245", "ssp585")
+        },
+    }
 
 
 def featured_communes(setup: Setup) -> list[str]:
@@ -717,6 +737,7 @@ def main() -> None:
         "transformaciones": serialize_transformations(
             transformations, default_reference="base"
         ),
+        "clima": climate_risk(),
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

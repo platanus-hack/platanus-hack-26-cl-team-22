@@ -25,6 +25,10 @@ Protocol (fixed before looking at the results; constants below):
     next to it so the effect of that choice is visible.
 - Households, population and security: read from their own calibration scripts, which already
   fit on one period and test on another (see the commands in the report).
+- Water risk: climate-model years are not real years, so the test is across communes. AUC of
+  the change in drought frequency (ssp245, 2041-2060) against the communes with a DGA scarcity
+  decree 2008-2023, next to two simple rankings (outside Santiago province, modelled
+  1991-2020 rainfall) and a label-permutation p value. Not part of the README table.
 
 Usage:  python -m experiments.validar   (or `make validate`, which reruns the calibrations first)
 Output: results/validacion.json, docs/validacion.md and the table in README.md (between markers).
@@ -38,9 +42,11 @@ import unicodedata
 from collections.abc import Mapping
 
 import numpy as np
+from scipy.stats import rankdata
 
 from core.aire import AirModel, distance_matrix_km, exponential_transfer
 from core.ciclo import Intervention, simulate
+from core.clima import BASELINE, load_series, simulate_climate
 from core.credibilidad import BetaCredibility, Measure, draw_theta
 from core.estado import SOURCES, RegionState
 from experiments.calibrar_aire import MODELLED, SCALES_KM, fit, loo_errors
@@ -66,6 +72,16 @@ AIR_READING = "conservadora"
 REPLICAS = 500
 TIE_TOLERANCE = 0.02  # errors within 2 % of each other count as a tie
 Z80 = 0.8
+
+# Water risk against DGA scarcity decrees. Climate-model years are not real years, so the test
+# is across communes: does the model's ranking put the communes with a decree first?
+WATER_SCENARIO = "ssp245"
+WATER_YEAR = 2051  # window 2041-2060
+WATER_INDICATOR = "drought_periods"  # chosen before seeing the result
+AUC_TIE = 0.02
+PERMUTATIONS = 10_000
+DECREES = ROOT / "data" / "dga" / "decretos_escasez_rm.csv"
+COMMUNES = ROOT / "data" / "comunas_rm.csv"
 
 HOUSEHOLDS = ROOT / "results" / "hogares_calibracion.json"
 SECURITY = ROOT / "results" / "seguridad_calibracion.json"
@@ -323,6 +339,97 @@ def collect(air: dict) -> list[dict]:
     ]
 
 
+def auc(scores: np.ndarray, labels: np.ndarray) -> float:
+    """Probability that a positive outranks a negative; ties count half (Mann-Whitney)."""
+    pos, neg = scores[labels == 1], scores[labels == 0]
+    diff = pos[:, None] - neg[None, :]
+    return float(((diff > 0).sum() + 0.5 * (diff == 0).sum()) / diff.size)
+
+
+def permutation_p(scores: np.ndarray, labels: np.ndarray, n: int = PERMUTATIONS,
+                  seed: int = SEED) -> float:
+    """One-sided p: share of label shuffles whose AUC is at least the observed one."""
+    ranks = rankdata(scores)  # average ranks, so ties count half as in auc()
+    n_pos, n_neg = int(labels.sum()), int((labels == 0).sum())
+    observed = auc(scores, labels)
+    rng = np.random.default_rng(seed)
+    shuffled = np.array([rng.permutation(labels) for _ in range(n)])
+    aucs = ((shuffled * ranks).sum(axis=1) - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
+    return float((1 + (aucs >= observed - 1e-12).sum()) / (n + 1))
+
+
+def water_vs_decrees(replicas: int = REPLICAS) -> dict:
+    """AUC of the model's water risk against communes with a DGA decree (2008-2023)."""
+    with COMMUNES.open(encoding="utf-8") as f:
+        communes = list(csv.DictReader(f))
+    with DECREES.open(encoding="utf-8") as f:
+        decreed = {row["codigo_comuna"] for row in csv.DictReader(f)}
+    codes = [c["codigo_comuna"] for c in communes]
+    labels = np.array([c in decreed for c in codes], dtype=int)
+
+    climate = simulate_climate(WATER_SCENARIO, seed=SEED, replicas=replicas, years=[WATER_YEAR])
+    drought = climate["riesgos"]["hidrico"][WATER_INDICATOR]["por_comuna"]
+    precipitation = load_series("pr_sum", WATER_SCENARIO)
+    in_base = (precipitation.years >= BASELINE[0]) & (precipitation.years <= BASELINE[1])
+    base_level = dict(zip(precipitation.communes,
+                          np.nanmean(precipitation.values[..., in_base], axis=(0, 2)), strict=True))
+    scores = {
+        "modelo": np.array([drought[c]["p50"][0] for c in codes]),
+        "fuera_provincia_santiago": np.array([c["provincia"] != "Santiago" for c in communes],
+                                             dtype=float),
+        "precipitacion_base": -np.array([base_level[c] for c in codes]),  # drier = more risk
+    }
+    aucs = {k: round(auc(v, labels), 3) for k, v in scores.items()}
+    ranked = sorted(aucs.values(), reverse=True)
+    best = max(aucs, key=aucs.get)
+    return {
+        "prueba": f"Comunas con decreto de escasez DGA 2008-2023 contra el cambio de "
+                  f"{WATER_INDICATOR} {WATER_SCENARIO} {WATER_YEAR - 10}-{WATER_YEAR + 9}",
+        "comunas": len(codes),
+        "con_decreto": int(labels.sum()),
+        "auc": aucs,
+        "p_permutacion": {k: round(permutation_p(v, labels), 4) for k, v in scores.items()},
+        "gana": "empate" if ranked[0] - ranked[1] < AUC_TIE else best,
+    }
+
+
+WATER_LABEL = {"modelo": "Modelo: más aumento de la frecuencia de sequía",
+               "fuera_provincia_santiago": "Fuera de la provincia de Santiago",
+               "precipitacion_base": "Menos lluvia modelada en 1991-2020"}
+
+
+def water_section(water: dict) -> str:
+    rows = "\n".join(f"| {WATER_LABEL[k]} | {v:.2f} | {water['p_permutacion'][k]:.3f}".replace(".", ",")
+                     + " |" for k, v in water["auc"].items())
+    verdict = ("el modelo ordena mejor que las alternativas" if water["gana"] == "modelo" else
+               "**el modelo no le gana a una alternativa simple**" if water["gana"] != "empate" else
+               "**empate**: el modelo no ordena mejor que una alternativa simple")
+    return f"""## Riesgo hídrico contra los decretos de escasez
+
+{water['con_decreto']} de {water['comunas']} comunas tuvieron un decreto de escasez de la DGA entre
+2008 y 2023. Los años de un modelo climático no son años reales, así que la prueba compara
+comunas, no años: ¿el riesgo del modelo pone primero a las comunas con decreto? Se mide con el
+AUC (0,5 = azar, 1 = las ordena perfecto). El indicador del modelo se eligió antes de ver el
+resultado: cambio de la frecuencia de sequía ({WATER_INDICATOR}, {WATER_SCENARIO},
+{WATER_YEAR - 10}-{WATER_YEAR + 9}, mediana entre réplicas).
+
+| Ordena por | AUC | p (permutación) |
+|---|---|---|
+{rows}
+
+El valor p es la parte de {PERMUTATIONS:,} reordenamientos al azar de las etiquetas que ordena
+igual o mejor; un p alto significa que el AUC no se distingue del azar. Las comunas vecinas no
+son independientes, así que el p real es más alto. La lluvia modelada de 1991-2020 queda bajo
+0,5 porque ordena al revés: las comunas con decreto son las de **más** lluvia modelada (en su
+mayoría rurales o de precordillera), otra señal de que los decretos siguen a la exposición.
+
+Resultado: {verdict}. Los decretos son actos administrativos: probablemente dependen también de
+la exposición (riego, agua de pozo, comunas rurales) y no solo del clima, y 15 de 186 se dictaron
+para una provincia completa. El riesgo climático del motor mide cuánto cambia el clima de cada
+comuna, no cuán expuesta está hoy.
+"""
+
+
 def _fmt(value: float | None, metric: str) -> str:
     if value is None:
         return "—"
@@ -347,7 +454,7 @@ def table(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def document(rows: list[dict], air: dict) -> str:
+def document(rows: list[dict], air: dict, water: dict) -> str:
     m, readings = air["modelo"], air["lecturas"]
     kernel = air["protocolo"]["kernel"]
     pattern = winner({"modelo": m["rmse_ugm3"],
@@ -410,7 +517,8 @@ primer resultado; el reemplazado queda abajo como referencia, no como resultado.
 Avisos:
 
 {chr(10).join('- ' + a for a in air['avisos'])}
-"""
+
+{water_section(water)}"""
 
 
 def _replace_readme(rows: list[dict]) -> None:
@@ -425,12 +533,14 @@ def _replace_readme(rows: list[dict]) -> None:
 def main() -> None:
     air = air_hindcast()
     rows = collect(air)
+    water = water_vs_decrees()
     report = {"comando": "make validate", "protocolo_empate": TIE_TOLERANCE, "filas": rows,
-              "aire": air}
+              "aire": air, "agua_decretos": water}
     OUTPUT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    DOC.write_text(document(rows, air), encoding="utf-8")
+    DOC.write_text(document(rows, air, water), encoding="utf-8")
     _replace_readme(rows)
     print(table(rows))
+    print(f"\nAgua vs decretos DGA, AUC: {water['auc']} -> gana {water['gana']}")
     print(f"\n-> {OUTPUT.relative_to(ROOT)}, {DOC.relative_to(ROOT)}, README.md")
 
 
