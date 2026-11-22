@@ -80,6 +80,26 @@ export function ipCliente(req: IncomingMessage, proxies: number): string {
   return lista[lista.length - proxies] ?? directa
 }
 
+/**
+ * Global cap on model calls per UTC day, across every visitor: the per-address limit alone does not stop
+ * someone with many addresses from spending the key. 0 or less means no cap.
+ */
+export function crearTopeDiario(tope: number, ahora: () => number = Date.now) {
+  let dia = -1
+  let usadas = 0
+  return (): boolean => {
+    if (tope <= 0) return true
+    const hoy = Math.floor(ahora() / 86_400_000)
+    if (hoy !== dia) {
+      dia = hoy
+      usadas = 0
+    }
+    if (usadas >= tope) return false
+    usadas++
+    return true
+  }
+}
+
 function responder(res: ServerResponse, estado: number, cuerpo: unknown) {
   res.writeHead(estado, { 'content-type': 'application/json; charset=utf-8' })
   res.end(JSON.stringify(cuerpo))
@@ -96,8 +116,9 @@ function estadoDeError(e: unknown): number {
 export function crearServidor(
   obtenerCliente: () => ClienteClaude | null,
   origenes: readonly string[],
-  opciones: { pedidosPorMinuto?: number; proxies?: number; memoTtlMs?: number } = {},
+  opciones: { pedidosPorMinuto?: number; proxies?: number; memoTtlMs?: number; topeDiario?: number } = {},
 ): Server {
+  const quedaCupo = crearTopeDiario(opciones.topeDiario ?? 0)
   const permitir = crearLimitador(opciones.pedidosPorMinuto ?? 20)
   const proxies = opciones.proxies ?? 0
   // Answers depend only on the validated request, so identical requests can share one.
@@ -129,6 +150,7 @@ export function crearServidor(
     const guardado = memo.leer(clave)
     if (guardado) return responder(res, 200, guardado)
     if (!permitir(ipCliente(req, proxies))) return responder(res, 429, { error: 'demasiados pedidos; espera un minuto' })
+    if (!quedaCupo()) return responder(res, 429, { error: 'se agotó el cupo de consultas de hoy' })
     // If the page gives up (it waits 12-15 s), stop the model call instead of spending tokens on it;
     // an identical request still waiting keeps the shared call alive.
     const corte = new AbortController()
@@ -159,7 +181,9 @@ if (import.meta.main) {
   const puerto = Number(process.env.PORT ?? 8787)
   // Trusted proxy hops in front of this process (Render: 1). Check GET /salud shows your own address.
   const proxies = Number(process.env.PROXIES_CONFIABLES ?? 0) || 0
-  crearServidor(() => cliente, origenes, { proxies }).listen(puerto, () => {
+  // Model calls per UTC day for the whole service (0 = no cap).
+  const topeDiario = Number(process.env.TOPE_DIARIO ?? 0) || 0
+  crearServidor(() => cliente, origenes, { proxies, topeDiario }).listen(puerto, () => {
     console.log(`servidor-guia en http://localhost:${puerto} (clave: ${cliente ? 'sí' : 'no'}; orígenes: ${origenes.join(', ')})`)
   })
 }

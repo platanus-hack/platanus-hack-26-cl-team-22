@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import type { AddressInfo } from 'node:net'
 import { test } from 'node:test'
 import type { ClienteClaude } from './claude.ts'
-import { crearServidor, ipCliente } from './servidor.ts'
+import { crearServidor, crearTopeDiario, ipCliente } from './servidor.ts'
 import type { IncomingMessage } from 'node:http'
 
 const ORIGEN = 'http://localhost:5173'
@@ -159,4 +159,32 @@ test('ipCliente trusts X-Forwarded-For only as far as the configured proxy hops'
   assert.equal(ipCliente(req('6.6.6.6, 200.1.1.1'), 1), '200.1.1.1')
   assert.equal(ipCliente(req('200.1.1.1'), 1), '200.1.1.1')
   assert.equal(ipCliente(req(), 1), '10.0.0.1')
+})
+
+test('the daily cap refuses model calls past the limit until the next UTC day; 0 means no cap', () => {
+  let t = Date.UTC(2026, 10, 21, 23, 0)
+  const queda = crearTopeDiario(2, () => t)
+  assert.deepEqual([queda(), queda(), queda()], [true, true, false])
+  t = Date.UTC(2026, 10, 22, 0, 1)
+  assert.equal(queda(), true)
+  const sinTope = crearTopeDiario(0)
+  assert.ok(Array.from({ length: 50 }, sinTope).every(Boolean))
+})
+
+test('past the daily cap the server answers 429 without calling Claude, but cached answers still go out', async () => {
+  let llamadas = 0
+  const c: ClienteClaude = { beta: { messages: { create: async () => (llamadas++, { stop_reason: 'end_turn', content: [{ type: 'text', text: LECTURA }] }) } } }
+  const s = crearServidor(() => c, [ORIGEN], { topeDiario: 1 })
+  await new Promise<void>((ok) => s.listen(0, '127.0.0.1', ok))
+  const base = `http://127.0.0.1:${(s.address() as AddressInfo).port}`
+  try {
+    assert.equal((await post(base, cuerpo)).status, 200)
+    const otro = await post(base, cuerpo.replace('asma', 'bronquitis'))
+    assert.equal(otro.status, 429)
+    assert.match((await otro.json()).error, /cupo/)
+    assert.equal((await post(base, cuerpo)).status, 200)
+    assert.equal(llamadas, 1)
+  } finally {
+    await new Promise((ok) => s.close(ok))
+  }
 })

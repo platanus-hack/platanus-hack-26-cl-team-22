@@ -37,6 +37,10 @@ services:
       # (from X-Forwarded-For) instead of the proxy's. Check GET /salud shows your own address in "ip".
       - key: PROXIES_CONFIABLES
         value: 1
+      # Model calls per UTC day for the whole service; past it the routes answer 429 and the page
+      # goes on without AI. 0 = no cap. Size it to the budget (about 3 calls per visitor).
+      - key: TOPE_DIARIO
+        value: 1000
       # Origin(s) of the landing allowed by CORS, comma separated.
       - key: ORIGENES
         sync: false

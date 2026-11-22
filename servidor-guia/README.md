@@ -35,6 +35,12 @@ Protecciones del servidor:
   navegadores. Antes de publicarlo, conviene además ponerlo detrás de un límite del proveedor.
 - Las llamadas a Claude esperan como máximo 20 s, con un reintento. Si la página se va (espera 12 a 15 s), la
   llamada se corta para no gastar tokens.
+- Tope global diario (`TOPE_DIARIO`, llamadas a Claude por día UTC para todo el servicio; 0 = sin tope): al
+  pasarlo responde 429 y la página sigue sin IA. El límite por dirección no frena a quien usa muchas direcciones.
+  Las respuestas en memoria siguen saliendo aunque se haya agotado el cupo.
+- El caso va entre comillas triples; tres o más comillas dentro del texto se reducen a una, para que nadie pueda
+  cerrar ese bloque y escribir instrucciones. Las preguntas del modelo se descartan si traen enlaces, no son
+  preguntas o piden datos personales (RUT, correo, teléfono, etc.).
 - Cada llamada deja una línea de log con sus tokens (`entrada`, `salida`, `cache_leida`, `cache_escrita`), sin el
   texto de la persona, para medir el costo real antes de tocar el esfuerzo o el modelo.
 Ante un rechazo por política, la API reintenta sola con un modelo de respaldo (`fallbacks: "default"`).
