@@ -5,10 +5,9 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 
 | Ruta | Pedido | Respuesta | Para qué |
 |---|---|---|---|
-| `POST /preguntar` | `{ caso }` | `{ preguntas }` | Hasta 2 preguntas de seguimiento sobre lo que el caso no dice (vivienda o empresa, niños, mayores, asma) |
-| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido }` | Lee el caso de la persona y propone ajustes de prioridad |
+| `POST /interpretar` | `{ caso, perfil, prioridades }` | `{ ajustes, indicadores, no_medido, preguntas }` | Lee el caso, propone ajustes de prioridad y, en la misma llamada, hasta 2 preguntas sobre lo que falta (vivienda o empresa, niños, mayores, asma) |
 | `POST /guia` | `PedidoGuia` (`viz/src/lib/guia.ts`) | `{ texto }` | Redacta la explicación de las comunas que quedaron primeras |
-| `GET /salud` | — | `{ ok, clave }` | Saber si el servidor tiene clave |
+| `GET /salud` | — | `{ ok, clave, ip }` | Saber si el servidor tiene clave y qué dirección usa el límite para quien consulta |
 
 ## Cómo decide
 
@@ -25,12 +24,19 @@ página ni en una variable `VITE_*`, porque Vite las copia al código que descar
 Si no hay clave, el modelo rechaza la consulta o algo falla, la página sigue sin ajustes y con su explicación propia.
 
 Protecciones del servidor:
-- Cada pedido se valida antes de llamar a Claude (`/preguntar`, `/interpretar` y `/guia`). Uno inválido responde 400 sin gastar
+- Cada pedido se valida antes de llamar a Claude (`/interpretar` y `/guia`). Uno inválido responde 400 sin gastar
   la clave; uno de más de 8 KB responde 413.
-- Hay un límite de 20 llamadas por minuto por dirección (429 si se pasa). CORS no basta, porque solo frena a los
+- Respuestas en memoria: un pedido idéntico a uno ya respondido (los ejemplos, una recarga) sale de la memoria
+  por 6 horas sin llamar a Claude y sin contar para el límite. Pedidos idénticos simultáneos comparten una sola
+  llamada. Los fallos no se guardan.
+- Hay un límite de 20 llamadas por minuto por dirección (429 si se pasa). Detrás de un proxy (Render) la dirección
+  sale de `X-Forwarded-For` según `PROXIES_CONFIABLES` (saltos de proxy confiables; 0 = la conexión directa). Si
+  está mal, todos comparten un límite: `GET /salud` debe mostrar tu propia dirección en `ip`. CORS no basta, porque solo frena a los
   navegadores. Antes de publicarlo, conviene además ponerlo detrás de un límite del proveedor.
 - Las llamadas a Claude esperan como máximo 20 s, con un reintento. Si la página se va (espera 12 a 15 s), la
   llamada se corta para no gastar tokens.
+- Cada llamada deja una línea de log con sus tokens (`entrada`, `salida`, `cache_leida`, `cache_escrita`), sin el
+  texto de la persona, para medir el costo real antes de tocar el esfuerzo o el modelo.
 Ante un rechazo por política, la API reintenta sola con un modelo de respaldo (`fallbacks: "default"`).
 
 ## Cómo correrlo

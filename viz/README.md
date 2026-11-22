@@ -121,8 +121,9 @@ a ese intermediario un texto redactado por un modelo de lenguaje (`src/lib/guia.
   caso y proponga ajustes de prioridad de un catálogo cerrado (`src/lib/caso.ts`). La persona los ve como
   «Por lo que contaste: Aire: Clave» y puede apagarlos; el índice recalcula el orden. Detalle en
   `servidor-guia/README.md`.
-  Antes de eso, con la misma `VITE_CASO_URL` (ruta hermana `/preguntar`), Claude puede hacer **hasta 2 preguntas de
-  seguimiento** sobre lo que el caso no dice; las respuestas son opcionales y se anexan al caso.
+  Esa misma llamada, hecha desde la entrada, trae **hasta 2 preguntas de seguimiento** sobre lo que el caso no
+  dice; las respuestas son opcionales y se anexan al caso. Si no hay preguntas (o nadie responde), el mapa reusa
+  esa lectura en vez de pedir otra.
 
 ### Junto a la landing
 

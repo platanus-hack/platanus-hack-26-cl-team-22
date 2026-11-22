@@ -2,8 +2,7 @@
  * HTTP intermediary between the simulator page and the Claude API. The API key lives only here
  * (ANTHROPIC_API_KEY in this process's environment), never in the page or in a VITE_ variable.
  *
- *   POST /interpretar  { caso, perfil, prioridades }  -> { ajustes, indicadores, no_medido }
- *   POST /preguntar    { caso }                      -> { preguntas }  (0 to 2 follow-up questions)
+ *   POST /interpretar  { caso, perfil, prioridades }  -> { ajustes, indicadores, no_medido, preguntas }
  *   POST /guia         PedidoGuia (viz/src/lib/guia.ts) -> { texto }
  *   GET  /salud        -> { ok, clave }
  *
@@ -11,7 +10,8 @@
  */
 import Anthropic from '@anthropic-ai/sdk'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
-import { interpretarCaso, prepararPreguntas, redactarGuia, validarPedidoCaso, validarPedidoGuia, validarPedidoPreguntas, type ClienteClaude } from './claude.ts'
+import { interpretarCaso, redactarGuia, validarPedidoCaso, validarPedidoGuia, type ClienteClaude } from './claude.ts'
+import { crearMemo } from './memo.ts'
 
 const LIMITE_CUERPO = 8_000
 const ORIGENES_DEFECTO = ['http://localhost:5173', 'http://localhost:4173']
@@ -67,6 +67,19 @@ function crearLimitador(porMinuto: number) {
   }
 }
 
+/**
+ * Who is asking, for the rate limit. Behind a proxy (Render) every request comes from the proxy's
+ * address, so all visitors would share one limit; with `proxies` trusted hops the client is the entry
+ * that many places from the end of X-Forwarded-For (earlier entries can be forged by the client).
+ */
+export function ipCliente(req: IncomingMessage, proxies: number): string {
+  const directa = req.socket.remoteAddress ?? 'desconocido'
+  if (proxies <= 0) return directa
+  const cabecera = req.headers['x-forwarded-for']
+  const lista = (Array.isArray(cabecera) ? cabecera.join(',') : (cabecera ?? '')).split(',').map((s) => s.trim()).filter(Boolean)
+  return lista[lista.length - proxies] ?? directa
+}
+
 function responder(res: ServerResponse, estado: number, cuerpo: unknown) {
   res.writeHead(estado, { 'content-type': 'application/json; charset=utf-8' })
   res.end(JSON.stringify(cuerpo))
@@ -83,9 +96,12 @@ function estadoDeError(e: unknown): number {
 export function crearServidor(
   obtenerCliente: () => ClienteClaude | null,
   origenes: readonly string[],
-  opciones: { pedidosPorMinuto?: number } = {},
+  opciones: { pedidosPorMinuto?: number; proxies?: number; memoTtlMs?: number } = {},
 ): Server {
   const permitir = crearLimitador(opciones.pedidosPorMinuto ?? 20)
+  const proxies = opciones.proxies ?? 0
+  // Answers depend only on the validated request, so identical requests can share one.
+  const memo = crearMemo<object>(opciones.memoTtlMs ?? 6 * 60 * 60_000, 500)
   return createServer(async (req, res) => {
     const origen = req.headers.origin
     if (origen && origenes.includes(origen)) {
@@ -95,8 +111,8 @@ export function crearServidor(
       res.setHeader('vary', 'origin')
     }
     if (req.method === 'OPTIONS') return void res.writeHead(204).end()
-    if (req.method === 'GET' && req.url === '/salud') return responder(res, 200, { ok: true, clave: obtenerCliente() !== null })
-    if (req.method !== 'POST' || (req.url !== '/interpretar' && req.url !== '/guia' && req.url !== '/preguntar')) return responder(res, 404, { error: 'no existe' })
+    if (req.method === 'GET' && req.url === '/salud') return responder(res, 200, { ok: true, clave: obtenerCliente() !== null, ip: ipCliente(req, proxies) })
+    if (req.method !== 'POST' || (req.url !== '/interpretar' && req.url !== '/guia')) return responder(res, 404, { error: 'no existe' })
 
     const cliente = obtenerCliente()
     if (!cliente) return responder(res, 503, { error: 'falta ANTHROPIC_API_KEY en el servidor' })
@@ -107,25 +123,26 @@ export function crearServidor(
     }
     const pedidoCaso = req.url === '/interpretar' ? validarPedidoCaso(cuerpo) : null
     const pedidoGuia = req.url === '/guia' ? validarPedidoGuia(cuerpo) : null
-    const pedidoPreguntas = req.url === '/preguntar' ? validarPedidoPreguntas(cuerpo) : null
-    if (!pedidoCaso && !pedidoGuia && !pedidoPreguntas) return responder(res, 400, { error: 'pedido no válido' })
-    if (!permitir(req.socket.remoteAddress ?? 'desconocido')) return responder(res, 429, { error: 'demasiados pedidos; espera un minuto' })
-    // If the page gives up (it waits 12-15 s), stop the model call instead of spending tokens on it.
+    if (!pedidoCaso && !pedidoGuia) return responder(res, 400, { error: 'pedido no válido' })
+    const clave = `${req.url} ${JSON.stringify(pedidoCaso ?? pedidoGuia)}`
+    // A cached answer costs nothing, so it does not count against the limit.
+    const guardado = memo.leer(clave)
+    if (guardado) return responder(res, 200, guardado)
+    if (!permitir(ipCliente(req, proxies))) return responder(res, 429, { error: 'demasiados pedidos; espera un minuto' })
+    // If the page gives up (it waits 12-15 s), stop the model call instead of spending tokens on it;
+    // an identical request still waiting keeps the shared call alive.
     const corte = new AbortController()
     res.on('close', () => {
       if (!res.writableEnded) corte.abort()
     })
     try {
-      if (pedidoPreguntas) {
-        const q = await prepararPreguntas(cliente, pedidoPreguntas, corte.signal)
-        return q ? responder(res, 200, { preguntas: q }) : responder(res, 502, { error: 'sin preguntas' })
-      }
-      if (pedidoCaso) {
-        const r = await interpretarCaso(cliente, pedidoCaso, corte.signal)
-        return r ? responder(res, 200, r) : responder(res, 502, { error: 'sin interpretación' })
-      }
-      const g = await redactarGuia(cliente, pedidoGuia!, corte.signal)
-      return g ? responder(res, 200, g) : responder(res, 502, { error: 'sin guía' })
+      const r = await memo.calcular(
+        clave,
+        (signal) => (pedidoCaso ? interpretarCaso(cliente, pedidoCaso, signal) : redactarGuia(cliente, pedidoGuia!, signal)),
+        corte.signal,
+      )
+      if (corte.signal.aborted) return
+      return r ? responder(res, 200, r) : responder(res, 502, { error: pedidoCaso ? 'sin interpretación' : 'sin guía' })
     } catch (e) {
       if (corte.signal.aborted) return
       console.error('Claude API:', e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : e)
@@ -140,7 +157,9 @@ if (import.meta.main) {
   const cliente = clave ? (new Anthropic({ timeout: 20_000, maxRetries: 1 }) as unknown as ClienteClaude) : null
   const origenes = process.env.ORIGENES ? process.env.ORIGENES.split(',').map((s) => s.trim()) : ORIGENES_DEFECTO
   const puerto = Number(process.env.PORT ?? 8787)
-  crearServidor(() => cliente, origenes).listen(puerto, () => {
+  // Trusted proxy hops in front of this process (Render: 1). Check GET /salud shows your own address.
+  const proxies = Number(process.env.PROXIES_CONFIABLES ?? 0) || 0
+  crearServidor(() => cliente, origenes, { proxies }).listen(puerto, () => {
     console.log(`servidor-guia en http://localhost:${puerto} (clave: ${cliente ? 'sí' : 'no'}; orígenes: ${origenes.join(', ')})`)
   })
 }
