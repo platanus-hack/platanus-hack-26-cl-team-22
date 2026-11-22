@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aplicarAjustes, ESQUEMA_INTERPRETACION, LARGO_CASO_MAX, pedirInterpretacion, validarInterpretacion, type Interpretacion } from './caso'
+import { componerCaso, MAX_PREGUNTAS, pedirPreguntas, urlPreguntas, validarPreguntas, aplicarAjustes, ESQUEMA_INTERPRETACION, LARGO_CASO_MAX, pedirInterpretacion, validarInterpretacion, type Interpretacion } from './caso'
 
 const caso = 'Busco departamento para mi familia; mi hijo tiene asma y trabajo de noche.'
 
@@ -121,5 +121,44 @@ describe('pedirInterpretacion', () => {
   it('returns null when the server fails or answers something else', async () => {
     expect(await pedirInterpretacion('http://x/interpretar', pedido, fetchQue(503, { error: 'x' }))).toBeNull()
     expect(await pedirInterpretacion('http://x/interpretar', pedido, fetchQue(200, 'hola'))).toBeNull()
+  })
+})
+
+describe('follow-up questions', () => {
+  it('keeps at most two distinct, short questions', () => {
+    const q = validarPreguntas({ preguntas: ['¿Es para vivir o para una empresa?', '¿Es para vivir o para una empresa?', '¿Hay niños o personas con asma?', '¿Una tercera pregunta?'] })
+    expect(q).toEqual(['¿Es para vivir o para una empresa?', '¿Hay niños o personas con asma?'])
+    expect(q.length).toBeLessThanOrEqual(MAX_PREGUNTAS)
+  })
+
+  it('drops non-strings, empty and overlong questions, and anything that is not the expected shape', () => {
+    expect(validarPreguntas({ preguntas: [3, '', 'x'.repeat(200), null] })).toEqual([])
+    expect(validarPreguntas('hola')).toEqual([])
+    expect(validarPreguntas({})).toEqual([])
+  })
+
+  it('appends only the answered questions and stays within the case limit', () => {
+    expect(componerCaso('Busco casa', ['¿Hay niños?', '¿Trabajan de noche?'], ['sí, una de 4 años', ' '])).toBe('Busco casa\n¿Hay niños? sí, una de 4 años')
+    expect(componerCaso('Busco casa', ['¿Hay niños?'], [])).toBe('Busco casa')
+    expect(componerCaso('a'.repeat(400), ['q'.repeat(90), 'q'.repeat(90)], ['r'.repeat(300), 'r'.repeat(300)]).length).toBeLessThanOrEqual(LARGO_CASO_MAX)
+  })
+
+  it('derives the questions endpoint from the interpretation one', () => {
+    expect(urlPreguntas('http://localhost:8787/interpretar')).toBe('http://localhost:8787/preguntar')
+    expect(urlPreguntas(null)).toBeNull()
+  })
+
+  it('pedirPreguntas posts the case and returns [] on any failure', async () => {
+    let enviado: unknown = null
+    const ok = (async (_u: string, init: RequestInit) => {
+      enviado = JSON.parse(String(init.body))
+      return new Response(JSON.stringify({ preguntas: ['¿Es para vivir o para una empresa?'] }), { status: 200 })
+    }) as unknown as typeof fetch
+    expect(await pedirPreguntas('http://x/preguntar', 'Busco casa', ok)).toEqual(['¿Es para vivir o para una empresa?'])
+    expect(enviado).toEqual({ caso: 'Busco casa' })
+    const falla = (async () => new Response('{}', { status: 503 })) as unknown as typeof fetch
+    expect(await pedirPreguntas('http://x/preguntar', 'Busco casa', falla)).toEqual([])
+    const rota = (async () => { throw new Error('red') }) as unknown as typeof fetch
+    expect(await pedirPreguntas('http://x/preguntar', 'Busco casa', rota)).toEqual([])
   })
 })

@@ -90,3 +90,13 @@ test('each client gets a limited number of model calls per minute', async () => 
     await new Promise((ok) => s.close(ok))
   }
 })
+
+test('POST /preguntar returns at most two questions and rejects a bad body without calling Claude', async () => {
+  await conServidor(cliente(JSON.stringify({ preguntas: ['¿Es para vivir o para una empresa?', '¿Hay niños o personas con asma?', '¿Una tercera pregunta?'] })), async (base) => {
+    const r = await fetch(`${base}/preguntar`, { method: 'POST', headers: { origin: ORIGEN, 'content-type': 'application/json' }, body: JSON.stringify({ caso: 'quiero evaluar el aire' }) })
+    assert.equal(r.status, 200)
+    assert.equal((await r.json()).preguntas.length, 2)
+    const mala = await fetch(`${base}/preguntar`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ caso: '' }) })
+    assert.equal(mala.status, 400)
+  })
+})

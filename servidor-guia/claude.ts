@@ -10,10 +10,14 @@
  */
 import {
   ESQUEMA_INTERPRETACION,
+  ESQUEMA_PREGUNTAS,
   INSTRUCCIONES_CASO,
+  INSTRUCCIONES_PREGUNTAS,
   LARGO_CASO_MAX,
   mensajeCaso,
+  mensajePreguntas,
   validarInterpretacion,
+  validarPreguntas,
   type Interpretacion,
 } from '../viz/src/lib/caso.ts'
 import { limpiarGuia, type Guia, type PedidoGuia } from '../viz/src/lib/guia.ts'
@@ -72,7 +76,35 @@ export async function interpretarCaso(cliente: ClienteClaude, pedido: PedidoCaso
   }
 }
 
-const INSTRUCCIONES_GUIA = `Explicas en español, en un párrafo de dos o tres frases, por qué esas comunas quedaron primeras para la persona, según el caso que escribió y sus prioridades.
+/** Checks the questions request before spending a call on it. */
+export function validarPedidoPreguntas(raw: unknown): { caso: string } | null {
+  if (typeof raw !== 'object' || raw === null) return null
+  const caso = typeof (raw as Record<string, unknown>).caso === 'string' ? ((raw as Record<string, string>).caso).trim() : ''
+  return caso && caso.length <= LARGO_CASO_MAX ? { caso } : null
+}
+
+/**
+ * Up to MAX_PREGUNTAS follow-up questions about what the case leaves out (residential or company, sensitive
+ * people, ...). Empty when the case is already clear; null when the call gave nothing usable.
+ */
+export async function prepararPreguntas(cliente: ClienteClaude, pedido: { caso: string }, signal?: AbortSignal): Promise<string[] | null> {
+  const r = await cliente.beta.messages.create({
+    model: MODELO,
+    max_tokens: 16000,
+    ...FALLBACK,
+    output_config: { effort: 'low', format: { type: 'json_schema', schema: ESQUEMA_PREGUNTAS } },
+    system: [{ type: 'text', text: INSTRUCCIONES_PREGUNTAS, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: mensajePreguntas(pedido.caso) }],
+  }, { signal })
+  if (r.stop_reason === 'refusal' || r.stop_reason === 'max_tokens') return null
+  try {
+    return validarPreguntas(JSON.parse(texto(r)))
+  } catch {
+    return null
+  }
+}
+
+const INSTRUCCIONES_GUIA =`Explicas en español, en un párrafo de dos o tres frases, por qué esas comunas quedaron primeras para la persona, según el caso que escribió y sus prioridades.
 
 Reglas:
 - Usa solo los nombres y números que recibes; no agregues datos, comunas ni cifras.
